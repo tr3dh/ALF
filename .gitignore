@@ -1,0 +1,43 @@
+# Kompilierte Dateien
+*.a
+*.o
+*.d
+*.h.d
+*.res
+*.lib
+*.dll
+*.exe
+*.elf
+*.gch
+*.h.gch
+
+# Temp Dateien
+*.tmp
+*.NOTE
+
+# Logdateien
+*.log
+*.LOG
+
+# Dokumente
+*.pdf
+*.html
+
+# Proj Dirs
+build/
+thirdparty/
+
+# Os Dateien
+.DS_Store
+Thumbs.db
+
+# Config dateien
+*.ini
+
+# Konfigdateien
+config.ini
+imgui.ini
+
+# Komprimierte Dateien
+*.zip
+*.tar.gz

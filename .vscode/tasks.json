@@ -1,0 +1,41 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "open msys mingw64 shell",
+            "type": "process",
+            "command": "C:\\msys64\\msys2_shell.cmd",
+            "args": ["-mingw64", "-defterm", "-here", "-no-start"],
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            },
+            "group": "build"
+        },
+        {
+            "label": "Open Git Bash",
+            "type": "shell",
+            "command": "C:\\Program Files\\Git\\bin\\bash.exe",
+            "args": ["-l"],
+            "presentation": {
+                "echo": false,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Toggle Vim",
+            "type": "process",
+            "command": "${command:toggleVim}",
+            "problemMatcher": []
+        }
+    ]
+}
