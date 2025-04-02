@@ -34,6 +34,7 @@ struct Quad4Cell{
     }
 
     NodeIndex m_cellNodes[4] = {0,0,0,0};
+    // static Expression m_shapeFunctions[4] = {1/4*(1-r)*(1-s), 1/4*(1+r)*(1-s), 1/4*(1+r)*(1+s), 1/4*(1-r)*(1+s)};
 
     //
     friend std::ostream& operator<<(std::ostream& os, const Quad4Cell& cell) {
@@ -41,10 +42,7 @@ struct Quad4Cell{
         os << "{"; 
         for(const auto& [i, nodeInd] : std::views::enumerate(cell.m_cellNodes)){
             
-            if(i != 0){
-                os << ", ";
-            }
-
+            if(i != 0){ os << ", "; }
             os << nodeInd;
         }
         os << "}";
