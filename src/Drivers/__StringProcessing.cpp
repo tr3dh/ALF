@@ -2,7 +2,6 @@
 
 namespace string{
 
-    //
     bool contains(const std::string& str, const std::string& subStr){
         return str.find(subStr) != std::string::npos;
     }
@@ -17,29 +16,33 @@ namespace string{
         return str.rfind(subStr);
     }
 
-    std::string trim(const std::string& str, const char& token) {
+    void trim(std::string& str, const char token) {
         auto start = std::ranges::find_if_not(str, [&token](unsigned char c) {
             return c == token;
         });
         auto end = std::ranges::find_if_not(str | std::views::reverse, [&token](unsigned char c) {
             return c == token;
         }).base();
-        return (start < end) ? std::string(start, end) : "";
-    }
+        str = (start < end) ? std::string(start, end) : "";
+    } 
 
-    template<typename T>
-    T convert(const std::string& str) {
-
-        T result;
-        auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), result);
-
-        if (ec != std::errc()) throw std::invalid_argument("Invalid number");
-        return result;
+    void trimVec(std::vector<std::string>& strVec, const char& token){
+        
+        // elementweise trimmen
+        for(auto& str : strVec){
+            trim(str,token);
+        }
     }
 
     std::vector<std::string> split(const std::string& str, const char& token){
         
         //
         return str | std::views::split(token) | std::ranges::to<std::vector<std::string>>();
+    }
+
+    bool endsWith(const std::string& str, const std::string& seq){
+
+        //
+        return findLast(str, seq) == str.length() - seq.length();
     }
 }

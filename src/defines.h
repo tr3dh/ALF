@@ -6,6 +6,11 @@
 // std includes
 #include <iostream>
 #include <unordered_map>
+#include <filesystem>
+#include <fstream>
+#include <ranges>
+
+namespace fs = std::filesystem;
 
 #include <string>
 #include <optional>

@@ -7,6 +7,8 @@ all: clean header proc
 exec:
 	./$(TARGET)
 
+launch: all exec
+
 ping:
 	@echo "Pong"
 
