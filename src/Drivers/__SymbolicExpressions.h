@@ -48,12 +48,12 @@ inline Expression operator+(const Expression& a, const Expression& b) {
     return SymEngine::add(a, b);
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression operator+(const T& a, const Expression& b) {
     return SymEngine::add(toExpression(a), b);
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression operator+(const Expression& a, const T& b) {
     return SymEngine::add(a, toExpression(b));
 }
@@ -67,12 +67,12 @@ inline Expression operator-(const Expression& a, const Expression& b) {
     return SymEngine::sub(a, b);
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression operator-(const T& a, const Expression& b) {
     return SymEngine::sub(toExpression(a), b);
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression operator-(const Expression& a, const T& b) {
     return SymEngine::sub(a, toExpression(b));
 }
@@ -81,12 +81,12 @@ inline Expression operator*(const Expression& a, const Expression& b) {
     return SymEngine::mul(a, b);
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression operator*(const T& a, const Expression& b) {
     return SymEngine::mul(toExpression(a), b);
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression operator*(const Expression& a, const T& b) {
     return SymEngine::mul(a, toExpression(b));
 }
@@ -95,12 +95,12 @@ inline Expression operator/(const Expression& a, const Expression& b) {
     return SymEngine::div(a, b);
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression operator/(const T& a, const Expression& b) {
     return SymEngine::div(toExpression(a), b);
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression operator/(const Expression& a, const T& b) {
     return SymEngine::div(a, toExpression(b));
 }
@@ -113,20 +113,15 @@ inline Expression pow(const Expression& a, const Expression& b) {
     return SymEngine::pow(a, b);
 }
 
-template<typename T>
-using enable_if_expression = std::enable_if_t<std::is_same_v<std::decay_t<T>, Expression>>;
-
-template<typename T>
-using enable_if_not_expression = std::enable_if_t<!std::is_same_v<std::decay_t<T>, Expression>>;
-
-template <typename T, typename = enable_if_not_expression<T>>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression pow(const T& a, const Expression& b) {
     return SymEngine::pow(toExpression(a), b);
 }
 
-template <typename T, typename = enable_if_not_expression<T>>
+template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 inline Expression pow(const Expression& a, const T& b) {
     return SymEngine::pow(a, toExpression(b));
 }
 
-#define SYMBOL(prefix) const Symbol prefix = SymEngine::symbol(#prefix)
+#define SYMBOL(prefix) Symbol prefix = SymEngine::symbol(#prefix)
+#define NULL_EXPR SymEngine::integer(0);

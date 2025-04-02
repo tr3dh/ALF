@@ -31,5 +31,5 @@ namespace fs = std::filesystem;
 #include "Drivers/__StringProcessing.h"
 #include "Drivers/__SymbolicExpressions.h"
 
-SYMBOL(x); SYMBOL(y); SYMBOL(z);    // globale Koordinaten  
-SYMBOL(r); SYMBOL(s); SYMBOL(t);    // Koordinaten im isoparametrischen Element
+extern Symbol x,y,z;            // globale Koordinaten  
+extern Symbol r,s,t;            // Koordinaten im isoparametrischen Element

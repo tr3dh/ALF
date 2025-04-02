@@ -20,6 +20,19 @@ struct Node2D{
 
 struct Quad4Cell{
 
+    constexpr static int s_nNodes = 4;
+    constexpr static int s_nDimensions = 2;
+
+    static Expression s_shapeFunctions[s_nNodes];
+    static Expression s_shapeFunctionDerivatives[s_nNodes][s_nDimensions];
+
+    static void deriveShapeFunctions(){
+        for(const auto& [i, shapeFunktion] : std::views::enumerate(s_shapeFunctions)){
+            s_shapeFunctionDerivatives[i][1] = shapeFunktion->diff(r);
+            s_shapeFunctionDerivatives[i][2] = shapeFunktion->diff(s);
+        }
+    }
+
     Quad4Cell() = default;
     Quad4Cell(NodeIndex a, NodeIndex b, NodeIndex c, NodeIndex d) 
         : m_cellNodes{a, b, c, d} {}
@@ -33,9 +46,6 @@ struct Quad4Cell{
         }
     }
 
-    NodeIndex m_cellNodes[4] = {0,0,0,0};
-    // static Expression m_shapeFunctions[4] = {1/4*(1-r)*(1-s), 1/4*(1+r)*(1-s), 1/4*(1+r)*(1+s), 1/4*(1-r)*(1+s)};
-
     //
     friend std::ostream& operator<<(std::ostream& os, const Quad4Cell& cell) {
         
@@ -48,6 +58,8 @@ struct Quad4Cell{
         os << "}";
         return os;
     }
+
+    NodeIndex m_cellNodes[s_nNodes] = {0,0,0,0};
 };
 
 class Mesh{
@@ -169,10 +181,17 @@ public:
             }
         }
 
+        LOG << "Mesh geladen aus '" << path << "'" <<  std::endl;
         LOG << "cell Type : " << cellType << std::endl;
         LOG << "Nodes : " << m_Nodes.size() << std::endl;
         LOG << "Cells : " << m_Cells.size() << std::endl;
 
         return true;
+    }
+
+    void createStiffnesMatrix(){
+
+        LOG << "Creating Stiffnes Matrix" << std::endl;
+
     }
 };
