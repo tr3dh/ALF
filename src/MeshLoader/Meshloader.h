@@ -11,6 +11,15 @@ struct Node2D{
 
     float x = 0.0f, y = 0.0f;
 
+    // Zugriff per Indexoperator
+    float& operator[](size_t index) {
+        switch(index) {
+            case 0: return x;
+            case 1: return y;
+            default: throw std::out_of_range("Index muss 0 oder 1 sein");
+        }
+    }
+
     //
     friend std::ostream& operator<<(std::ostream& os, const Node2D& node) {
         os << "{" << node.x << ", " << node.y << "}";
@@ -28,8 +37,8 @@ struct Quad4Cell{
 
     static void deriveShapeFunctions(){
         for(const auto& [i, shapeFunktion] : std::views::enumerate(s_shapeFunctions)){
-            s_shapeFunctionDerivatives[i][1] = shapeFunktion->diff(r);
-            s_shapeFunctionDerivatives[i][2] = shapeFunktion->diff(s);
+            s_shapeFunctionDerivatives[i][0] = shapeFunktion->diff(r);
+            s_shapeFunctionDerivatives[i][1] = shapeFunktion->diff(s);
         }
     }
 
@@ -193,5 +202,104 @@ public:
 
         LOG << "Creating Stiffnes Matrix" << std::endl;
 
+        // Jacobi Matrix bestimmen
+        Expression sum = NULL_EXPR;
+        SymEngine::DenseMatrix Jacoby(Quad4Cell::s_nDimensions,Quad4Cell::s_nDimensions),
+                                jInv(Quad4Cell::s_nDimensions,Quad4Cell::s_nDimensions),
+                                BMatrix(Quad4Cell::s_nDimensions + 1, Quad4Cell::s_nNodes * 2);
+
+        Expression jDet = NULL_EXPR;
+
+        // die Ableitungen der ShapeFunktionen hier nochmal in anderer Form abspeichern
+        // in der Berechnung für die Einträge der B Matitzen müssen jedes mal
+        // [dN1Dr dN1ds], [dN2Dr dN2ds], ... mit der Invertierte Jacoby multipliziert werden
+        // um nicht jedes Mal (pro Element) die gleichen 4 Matritzen mit Zugriffen in das Array
+        // und herauskopieren der Expression in eine neue 2 * 2 Matrix erstellen zu müssen
+        // wird das hier vorab erledig
+        // -> evtl SpeicherStruktur im Element (hier Quad4Cell) direkt auf diese Form anpassen
+        std::vector<SymEngine::DenseMatrix> shapeFDerivs = {};
+        std::vector<SymEngine::DenseMatrix> shapeFDerivsForGlobKoords = {};
+
+        shapeFDerivs.reserve(Quad4Cell::s_nDimensions);
+        for(int row = 0; row < Quad4Cell::s_nNodes; row++){
+
+            shapeFDerivs.emplace_back(1,Quad4Cell::s_nDimensions);
+
+            for(int col = 0; col < Quad4Cell::s_nDimensions; col++){
+
+                shapeFDerivs[row].set(0, col, Quad4Cell::s_shapeFunctionDerivatives[row][col]);
+            }
+        }
+
+        // 1,2,3,4,5,6,...
+        for(const auto& [cellIndex, cell] : m_Cells){
+
+            //
+            clearMatrix(Jacoby);
+            
+            // r, s, t, ...
+            for(int locKoord = 0; locKoord < Quad4Cell::s_nDimensions; locKoord++){
+                
+                // x, y, z, ...
+                for(int globKoord = 0; globKoord < Quad4Cell::s_nDimensions; globKoord++){
+
+                    //
+                    sum = NULL_EXPR;
+
+                    // 1, 2, 3, 4, ...
+                    for(int locNode = 0; locNode< Quad4Cell::s_nNodes; locNode++){
+                        
+                        // r,x,1 ... r,x,4
+                        // r,y,1 ... r,y,4
+                        // s,x,1 ... s,x,4
+                        // s,y,1 ... s,y,4
+
+                        // entspricht Jacoby[global, local] += shapeFunktion * globKoord
+                        sum = sum + Quad4Cell::s_shapeFunctionDerivatives[locNode][locKoord] *\
+                                        m_Nodes[cell.m_cellNodes[locNode]][globKoord];
+                    } 
+
+                    Jacoby.set(locKoord, globKoord, sum);
+                }
+            }
+
+            jDet = Jacoby.det();
+            Jacoby.inv(jInv);
+
+            // [dN1dx, dN1dy,
+            //  dN2dx, ...]
+            // Matrix ermitteln
+
+            // 1, 2, 3, 4, ...
+            shapeFDerivsForGlobKoords.clear();
+            shapeFDerivsForGlobKoords.reserve(Quad4Cell::s_nNodes);
+            for(int locNode = 0; locNode < Quad4Cell::s_nNodes; locNode++){
+
+                shapeFDerivsForGlobKoords.emplace_back(1,Quad4Cell::s_nDimensions);
+                shapeFDerivs[locNode].mul_matrix(jInv, shapeFDerivsForGlobKoords[locNode]);
+            }
+
+            // B Matrix ermitteln
+            clearMatrix(BMatrix);
+
+            // 1, 2, 3, 4, ...
+            for(int locNode = 0; locNode < Quad4Cell::s_nNodes; locNode++){
+
+                // x, y, z, ...
+                for(int globKoord = 0; globKoord < Quad4Cell::s_nDimensions; globKoord++){
+
+                    // Eintrag in oberen Reihen (versetzt um globKoords)
+                    BMatrix.set(globKoord, locNode * Quad4Cell::s_nDimensions + globKoord, shapeFDerivsForGlobKoords[locNode].get(0,globKoord));
+
+                    // unterste Reihe (Quad4Cell::s_nDimensions + 1) für Scherung
+                    BMatrix.set(Quad4Cell::s_nDimensions, locNode * Quad4Cell::s_nDimensions + (Quad4Cell::s_nDimensions - 1 - globKoord),
+                        shapeFDerivsForGlobKoords[locNode].get(0,globKoord));
+                }
+            }
+
+            LOG << BMatrix << std::endl;
+        }
+
+        LOG << "Finished Creating Stiffnes Matrix" << std::endl;
     }
 };

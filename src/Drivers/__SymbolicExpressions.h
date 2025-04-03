@@ -1,3 +1,5 @@
+#pragma once
+
 // Sym includes
 #include <symengine/expression.h>
 #include <symengine/symbol.h>
@@ -18,7 +20,7 @@ inline std::ostream& operator<<(std::ostream& os, const Expression& expression) 
 }
 
 template <typename T>
-Expression toExpression(const T& value) {
+inline Expression toExpression(const T& value) {
 
     if constexpr (std::is_same_v<std::decay_t<T>, Expression>) {
         return value;

@@ -30,6 +30,7 @@ namespace fs = std::filesystem;
 #include "Drivers/__Asserts.h"
 #include "Drivers/__StringProcessing.h"
 #include "Drivers/__SymbolicExpressions.h"
+#include "Drivers/__SymEngineMatrix.h"
 
 extern Symbol x,y,z;            // globale Koordinaten  
 extern Symbol r,s,t;            // Koordinaten im isoparametrischen Element

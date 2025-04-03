@@ -4,6 +4,8 @@
 
 int main(int argc, char** argv)
 {   
+    std::cout << std::fixed << std::setprecision(4);
+
     Quad4Cell::deriveShapeFunctions();
     
     Mesh mesh;
