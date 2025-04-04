@@ -35,6 +35,12 @@ struct Quad4Cell{
     static Expression s_shapeFunctions[s_nNodes];
     static Expression s_shapeFunctionDerivatives[s_nNodes][s_nDimensions];
 
+    //
+    const static double gauss_pt; // 1.0/sqrt(3.0);
+            
+    //
+    const static std::vector<SymEngine::map_basic_basic> subs;
+
     static void deriveShapeFunctions(){
         for(const auto& [i, shapeFunktion] : std::views::enumerate(s_shapeFunctions)){
             s_shapeFunctionDerivatives[i][0] = shapeFunktion->diff(r);
@@ -198,6 +204,8 @@ public:
         return true;
     }
 
+    Eigen::SparseMatrix<float> m_kSystem;
+
     void createStiffnesMatrix(){
 
         LOG << "Creating Stiffnes Matrix" << std::endl;
@@ -206,9 +214,30 @@ public:
         Expression sum = NULL_EXPR;
         SymEngine::DenseMatrix Jacoby(Quad4Cell::s_nDimensions,Quad4Cell::s_nDimensions),
                                 jInv(Quad4Cell::s_nDimensions,Quad4Cell::s_nDimensions),
-                                BMatrix(Quad4Cell::s_nDimensions + 1, Quad4Cell::s_nNodes * 2);
+                                BMatrix(Quad4Cell::s_nDimensions + 1, Quad4Cell::s_nNodes * 2),
+                                BMatrixT(Quad4Cell::s_nNodes * 2, Quad4Cell::s_nDimensions + 1),
+                                kInt(Quad4Cell::s_nNodes * 2, Quad4Cell::s_nNodes * 2);
+
+        Eigen::MatrixXd kCell(Quad4Cell::s_nNodes * 2, Quad4Cell::s_nNodes * 2);
+
+        m_kSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * Quad4Cell::s_nDimensions, m_Nodes.size() * Quad4Cell::s_nDimensions);
 
         Expression jDet = NULL_EXPR;
+
+        // Entspricht numerischesLimit vom unsignedInt der für als NodeIndex definiert worden ist -1
+        // für uint16_t : 65535 -> Wert der sicher nie in den Nodeindices vorkommt und wenn doch muss
+        // Nodeindex dann über einen größeren uint definiert werden
+        NodeIndex globalNodeNum_Row = -1, globalNodeNum_Col = -1;
+        
+        //
+        Expression thickness = toExpression(0.1);
+        Expression ElastModule = toExpression(20000);
+        Expression Poission = toExpression(0.2); 
+        Expression stiffnessCoeff = ElastModule/(1-Poission*Poission);
+
+        SymEngine::DenseMatrix CMatrix(Quad4Cell::s_nDimensions + 1, Quad4Cell::s_nDimensions + 1,
+            {stiffnessCoeff, stiffnessCoeff * Poission, toExpression(0), stiffnessCoeff * Poission, stiffnessCoeff,
+                toExpression(0), toExpression(0), toExpression(0), (1-Poission)/2});
 
         // die Ableitungen der ShapeFunktionen hier nochmal in anderer Form abspeichern
         // in der Berechnung für die Einträge der B Matitzen müssen jedes mal
@@ -219,6 +248,9 @@ public:
         // -> evtl SpeicherStruktur im Element (hier Quad4Cell) direkt auf diese Form anpassen
         std::vector<SymEngine::DenseMatrix> shapeFDerivs = {};
         std::vector<SymEngine::DenseMatrix> shapeFDerivsForGlobKoords = {};
+
+        // für Konstruktion der sparse Matrix
+        std::vector<Eigen::Triplet<float>> triplets;
 
         shapeFDerivs.reserve(Quad4Cell::s_nDimensions);
         for(int row = 0; row < Quad4Cell::s_nNodes; row++){
@@ -282,6 +314,10 @@ public:
             // B Matrix ermitteln
             clearMatrix(BMatrix);
 
+            // mit .get wird in symengine Pointer auf das entsprechende Element in der Matrix zurückgegeben
+            // etwas suboptimal, später evtl. über vorabReferenzierung optimieren
+            // reicht aber für den Moment
+
             // 1, 2, 3, 4, ...
             for(int locNode = 0; locNode < Quad4Cell::s_nNodes; locNode++){
 
@@ -297,8 +333,66 @@ public:
                 }
             }
 
-            LOG << BMatrix << std::endl;
+            // Kmatrix Ermitteln
+            clearMatrix(kInt);
+
+            BMatrix.transpose(BMatrixT);
+
+            // nur vorrübergehende Lösung, später wird schon vorab in die shape Funktionen eingesetzt
+            // und Jacoby und B Matrix direkt mit den entsprechenden eingesetzten Werte über Eigen berechnet
+            // (-> schnellere und weniger umständliche Matrix multiplikation da eigen Kette ermöglicht -> A*B*C'*...)
+            // entspricht kInt = B'*C*B*jDet*t
+            BMatrixT.mul_matrix(CMatrix,BMatrixT);
+            BMatrixT.mul_matrix(BMatrix, kInt);
+            kInt.mul_scalar(jDet*thickness, kInt);
+
+            // aufsummieren der KMatritzen Einträge für die verschiedenen Integrationspunkte
+
+            //
+            kCell.setZero();
+
+            // 1, 2, 3, 4, ...
+            for(int nodeNum = 0; nodeNum < Quad4Cell::s_nNodes; nodeNum++){
+
+                //
+                subMatrix(kInt, kCell, Quad4Cell::subs[nodeNum], true);
+            }
+
+            // Elementsteifigkeits Matrix [kCell] ermittlelt
+            // Assembierung bzw. Eintrag in Steifigkeitsmatrix des Gesamtsystems
+            for(int nodeNum_Row = 0; nodeNum_Row < Quad4Cell::s_nNodes; nodeNum_Row++){
+
+                //
+                for(int nodeNum_Col = 0; nodeNum_Col < Quad4Cell::s_nNodes; nodeNum_Col++){
+
+                    // Durch die beiden schleifen wird so jeder erste Eintrag eines <dimension> x <dimension> Block
+                    // in der lokalen Steifigkeitsmatrix abgelaufen
+                    // die for schleife über die globalen Koordinaten bzw. die Blockkopien (effizienter) sorgt dann dafür,
+                    // dass jeder Eintrag dieses Blocks übertragen wird
+                    
+                    globalNodeNum_Row = cell.m_cellNodes[nodeNum_Row] - 1;
+                    globalNodeNum_Col = cell.m_cellNodes[nodeNum_Col] - 1;
+
+                    // alternativ für dense Matritzen :
+                    // m_kSystem.block<Quad4Cell::s_nDimensions, Quad4Cell::s_nDimensions>(globalNodeNum_Row * Quad4Cell::s_nDimensions, globalNodeNum_Col * Quad4Cell::s_nDimensions) +=\
+                        kCell.block<Quad4Cell::s_nDimensions, Quad4Cell::s_nDimensions>(nodeNum_Row * Quad4Cell::s_nDimensions, nodeNum_Col * Quad4Cell::s_nDimensions).sparseView();
+                    
+                    // x, y, z, ...
+                    for(int globKoord_Row = 0; globKoord_Row < Quad4Cell::s_nDimensions; globKoord_Row++){
+
+                        // x, y, z, ...
+                        for(int globKoord_Col = 0; globKoord_Col < Quad4Cell::s_nDimensions; globKoord_Col++){
+
+                            triplets.emplace_back(globalNodeNum_Row * Quad4Cell::s_nDimensions + globKoord_Row, globalNodeNum_Col * Quad4Cell::s_nDimensions + globKoord_Col, \
+                                kCell(nodeNum_Row * Quad4Cell::s_nDimensions + globKoord_Row, nodeNum_Col * Quad4Cell::s_nDimensions + globKoord_Col));
+                        }
+                    }
+                }
+            }
         }
+
+        //
+        m_kSystem.setFromTriplets(triplets.begin(), triplets.end());
 
         LOG << "Finished Creating Stiffnes Matrix" << std::endl;
     }

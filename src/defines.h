@@ -17,6 +17,7 @@ namespace fs = std::filesystem;
 
 // Numeric includes
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 
 //
 #if defined(LOG) | defined(_ERROR)
