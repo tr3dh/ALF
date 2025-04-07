@@ -103,6 +103,8 @@ public:
 
     bool loadFromFile(const std::string& path){
 
+        LOG << "Lade Mesh ..." << std::endl;
+
         CRITICAL_ASSERT(fs::exists(fs::path(path)), "Angegebener Pfad für Netzt existiert nicht");
         CRITICAL_ASSERT(string::endsWith(path, "inp"), "Ungültige File Endung, Programm erwartet ein *.inp file");
 
@@ -196,10 +198,12 @@ public:
             }
         }
 
+        //
         LOG << "Mesh geladen aus '" << path << "'" <<  std::endl;
         LOG << "cell Type : " << cellType << std::endl;
         LOG << "Nodes : " << m_Nodes.size() << std::endl;
         LOG << "Cells : " << m_Cells.size() << std::endl;
+        LOG << std::endl;
 
         return true;
     }
@@ -416,5 +420,64 @@ public:
         m_kSystem += temp;
 
         LOG << "Finished Creating Stiffnes Matrix" << std::endl;
+        LOG << std::endl;
     }
+
+    struct Force{
+        uint8_t direction;
+        float amount;
+    };
+
+    void applyForces(const std::map<NodeIndex, std::vector<Force>>& externalForces){
+
+        // für Konstruktion der sparse Matrix
+        std::vector<Eigen::Triplet<float>> triplets = {};
+
+        m_fSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * Quad4Cell::s_nDimensions, 1);
+
+        for(const auto& [index, forces] : externalForces){
+            for(const auto& force : forces){
+
+                CRITICAL_ASSERT(force.direction < Quad4Cell::s_nDimensions, "Ungültige Richtungsangebe");
+                triplets.emplace_back((index-1) * Quad4Cell::s_nDimensions + force.direction, 0, force.amount);
+            }
+        }
+
+        m_fSystem.setFromTriplets(triplets.begin(), triplets.end());
+    }
+
+    void fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations){
+
+        //
+        LOG << "Reading node Fixations ..." << std::endl;
+
+        std::vector<NodeIndex> indicesToRemove = {};
+        m_uSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * Quad4Cell::s_nDimensions, 1);
+
+        for(const auto& [index, dirVec] : nodeFixations){
+            for(const auto& direction : dirVec){
+
+                //
+                CRITICAL_ASSERT(direction < Quad4Cell::s_nDimensions, "Ungültige Richtungsangebe");
+                LOG << "Fixing node " << index << "\t\tin " << (direction == 0 ? "x" : "y") << " direction" << std::endl;
+
+                indicesToRemove.emplace_back(Quad4Cell::s_nDimensions * (index - 1) + direction);
+            }
+        }
+
+        // Absteigend sortieren
+        std::sort(indicesToRemove.begin(), indicesToRemove.end(), std::greater<NodeIndex>());
+
+        LOG << "Removing indices {";
+        for(const auto& i : indicesToRemove){
+            LOG << i << ",";
+        }
+        LOG << "}" << std::endl;
+
+        removeSparseRow(m_uSystem, indicesToRemove);
+        removeSparseRow(m_fSystem, indicesToRemove);
+        removeSparseRowAndCol<NodeIndex>(m_kSystem, indicesToRemove);
+
+        CRITICAL_ASSERT(m_fSystem.rows() == m_kSystem.rows() && m_uSystem.rows() == m_kSystem.rows(), "Matritzen Dimensionen von u,f und K stimmen nicht überein");
+    } 
 };
