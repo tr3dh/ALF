@@ -204,7 +204,7 @@ public:
         return true;
     }
 
-    Eigen::SparseMatrix<float> m_kSystem;
+    Eigen::SparseMatrix<float> m_kSystem, m_uSystem, m_fSystem;
 
     void createStiffnesMatrix(){
 
@@ -250,7 +250,7 @@ public:
         std::vector<SymEngine::DenseMatrix> shapeFDerivsForGlobKoords = {};
 
         // für Konstruktion der sparse Matrix
-        std::vector<Eigen::Triplet<float>> triplets;
+        std::vector<Eigen::Triplet<float>> triplets = {};
 
         shapeFDerivs.reserve(Quad4Cell::s_nDimensions);
         for(int row = 0; row < Quad4Cell::s_nNodes; row++){
@@ -360,10 +360,21 @@ public:
 
             // Elementsteifigkeits Matrix [kCell] ermittlelt
             // Assembierung bzw. Eintrag in Steifigkeitsmatrix des Gesamtsystems
-            for(int nodeNum_Row = 0; nodeNum_Row < Quad4Cell::s_nNodes; nodeNum_Row++){
+            NodeIndex nodeNum_Row, nodeNum_Col = 0;
+            NodeIndex globKoord_Row = 0, globKoord_Col = 0;
+
+            // Eintrag in glob K Matrix
+            NodeIndex kGlobRow = 0, kGlobCol = 0;
+
+            //                                                                                          // erwartete Schreibzugriffe auf triplets Vektor (-> in glob KMatrix) :
+            triplets.reserve((std::pow(Quad4Cell::s_nNodes*Quad4Cell::s_nDimensions, 2)/2               // + hälfte aller Einträge aus der Elementsteifigkeitsmatrix  
+                                + Quad4Cell::s_nNodes*Quad4Cell::s_nDimensions/2)                       // + hälfte der Diagonalelemente -> alle Einträge aus der oberen Dreiecksmatrix
+                                * m_Nodes.size());                                                      // * anzahl elemente 
+            //
+            for(nodeNum_Row = 0; nodeNum_Row < Quad4Cell::s_nNodes; nodeNum_Row++){
 
                 //
-                for(int nodeNum_Col = 0; nodeNum_Col < Quad4Cell::s_nNodes; nodeNum_Col++){
+                for(nodeNum_Col = 0; nodeNum_Col < Quad4Cell::s_nNodes; nodeNum_Col++){
 
                     // Durch die beiden schleifen wird so jeder erste Eintrag eines <dimension> x <dimension> Block
                     // in der lokalen Steifigkeitsmatrix abgelaufen
@@ -378,12 +389,20 @@ public:
                         kCell.block<Quad4Cell::s_nDimensions, Quad4Cell::s_nDimensions>(nodeNum_Row * Quad4Cell::s_nDimensions, nodeNum_Col * Quad4Cell::s_nDimensions).sparseView();
                     
                     // x, y, z, ...
-                    for(int globKoord_Row = 0; globKoord_Row < Quad4Cell::s_nDimensions; globKoord_Row++){
+                    for(globKoord_Row = 0; globKoord_Row < Quad4Cell::s_nDimensions; globKoord_Row++){
 
                         // x, y, z, ...
-                        for(int globKoord_Col = 0; globKoord_Col < Quad4Cell::s_nDimensions; globKoord_Col++){
+                        for(globKoord_Col = 0; globKoord_Col < Quad4Cell::s_nDimensions; globKoord_Col++){
 
-                            triplets.emplace_back(globalNodeNum_Row * Quad4Cell::s_nDimensions + globKoord_Row, globalNodeNum_Col * Quad4Cell::s_nDimensions + globKoord_Col, \
+                            kGlobRow = globalNodeNum_Row * Quad4Cell::s_nDimensions + globKoord_Row;
+                            kGlobCol = globalNodeNum_Col * Quad4Cell::s_nDimensions + globKoord_Col;
+
+                            // nur obere Hälfte berechnen, da Matrix symmetrisch
+                            if(kGlobCol < kGlobRow){
+                                continue;
+                            }
+
+                            triplets.emplace_back(kGlobRow, kGlobCol, \
                                 kCell(nodeNum_Row * Quad4Cell::s_nDimensions + globKoord_Row, nodeNum_Col * Quad4Cell::s_nDimensions + globKoord_Col));
                         }
                     }
@@ -393,6 +412,8 @@ public:
 
         //
         m_kSystem.setFromTriplets(triplets.begin(), triplets.end());
+        Eigen::SparseMatrix<float> temp = m_kSystem.transpose().triangularView<Eigen::StrictlyLower>();
+        m_kSystem += temp;
 
         LOG << "Finished Creating Stiffnes Matrix" << std::endl;
     }
