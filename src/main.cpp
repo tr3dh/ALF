@@ -14,8 +14,10 @@ int main(int argc, char** argv)
 
     mesh.createStiffnesMatrix();
 
-    mesh.applyForces({{22,{{0,502.7}, {1,252.7}}}, {33,{{0,500},{1,250}}}});
+    mesh.applyForces({{11,{{0,2}}}});
     mesh.fixNodes({{1,{0,1}}, {11,{1}}});
+
+    mesh.solve();
 
     return 0;
 }

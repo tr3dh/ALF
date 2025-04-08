@@ -8,7 +8,8 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 LDFLAGS := -L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
 	-lgmp -lmpfr \
-	-lassimp
+	-lassimp \
+	-lplplotcxx -lplplot \
 
 SRCDIR := src
 OBJDIR := build

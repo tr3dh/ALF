@@ -81,3 +81,42 @@ inline void removeSparseRow(Eigen::SparseMatrix<float>& mat, const std::vector<T
     mat.resize(newSize, 1);
     mat.setFromTriplets(triplets.begin(), triplets.end());
 }
+
+template<typename T>
+inline void addSparseRow(Eigen::SparseMatrix<float>& mat, const std::vector<T>& rowsToAdd) {
+    
+    assert(mat.cols() == 1);
+    if (rowsToAdd.empty()) return;
+    
+    assert(std::is_sorted(rowsToAdd.begin(), rowsToAdd.end()));
+    
+    std::vector<Eigen::Triplet<float>> triplets;
+    triplets.reserve(mat.nonZeros() + rowsToAdd.size());
+    
+    int shift = 0;
+    auto insertIt = rowsToAdd.begin();
+    
+    for (int k = 0; k < mat.outerSize(); ++k) {
+        for (Eigen::SparseMatrix<float>::InnerIterator it(mat, k); it; ++it) {
+            int originalRow = it.row();
+            
+            // Advance insert positions that are before current row
+            while (insertIt != rowsToAdd.end() && *insertIt <= originalRow + shift) {
+                shift++;
+                insertIt++;
+            }
+            
+            triplets.emplace_back(originalRow + shift, 0, it.value());
+        }
+    }
+    
+    while (insertIt != rowsToAdd.end()) {
+        triplets.emplace_back(*insertIt, 0, 0.0f);
+        insertIt++;
+    }
+    
+    // Update matrix
+    int newSize = mat.rows() + rowsToAdd.size();
+    mat.resize(newSize, 1);
+    mat.setFromTriplets(triplets.begin(), triplets.end());
+}

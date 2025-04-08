@@ -98,7 +98,7 @@ public:
     static constexpr std::string cellToken = "*Element";
     static constexpr std::string endToken = "*End Part";
 
-    std::map<NodeIndex, Node2D> m_Nodes = {};
+    std::map<NodeIndex, Node2D> m_Nodes = {}, m_defNodes = {};
     std::map<NodeIndex, Quad4Cell> m_Cells = {};
 
     bool loadFromFile(const std::string& path){
@@ -419,7 +419,10 @@ public:
         Eigen::SparseMatrix<float> temp = m_kSystem.transpose().triangularView<Eigen::StrictlyLower>();
         m_kSystem += temp;
 
-        LOG << "Finished Creating Stiffnes Matrix" << std::endl;
+        LOG << "Finished Creating Stiffnes Matrix\n" << std::endl;
+
+        LOG << m_kSystem.block(0,0,10,10) << std::endl;
+
         LOG << std::endl;
     }
 
@@ -446,12 +449,13 @@ public:
         m_fSystem.setFromTriplets(triplets.begin(), triplets.end());
     }
 
+    std::vector<NodeIndex> m_indicesToRemove = {};
     void fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations){
 
         //
         LOG << "Reading node Fixations ..." << std::endl;
 
-        std::vector<NodeIndex> indicesToRemove = {};
+        m_indicesToRemove.clear();
         m_uSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * Quad4Cell::s_nDimensions, 1);
 
         for(const auto& [index, dirVec] : nodeFixations){
@@ -461,23 +465,47 @@ public:
                 CRITICAL_ASSERT(direction < Quad4Cell::s_nDimensions, "Ungültige Richtungsangebe");
                 LOG << "Fixing node " << index << "\t\tin " << (direction == 0 ? "x" : "y") << " direction" << std::endl;
 
-                indicesToRemove.emplace_back(Quad4Cell::s_nDimensions * (index - 1) + direction);
+                m_indicesToRemove.emplace_back(Quad4Cell::s_nDimensions * (index - 1) + direction);
             }
         }
 
         // Absteigend sortieren
-        std::sort(indicesToRemove.begin(), indicesToRemove.end(), std::greater<NodeIndex>());
+        std::sort(m_indicesToRemove.begin(), m_indicesToRemove.end(), std::greater<NodeIndex>());
 
         LOG << "Removing indices {";
-        for(const auto& i : indicesToRemove){
+        for(const auto& i : m_indicesToRemove){
             LOG << i << ",";
         }
         LOG << "}" << std::endl;
 
-        removeSparseRow(m_uSystem, indicesToRemove);
-        removeSparseRow(m_fSystem, indicesToRemove);
-        removeSparseRowAndCol<NodeIndex>(m_kSystem, indicesToRemove);
+        removeSparseRow(m_uSystem, m_indicesToRemove);
+        removeSparseRow(m_fSystem, m_indicesToRemove);
+        removeSparseRowAndCol<NodeIndex>(m_kSystem, m_indicesToRemove);
 
         CRITICAL_ASSERT(m_fSystem.rows() == m_kSystem.rows() && m_uSystem.rows() == m_kSystem.rows(), "Matritzen Dimensionen von u,f und K stimmen nicht überein");
-    } 
+    }
+
+    void solve(){
+
+        // cholesky solver für dünnbestze/positiv semi definite Matritzen
+        Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver;
+        
+        solver.compute(m_kSystem);
+        m_uSystem = solver.solve(m_fSystem);
+
+        std::sort(m_indicesToRemove.begin(), m_indicesToRemove.end());
+        addSparseRow(m_uSystem, m_indicesToRemove);
+
+        for(const auto& [index, node] : m_Nodes){
+
+            m_defNodes[index] = Node2D(node.x + m_uSystem.coeff((index-1) * Quad4Cell::s_nDimensions, 0), node.y + m_uSystem.coeff((index-1) * Quad4Cell::s_nDimensions + 1, 0));
+        }
+
+        LOG << "\nDisplacement :\n" << m_uSystem.block(0,0,10,1) << std::endl;
+        LOG << "Displaced Nodes :\n";
+        for(const auto& [index, node] : m_defNodes){
+            LOG << node;
+        }
+        LOG << std::endl;
+    }
 };

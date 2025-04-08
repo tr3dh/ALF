@@ -28,6 +28,11 @@ symengine:
 
 	cd thirdParty/symengine/build && ninja
 
+matplot:
+	cd thirdParty && git clone https://github.com/alandefreitas/matplotplusplus
+	cd thirdParty && cd matplotplusplus && mkdir build
+	cd thirdParty/matplotplusplus/build && cmake .. -G "MinGW Makefiles" && cmake --build .
+
 # Batch-Datei erstellen
 open_vscode.bat:
 	@echo @echo off > open_vscode.bat
@@ -64,6 +69,12 @@ prefab:
 
 	@echo "Installiere Git..."
 	$(PACMAN) git
+
+	@echo "Installiere SFML..."
+	$(PACMAN) mingw-w64-x86_64-sfml
+
+	@echo "Installiere Python..."
+	$(PACMAN) mingw-w64-x86_64-plplot
 
 	@echo "Version Check..."
 	gcc --version && g++ --version
