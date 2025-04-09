@@ -22,7 +22,7 @@
             << "\t\\ File: " << __FILE__ << "\n" \
             << "\t\\ Line: " << __LINE__ << "\n" \
             << "\t\\ Function: " << __FUNCTION__; \
-        _ERROR << oss.str() << std::endl; \
+        _ERROR << oss.str() << endl; \
     }
 
 #define CRITICAL_ASSERT(condition, message) \

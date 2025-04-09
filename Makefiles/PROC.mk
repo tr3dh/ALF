@@ -9,7 +9,8 @@ LDFLAGS := -L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
 	-lgmp -lmpfr \
 	-lassimp \
-	-lplplotcxx -lplplot \
+	-lws2_32 -lmswsock\
+	-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network -lsfml-audio\
 
 SRCDIR := src
 OBJDIR := build

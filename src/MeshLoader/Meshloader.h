@@ -1,6 +1,7 @@
 #pragma once
 
 #include "defines.h"
+#include <symengine/expression.h>
 
 typedef uint16_t NodeIndex; 
 
@@ -103,7 +104,7 @@ public:
 
     bool loadFromFile(const std::string& path){
 
-        LOG << "Lade Mesh ..." << std::endl;
+        LOG << "Lade Mesh ..." << endl;
 
         CRITICAL_ASSERT(fs::exists(fs::path(path)), "Angegebener Pfad für Netzt existiert nicht");
         CRITICAL_ASSERT(string::endsWith(path, "inp"), "Ungültige File Endung, Programm erwartet ein *.inp file");
@@ -199,11 +200,11 @@ public:
         }
 
         //
-        LOG << "Mesh geladen aus '" << path << "'" <<  std::endl;
-        LOG << "cell Type : " << cellType << std::endl;
-        LOG << "Nodes : " << m_Nodes.size() << std::endl;
-        LOG << "Cells : " << m_Cells.size() << std::endl;
-        LOG << std::endl;
+        LOG << "Mesh geladen aus '" << path << "'" <<  endl;
+        LOG << "cell Type : " << cellType << endl;
+        LOG << "Nodes : " << m_Nodes.size() << endl;
+        LOG << "Cells : " << m_Cells.size() << endl;
+        LOG << endl;
 
         return true;
     }
@@ -212,7 +213,7 @@ public:
 
     void createStiffnesMatrix(){
 
-        LOG << "Creating Stiffnes Matrix" << std::endl;
+        LOG << "Creating Stiffnes Matrix" << endl;
 
         // Jacobi Matrix bestimmen
         Expression sum = NULL_EXPR;
@@ -241,7 +242,7 @@ public:
 
         SymEngine::DenseMatrix CMatrix(Quad4Cell::s_nDimensions + 1, Quad4Cell::s_nDimensions + 1,
             {stiffnessCoeff, stiffnessCoeff * Poission, toExpression(0), stiffnessCoeff * Poission, stiffnessCoeff,
-                toExpression(0), toExpression(0), toExpression(0), (1-Poission)/2});
+                toExpression(0), toExpression(0), toExpression(0), stiffnessCoeff * (1-Poission)/2});
 
         // die Ableitungen der ShapeFunktionen hier nochmal in anderer Form abspeichern
         // in der Berechnung für die Einträge der B Matitzen müssen jedes mal
@@ -295,7 +296,7 @@ public:
                                         m_Nodes[cell.m_cellNodes[locNode]][globKoord];
                     } 
 
-                    Jacoby.set(locKoord, globKoord, sum);
+                    Jacoby.set(globKoord, locKoord, sum);
                 }
             }
 
@@ -362,6 +363,9 @@ public:
                 subMatrix(kInt, kCell, Quad4Cell::subs[nodeNum], true);
             }
 
+            LOG << kCell.block(0,0,8,8) << endl;
+            LOG << endl;
+
             // Elementsteifigkeits Matrix [kCell] ermittlelt
             // Assembierung bzw. Eintrag in Steifigkeitsmatrix des Gesamtsystems
             NodeIndex nodeNum_Row, nodeNum_Col = 0;
@@ -419,11 +423,8 @@ public:
         Eigen::SparseMatrix<float> temp = m_kSystem.transpose().triangularView<Eigen::StrictlyLower>();
         m_kSystem += temp;
 
-        LOG << "Finished Creating Stiffnes Matrix\n" << std::endl;
-
-        LOG << m_kSystem.block(0,0,10,10) << std::endl;
-
-        LOG << std::endl;
+        LOG << "Finished Creating Stiffnes Matrix\n" << endl;
+        LOG << endl;
     }
 
     struct Force{
@@ -453,7 +454,7 @@ public:
     void fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations){
 
         //
-        LOG << "Reading node Fixations ..." << std::endl;
+        LOG << "Reading node Fixations ..." << endl;
 
         m_indicesToRemove.clear();
         m_uSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * Quad4Cell::s_nDimensions, 1);
@@ -463,7 +464,7 @@ public:
 
                 //
                 CRITICAL_ASSERT(direction < Quad4Cell::s_nDimensions, "Ungültige Richtungsangebe");
-                LOG << "Fixing node " << index << "\t\tin " << (direction == 0 ? "x" : "y") << " direction" << std::endl;
+                LOG << "Fixing node " << index << "\t\tin " << (direction == 0 ? "x" : "y") << " direction" << endl;
 
                 m_indicesToRemove.emplace_back(Quad4Cell::s_nDimensions * (index - 1) + direction);
             }
@@ -476,7 +477,7 @@ public:
         for(const auto& i : m_indicesToRemove){
             LOG << i << ",";
         }
-        LOG << "}" << std::endl;
+        LOG << "}" << endl;
 
         removeSparseRow(m_uSystem, m_indicesToRemove);
         removeSparseRow(m_fSystem, m_indicesToRemove);
@@ -501,11 +502,113 @@ public:
             m_defNodes[index] = Node2D(node.x + m_uSystem.coeff((index-1) * Quad4Cell::s_nDimensions, 0), node.y + m_uSystem.coeff((index-1) * Quad4Cell::s_nDimensions + 1, 0));
         }
 
-        LOG << "\nDisplacement :\n" << m_uSystem.block(0,0,10,1) << std::endl;
+        LOG << "\nDisplacement :\n" << m_uSystem << endl;
         LOG << "Displaced Nodes :\n";
         for(const auto& [index, node] : m_defNodes){
             LOG << node;
         }
-        LOG << std::endl;
+        LOG << endl;
+    }
+
+    void display(const int& offset = -200, const int& scaling = 3500){
+
+        // Render Window
+        sf::RenderWindow window(sf::VideoMode(1200,800), "<> <FEMProc> <>");
+        window.setFramerateLimit(0);
+
+        while (window.isOpen()) {
+
+            sf::Event event;
+            while (window.pollEvent(event)) {
+
+                if (event.type == sf::Event::Closed) {
+
+                    window.close();
+                }
+            }
+
+            window.clear(sf::Color::Black);
+
+            //
+            int rad = 4;
+            sf::CircleShape dot(rad);
+            dot.setOrigin(rad, rad);
+
+            sfLine line;
+            line.setThickness(2);
+
+            Node2D nullRefNode;
+            Node2D& node1 = nullRefNode, node2 = nullRefNode;
+            Node2D& defnode1 = nullRefNode, defnode2 = nullRefNode;
+
+            NodeIndex nodeNum1, nodeNum2;
+            sf::Vector2f point1, point2;
+
+            // undef mesh
+            dot.setFillColor(sf::Color::White);
+            line.colorVerticies(sf::Color::White);
+            for(const auto& [index, cell] : m_Cells){
+
+                for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+
+                    // Refs für weniger overhead
+                    nodeNum1 = localNodeNum;
+                    nodeNum2 = (localNodeNum == Quad4Cell::s_nNodes - 1) ? 0 : localNodeNum + 1;
+
+                    node1 = m_Nodes[cell.m_cellNodes[nodeNum1]];
+                    node2 = m_Nodes[cell.m_cellNodes[nodeNum2]];
+
+                    //
+                    point1 = {(node1.x * scaling) - offset, (node1.y * scaling) - offset};
+                    point2 = {(node2.x * scaling) - offset, (node2.y * scaling) - offset};
+
+                    point1.y = window.getSize().y - point1.y;
+                    point2.y = window.getSize().y - point2.y;
+
+                    //
+                    dot.setPosition(point1);
+                    window.draw(dot);
+
+                    //
+                    line.positionVerticies(point1, point2);
+                    line.draw(window);
+                }
+            }
+
+            // deformed mesh
+            dot.setFillColor(sf::Color::Red);
+            line.colorVerticies(sf::Color::Red);
+            for(const auto& [index, cell] : m_Cells){
+
+                for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+
+                    // Refs für weniger overhead
+                    nodeNum1 = localNodeNum;
+                    nodeNum2 = (localNodeNum == Quad4Cell::s_nNodes - 1) ? 0 : localNodeNum + 1;
+
+                    defnode1 = m_defNodes[cell.m_cellNodes[nodeNum1]];
+                    defnode2 = m_defNodes[cell.m_cellNodes[nodeNum2]];
+
+                    //
+                    point1 = {(defnode1.x * scaling) - offset, (defnode1.y * scaling) - offset};
+                    point2 = {(defnode2.x * scaling) - offset, (defnode2.y * scaling) - offset};
+
+                    //
+                    point1.y = window.getSize().y - point1.y;
+                    point2.y = window.getSize().y - point2.y;
+
+                    //
+                    dot.setPosition(point1);
+                    window.draw(dot);
+
+                    //
+                    line.positionVerticies(point1, point2);
+                    line.draw(window);
+                }
+            }
+
+            window.display();
+        }
+
     }
 };

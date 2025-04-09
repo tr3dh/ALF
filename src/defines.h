@@ -22,6 +22,9 @@ namespace fs = std::filesystem;
 #include <eigen3/Eigen/SparseLU>
 
 //
+#include <SFML/Graphics.hpp>
+
+//
 #if defined(LOG) | defined(_ERROR)
 #error "Logging Direktiven können nicht definiert werden, Makros bereits deklariert"
 #endif
@@ -29,11 +32,15 @@ namespace fs = std::filesystem;
 #define LOG std::cout
 #define _ERROR std::cerr
 
+#define endl "\n";
+
 // Drivers
 #include "Drivers/__Asserts.h"
 #include "Drivers/__StringProcessing.h"
 #include "Drivers/__SymbolicExpressions.h"
 #include "Drivers/__SymEngineMatrix.h"
+#include "Drivers/__EigenMatrix.h"
+#include "Drivers/__SFLine.h"
 
 extern Symbol x,y,z;            // globale Koordinaten  
 extern Symbol r,s,t;            // Koordinaten im isoparametrischen Element
