@@ -102,6 +102,23 @@ public:
     std::map<NodeIndex, Node2D> m_Nodes = {}, m_defNodes = {};
     std::map<NodeIndex, Quad4Cell> m_Cells = {};
 
+    static void genInpFile(const std::string& fileName){
+
+        if(fs::exists(fs::path(fileName))){
+
+            //
+            fs::remove(fs::path(fileName));
+            LOG << "File removed " << fileName << endl; LOG << endl;
+        }
+
+        std::ofstream file(fileName);
+
+
+
+        file.close();
+
+    }
+
     bool loadFromFile(const std::string& path){
 
         LOG << "Lade Mesh ..." << endl;
@@ -211,6 +228,11 @@ public:
 
     Eigen::SparseMatrix<float> m_kSystem, m_uSystem, m_fSystem;
 
+    std::map<NodeIndex, Expression>  m_cachedJDets = {};
+    std::map<NodeIndex, SymEngine::DenseMatrix> m_cachedBMats = {};
+
+    SymEngine::DenseMatrix CMatrix;
+
     void createStiffnesMatrix(){
 
         LOG << "Creating Stiffnes Matrix" << endl;
@@ -240,7 +262,7 @@ public:
         Expression Poission = toExpression(0.2); 
         Expression stiffnessCoeff = ElastModule/(1-Poission*Poission);
 
-        SymEngine::DenseMatrix CMatrix(Quad4Cell::s_nDimensions + 1, Quad4Cell::s_nDimensions + 1,
+        CMatrix = SymEngine::DenseMatrix(Quad4Cell::s_nDimensions + 1, Quad4Cell::s_nDimensions + 1,
             {stiffnessCoeff, stiffnessCoeff * Poission, toExpression(0), stiffnessCoeff * Poission, stiffnessCoeff,
                 toExpression(0), toExpression(0), toExpression(0), stiffnessCoeff * (1-Poission)/2});
 
@@ -338,6 +360,10 @@ public:
                 }
             }
 
+            //
+            m_cachedJDets.emplace(cellIndex,jDet);
+            m_cachedBMats.emplace(cellIndex, BMatrix);
+
             // Kmatrix Ermitteln
             clearMatrix(kInt);
 
@@ -362,9 +388,6 @@ public:
                 //
                 subMatrix(kInt, kCell, Quad4Cell::subs[nodeNum], true);
             }
-
-            LOG << kCell.block(0,0,8,8) << endl;
-            LOG << endl;
 
             // Elementsteifigkeits Matrix [kCell] ermittlelt
             // Assembierung bzw. Eintrag in Steifigkeitsmatrix des Gesamtsystems
@@ -501,16 +524,165 @@ public:
 
             m_defNodes[index] = Node2D(node.x + m_uSystem.coeff((index-1) * Quad4Cell::s_nDimensions, 0), node.y + m_uSystem.coeff((index-1) * Quad4Cell::s_nDimensions + 1, 0));
         }
-
-        LOG << "\nDisplacement :\n" << m_uSystem << endl;
-        LOG << "Displaced Nodes :\n";
-        for(const auto& [index, node] : m_defNodes){
-            LOG << node;
-        }
-        LOG << endl;
     }
 
-    void display(const int& offset = -200, const int& scaling = 3500){
+    enum class MeshData : uint8_t{
+
+        DISPLACEMENT,
+        STRAIN,
+        STRESS,
+        VANMISES_STRESS,
+        NONE,
+    };
+
+    struct CellData{
+
+        static CellData nullRef;
+
+        CellData() = default;
+
+        CellData(const Eigen::MatrixXd& strainIn, const Eigen::MatrixXd& stressIn) :
+        strain(strainIn), stress(stressIn){
+
+        }
+
+        void calculateVanMisesStress(){
+
+            vanMisesStress = std::sqrt(std::pow(stress(0,0),2) + std::pow(stress(1,0),2) - stress(0,0) * stress(1,0) + 3 * std::pow(stress(2,0),2));
+        }
+
+        float getData(const MeshData& data, int globKoord) const{
+            switch(data){
+                case MeshData::STRAIN:{
+
+                    return strain(globKoord,0);
+                    break;
+                }
+                case MeshData::STRESS:{
+
+                    return stress(globKoord,0);
+                    break;
+                }
+                case MeshData::VANMISES_STRESS:{
+                    return vanMisesStress;
+                }
+                default:{
+                    break;
+                }
+            }
+            return 0.0f;
+        }
+
+        Eigen::MatrixXd strain, stress;
+        float vanMisesStress = 0.0f;
+    };
+
+    Eigen::SparseMatrix<float> m_strainSystem, m_stressSystem;
+    std::map<NodeIndex, CellData> m_cellData = {};
+    void calculateStrainAndStress(){
+
+        // später nach elem typ anpassen
+        Eigen::MatrixXd epsilon_e(3,1), sigma_e(3,1), cMatrix(3,3);
+
+        subMatrix(CMatrix,cMatrix,{});
+
+        Eigen::MatrixXd BMatrix(3,8);
+        float jDet = 0.0f;
+        float cellVolume = 0;
+        Eigen::MatrixXd cellDisplacement(8,1);
+
+        //
+        int nodeNum = 0;
+        //CellData& c_cellData = CellData::nullRef;
+        for(const auto& [cellIndex, cell] : m_Cells){
+
+            //
+            cellDisplacement.setZero();
+
+            // Elementverschiebung aus globalem Verschiebungsvektor extrahieren
+
+            // 1, 2, 3, 4, ...
+            for(nodeNum = 0; nodeNum < Quad4Cell::s_nNodes; nodeNum++){
+
+                // x, y, z, ...
+                for(int globKoord = 0; globKoord < Quad4Cell::s_nDimensions; globKoord++){
+                    
+                    cellDisplacement(nodeNum * Quad4Cell::s_nDimensions + globKoord, 0) = m_uSystem.coeffRef((cell.m_cellNodes[nodeNum] - 1) * Quad4Cell::s_nDimensions + globKoord, 0);
+                }
+            }
+
+            // Dehnungen berechnen (gemittelt fürs Element)
+            cellVolume = 0;
+            epsilon_e.setZero();
+
+            // 1, 2, 3, 4, ...
+            for(nodeNum = 0; nodeNum < Quad4Cell::s_nNodes; nodeNum++){
+
+                subMatrix(m_cachedBMats[cellIndex], BMatrix,Quad4Cell::subs[nodeNum]);
+                jDet = SymEngine::eval_double(*m_cachedJDets[cellIndex]->subs(Quad4Cell::subs[nodeNum]));
+
+                epsilon_e += cMatrix * BMatrix * cellDisplacement * jDet;
+                cellVolume += jDet;
+            }
+            epsilon_e *= (1/cellVolume);
+
+            // Spannungen berechnen (gemittelt fürs Element)
+            cellVolume = 0;
+            sigma_e.setZero();
+
+            // 1, 2, 3, 4, ...
+            for(nodeNum = 0; nodeNum < Quad4Cell::s_nNodes; nodeNum++){
+
+                subMatrix(m_cachedBMats[cellIndex], BMatrix,Quad4Cell::subs[nodeNum]);
+                jDet = SymEngine::eval_double(*m_cachedJDets[cellIndex]->subs(Quad4Cell::subs[nodeNum]));
+
+                sigma_e += cMatrix * BMatrix * cellDisplacement * jDet;
+                cellVolume += jDet;
+            }
+            sigma_e *= (1/cellVolume);
+
+            m_cellData.emplace(std::piecewise_construct,
+                std::forward_as_tuple(cellIndex),
+                std::forward_as_tuple(epsilon_e, sigma_e));
+            m_cellData[cellIndex].calculateVanMisesStress();
+        }
+    }
+
+    sf::Color getColorByValue(float val, float min, float max) {
+
+        // Normalisiere den Wert auf [0, 1]
+        float normalized = (val - min) / (max - min);
+        normalized = std::clamp(normalized, 0.0f, 1.0f);
+
+        // Regenbogenfarben (HSB/HSV-basiert)
+        float hue = (1.0f - normalized) * 0.666f; // Blau (0.666) → Rot (0.0)
+        sf::Color color = sf::Color::Black;
+
+        if (hue < 0.166f) {
+            // Rot zu Gelb (R=255, G steigt)
+            color.r = 255;
+            color.g = static_cast<sf::Uint8>(hue * 6 * 255);
+        } else if (hue < 0.333f) {
+            // Gelb zu Grün (G=255, R fällt)
+            color.g = 255;
+            color.r = static_cast<sf::Uint8>((0.333f - hue) * 6 * 255);
+        } else if (hue < 0.5f) {
+            // Grün zu Türkis (G=255, B steigt)
+            color.g = 255;
+            color.b = static_cast<sf::Uint8>((hue - 0.333f) * 6 * 255);
+        } else if (hue < 0.666f) {
+            // Türkis zu Blau (B=255, G fällt)
+            color.b = 255;
+            color.g = static_cast<sf::Uint8>((0.666f - hue) * 6 * 255);
+        } else {
+            // Blau (Vollton)
+            color.b = 255;
+        }
+
+        return color;
+    }
+    
+    void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, const int& offset = -200, const int& scaling = 3500){
 
         // Render Window
         sf::RenderWindow window(sf::VideoMode(1200,800), "<> <FEMProc> <>");
@@ -529,6 +701,8 @@ public:
 
             window.clear(sf::Color::Black);
 
+            // Rendere Daten
+
             //
             int rad = 4;
             sf::CircleShape dot(rad);
@@ -537,12 +711,53 @@ public:
             sfLine line;
             line.setThickness(2);
 
+            sfQuad quad;
+
             Node2D nullRefNode;
             Node2D& node1 = nullRefNode, node2 = nullRefNode;
             Node2D& defnode1 = nullRefNode, defnode2 = nullRefNode;
 
             NodeIndex nodeNum1, nodeNum2;
             sf::Vector2f point1, point2;
+
+            float fData = 0.0f, min = 0, max = 0;
+            for(const auto& [cellIndex, data] : m_cellData){
+                
+                fData = data.getData(displayedData, globKoord);
+
+                if(fData < min){
+                    min = fData;
+                }
+                else if(fData > max){
+                    max = fData;
+                }
+
+            }
+
+            std::vector<sf::Vector2f> points = {};
+            for(const auto& [index, cell] : m_Cells){
+
+                points.clear();
+                points.reserve(4);
+                
+                for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+
+                    // Refs für weniger overhead
+                    nodeNum1 = localNodeNum;
+                    node1 = (displayOnDeformedMesh ? m_defNodes : m_Nodes)[cell.m_cellNodes[nodeNum1]];
+                    point1 = {(node1.x * scaling) - offset, (node1.y * scaling) - offset};
+                    point1.y = window.getSize().y - point1.y;
+
+                    //
+                    points.emplace_back(point1);
+                }
+
+                quad.positionVerticies(points);
+
+                quad.colorVerticies(getColorByValue(m_cellData[index].getData(displayedData, globKoord), min, max));
+
+                quad.draw(window);
+            }
 
             // undef mesh
             dot.setFillColor(sf::Color::White);

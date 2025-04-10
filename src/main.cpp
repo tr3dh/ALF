@@ -8,21 +8,23 @@ int main(int argc, char** argv)
     LOG << endl;
 
     Quad4Cell::deriveShapeFunctions();
-    
-    // dieses Anwendungsbeispiel ist identisch mit dem aus der Übung 5 der Fem1 Vorlesung 21/22 (Skript Hu5.m)
-    // es dient zur Validierung des Programms
+
+    Mesh::genInpFile("TMP.inp");
 
     //  
     Mesh mesh;
-    mesh.loadFromFile("HU5_FEM1Example.inp");
+    mesh.loadFromFile("Job-1.inp");
 
     mesh.createStiffnesMatrix();
 
-    mesh.applyForces({{6,{{1,-1000}}}});
-    mesh.fixNodes({{1,{0,1}}, {3,{0,1}}, {4,{0,1}}});
+    mesh.applyForces({{121,{{0,2}}}});
+    mesh.fixNodes({{1,{0,1}}, // {12,{0,1}}, {23,{0,1}}, {34,{0,1}}, {45,{0,1}}, {56,{0,1}}, {67,{0,1}}, {78,{0,1}}, {89,{0,1}}, {100,{0,1}}, {111,{0,1}},
+                    {11,{1}}});
 
     mesh.solve();
-    mesh.display(-300,50);
+    mesh.calculateStrainAndStress();
+    
+    mesh.display(Mesh::MeshData::VANMISES_STRESS, 0, false, -200,3500);
 
     return 0;
 }
