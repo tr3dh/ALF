@@ -539,32 +539,81 @@ public:
 
         static CellData nullRef;
 
-        CellData() = default;
+        CellData(){
+           
+            cellDisplacement = Eigen::MatrixXd(8,1);
+            cellDisplacement.setZero();
 
-        CellData(const Eigen::MatrixXd& strainIn, const Eigen::MatrixXd& stressIn) :
-        strain(strainIn), stress(stressIn){
+            strain = Eigen::MatrixXd(3,1);
+            strain.setZero();
 
+            stress = Eigen::MatrixXd(3,1);
+            stress.setZero();
+
+            quadratureStrain.reserve(4);
+            quadratureStress.reserve(4);
+        };
+
+        void calculateCellStrainAndStress(){
+
+            // 1, 2, 3, 4, ...
+            for(int nodeNum = 0; nodeNum < Quad4Cell::s_nNodes; nodeNum++){
+
+                strain += quadratureStrain[nodeNum];
+                stress += quadratureStress[nodeNum];
+            }
+
+            strain*=(1/cellVolume);
+            stress*=(1/cellVolume);
+
+            calculateVanMisesStress();
         }
 
         void calculateVanMisesStress(){
 
+            //
+            quadratureMisesStress.clear();
+            quadratureMisesStress.reserve(4);
+
+            for(size_t nodeNum = 0; nodeNum < 4; nodeNum++){
+
+                quadratureMisesStress.emplace_back(
+                    std::sqrt(std::pow(quadratureStress[nodeNum](0,0),2) + std::pow(quadratureStress[nodeNum](1,0),2) -
+                    quadratureStress[nodeNum](0,0) * quadratureStress[nodeNum](1,0) + 3 * std::pow(quadratureStress[nodeNum](2,0),2))
+                );
+            }
+
             vanMisesStress = std::sqrt(std::pow(stress(0,0),2) + std::pow(stress(1,0),2) - stress(0,0) * stress(1,0) + 3 * std::pow(stress(2,0),2));
         }
 
-        float getData(const MeshData& data, int globKoord) const{
+        float getData(const MeshData& data, int globKoord, int forQuadraturePoint = -1) const{
             switch(data){
                 case MeshData::STRAIN:{
+
+                    if(forQuadraturePoint != -1){
+                        return(quadratureStrain[forQuadraturePoint](globKoord,0));
+                    }
 
                     return strain(globKoord,0);
                     break;
                 }
                 case MeshData::STRESS:{
 
+                    if(forQuadraturePoint != -1){
+                        return(quadratureStress[forQuadraturePoint](globKoord,0));
+                    }
+
                     return stress(globKoord,0);
                     break;
                 }
                 case MeshData::VANMISES_STRESS:{
+
+                    if(forQuadraturePoint != -1){
+                        return(quadratureMisesStress[forQuadraturePoint]);
+                    }
+
                     return vanMisesStress;
+                    break;
                 }
                 default:{
                     break;
@@ -574,7 +623,12 @@ public:
         }
 
         Eigen::MatrixXd strain, stress;
+        std::vector<Eigen::MatrixXd> quadratureStrain = {}, quadratureStress = {};
+        float cellVolume = 0.0f;
+        Eigen::MatrixXd cellDisplacement;
+
         float vanMisesStress = 0.0f;
+        std::vector<float> quadratureMisesStress = {};
     };
 
     Eigen::SparseMatrix<float> m_strainSystem, m_stressSystem;
@@ -593,11 +647,11 @@ public:
 
         //
         int nodeNum = 0;
-        //CellData& c_cellData = CellData::nullRef;
         for(const auto& [cellIndex, cell] : m_Cells){
 
             //
-            cellDisplacement.setZero();
+            m_cellData.try_emplace(cellIndex);
+            CellData& r_cellData = m_cellData[cellIndex];
 
             // Elementverschiebung aus globalem Verschiebungsvektor extrahieren
 
@@ -607,44 +661,23 @@ public:
                 // x, y, z, ...
                 for(int globKoord = 0; globKoord < Quad4Cell::s_nDimensions; globKoord++){
                     
-                    cellDisplacement(nodeNum * Quad4Cell::s_nDimensions + globKoord, 0) = m_uSystem.coeffRef((cell.m_cellNodes[nodeNum] - 1) * Quad4Cell::s_nDimensions + globKoord, 0);
+                    r_cellData.cellDisplacement(nodeNum * Quad4Cell::s_nDimensions + globKoord, 0) = m_uSystem.coeffRef((cell.m_cellNodes[nodeNum] - 1) * Quad4Cell::s_nDimensions + globKoord, 0);
                 }
             }
 
-            // Dehnungen berechnen (gemittelt fürs Element)
-            cellVolume = 0;
-            epsilon_e.setZero();
-
             // 1, 2, 3, 4, ...
             for(nodeNum = 0; nodeNum < Quad4Cell::s_nNodes; nodeNum++){
 
                 subMatrix(m_cachedBMats[cellIndex], BMatrix,Quad4Cell::subs[nodeNum]);
                 jDet = SymEngine::eval_double(*m_cachedJDets[cellIndex]->subs(Quad4Cell::subs[nodeNum]));
 
-                epsilon_e += cMatrix * BMatrix * cellDisplacement * jDet;
-                cellVolume += jDet;
+                r_cellData.quadratureStrain.emplace_back(BMatrix * r_cellData.cellDisplacement * jDet);
+                r_cellData.quadratureStress.emplace_back(cMatrix * BMatrix * r_cellData.cellDisplacement * jDet);
+
+                r_cellData.cellVolume += jDet;
             }
-            epsilon_e *= (1/cellVolume);
 
-            // Spannungen berechnen (gemittelt fürs Element)
-            cellVolume = 0;
-            sigma_e.setZero();
-
-            // 1, 2, 3, 4, ...
-            for(nodeNum = 0; nodeNum < Quad4Cell::s_nNodes; nodeNum++){
-
-                subMatrix(m_cachedBMats[cellIndex], BMatrix,Quad4Cell::subs[nodeNum]);
-                jDet = SymEngine::eval_double(*m_cachedJDets[cellIndex]->subs(Quad4Cell::subs[nodeNum]));
-
-                sigma_e += cMatrix * BMatrix * cellDisplacement * jDet;
-                cellVolume += jDet;
-            }
-            sigma_e *= (1/cellVolume);
-
-            m_cellData.emplace(std::piecewise_construct,
-                std::forward_as_tuple(cellIndex),
-                std::forward_as_tuple(epsilon_e, sigma_e));
-            m_cellData[cellIndex].calculateVanMisesStress();
+            r_cellData.calculateCellStrainAndStress();
         }
     }
 
@@ -682,7 +715,8 @@ public:
         return color;
     }
     
-    void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, const int& offset = -200, const int& scaling = 3500){
+    void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
+        const int& offset = -200, const int& scaling = 3500){
 
         // Render Window
         sf::RenderWindow window(sf::VideoMode(1200,800), "<> <FEMProc> <>");
@@ -718,23 +752,45 @@ public:
             Node2D& defnode1 = nullRefNode, defnode2 = nullRefNode;
 
             NodeIndex nodeNum1, nodeNum2;
+            NodeIndex previousNum, lastNum, nextNum;
             sf::Vector2f point1, point2;
 
             float fData = 0.0f, min = 0, max = 0;
-            for(const auto& [cellIndex, data] : m_cellData){
+
+            if(displayOnQuadraturePoints){
+
+                for(const auto& [cellIndex, data] : m_cellData){
+
+                    for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+
+                        fData = data.getData(displayedData, globKoord, localNodeNum);
+    
+                        if(fData < min){
+                            min = fData;
+                        }
+                        else if(fData > max){
+                            max = fData;
+                        }
+
+                    }
+                }
+            } else {
+
+                for(const auto& [cellIndex, data] : m_cellData){
                 
-                fData = data.getData(displayedData, globKoord);
-
-                if(fData < min){
-                    min = fData;
+                    fData = data.getData(displayedData, globKoord);
+    
+                    if(fData < min){
+                        min = fData;
+                    }
+                    else if(fData > max){
+                        max = fData;
+                    }
+    
                 }
-                else if(fData > max){
-                    max = fData;
-                }
-
             }
 
-            std::vector<sf::Vector2f> points = {};
+            std::vector<sf::Vector2f> points = {}, subpoints = {};
             for(const auto& [index, cell] : m_Cells){
 
                 points.clear();
@@ -753,10 +809,43 @@ public:
                 }
 
                 quad.positionVerticies(points);
-
                 quad.colorVerticies(getColorByValue(m_cellData[index].getData(displayedData, globKoord), min, max));
-
                 quad.draw(window);
+
+                if(displayOnQuadraturePoints){
+
+                    sf::Vector2f midPoint = {0,0};
+
+                    for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+                        midPoint.x += points[localNodeNum].x;
+                        midPoint.y += points[localNodeNum].y;
+                    }
+
+                    midPoint.x /= 4;
+                    midPoint.y /= 4;
+
+                    for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+
+                        //
+                        subpoints.clear();
+                        subpoints.reserve(4);
+
+                        //
+                        previousNum = localNodeNum;
+                        lastNum = localNodeNum == 0 ? 3 : localNodeNum - 1;
+                        nextNum = localNodeNum == 3 ? 0 : localNodeNum + 1;
+
+                        // Refs für weniger overhead
+                        subpoints.emplace_back(points[localNodeNum]);
+                        subpoints.emplace_back((points[localNodeNum].x + points[nextNum].x)/2, (points[localNodeNum].y + points[nextNum].y)/2);
+                        subpoints.emplace_back(midPoint);
+                        subpoints.emplace_back((points[localNodeNum].x + points[lastNum].x)/2, (points[localNodeNum].y + points[lastNum].y)/2);
+
+                        quad.positionVerticies(subpoints);
+                        quad.colorVerticies(getColorByValue(m_cellData[index].getData(displayedData, globKoord, localNodeNum), min, max));
+                        quad.draw(window);
+                    }
+                }
             }
 
             // undef mesh

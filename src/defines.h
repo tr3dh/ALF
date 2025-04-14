@@ -42,6 +42,7 @@ namespace fs = std::filesystem;
 #include "Drivers/__EigenMatrix.h"
 #include "Drivers/__SFLine.h"
 #include "Drivers/__SFQuad.h"
+#include "Drivers/__jsonSerialize.h"
 
 extern Symbol x,y,z;            // globale Koordinaten  
 extern Symbol r,s,t;            // Koordinaten im isoparametrischen Element

@@ -3,6 +3,7 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I./src \
 	-I/mingw64/include \
 	-I./thirdparty/symengine -I./thirdparty/symengine/build \
+	-I./thirdparty/magic_enum/include \
 	-pthread
 
 LDFLAGS := -L/mingw64/lib \

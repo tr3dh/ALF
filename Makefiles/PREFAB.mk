@@ -9,24 +9,31 @@ update:
 # bislang habe ich die symengine nur mit ninja gebaut bekommen
 # deshalb ist auc die installation erforderlich
 symengine:
+	@if [ -d "thirdParty/symengine" ]; then \
+		echo "Info: 'thirdParty/symengine' existiert bereits. Überspringe Build.";\
+	else \
+		cd thirdParty && git clone https://github.com/symengine/symengine.git && \
+		cd symengine && mkdir -p build && \
+		cd build && cmake -G "Ninja" \
+			-DCMAKE_C_COMPILER=gcc \
+			-DCMAKE_CXX_COMPILER=g++ \
+			-DCMAKE_INSTALL_PREFIX=/mingw64 \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DWITH_SYMENGINE_THREAD_SAFE=ON \
+			-DBUILD_BENCHMARKS=OFF \
+			-DWITH_MPFR=ON \
+			-DWITH_BOOST=OFF \
+			-DWITH_LLVM=off \
+			.. && \
+		ninja; \
+	fi
 
-	cd thirdParty && git clone https://github.com/symengine/symengine.git
-	cd thirdParty/symengine
-	cd thirdParty/symengine && mkdir build
-
-	cd thirdParty/symengine/build && cmake -G "Ninja" \
-		-DCMAKE_C_COMPILER=gcc \
-		-DCMAKE_CXX_COMPILER=g++ \
-		-DCMAKE_INSTALL_PREFIX=/mingw64 \
-		-DCMAKE_BUILD_TYPE=Release \
-		-DWITH_SYMENGINE_THREAD_SAFE=ON \
-		-DBUILD_BENCHMARKS=OFF \
-		-DWITH_MPFR=ON \
-		-DWITH_BOOST=OFF \
-		-DWITH_LLVM=off \
-		..
-
-	cd thirdParty/symengine/build && ninja
+magic_enum:
+	@if [ -d "thirdParty/magic_enum" ]; then \
+			echo "Info: 'thirdParty/magic_enum' existiert bereits. Überspringe Build.";\
+		else \
+			cd thirdParty && git clone https://github.com/Neargye/magic_enum.git; \
+		fi
 
 matplot:
 	cd thirdParty && git clone https://github.com/alandefreitas/matplotplusplus
@@ -70,15 +77,18 @@ prefab:
 	@echo "Installiere Git..."
 	$(PACMAN) git
 
-	@echo "Installiere SFML..."
-	$(PACMAN) mingw-w64-x86_64-sfml
-
-	@echo "Installiere Python..."
-	$(PACMAN) mingw-w64-x86_64-plplot
-
 	@echo "Version Check..."
 	gcc --version && g++ --version
 	make --version && cmake --version && ninja --version
 	git --version
+
+	@echo "Installiere SFML..."
+	$(PACMAN) mingw-w64-x86_64-sfml
+
+	@echo "Installiere NLohmnann JSON..."
+	$(PACMAN) mingw-w64-x86_64-nlohmann-json
+
+	@echo "Installiere Magic Enum..."
+	@make magic_enum
 
 	@make symengine

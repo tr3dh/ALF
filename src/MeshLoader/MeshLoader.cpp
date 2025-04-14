@@ -26,3 +26,5 @@ const std::vector<SymEngine::map_basic_basic> Quad4Cell::subs = {
     {{r, SymEngine::real_double(gauss_pt)},  {s, SymEngine::real_double(-gauss_pt)}}, // Point 3
     {{r, SymEngine::real_double(gauss_pt)},  {s, SymEngine::real_double(gauss_pt)}}   // Point 4
 };
+
+Mesh::CellData Mesh::CellData::nullRef = Mesh::CellData();
