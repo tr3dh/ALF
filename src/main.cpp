@@ -2,10 +2,12 @@
 
 #include "MeshLoader/Meshloader.h"
 
+using namespace SymEngine;
+
 int main(int argc, char** argv)
 {
     //
-    LOG << std::fixed << std::setprecision(10);
+    LOG << std::fixed << std::setprecision(4);
     LOG << endl;
 
     //
@@ -25,8 +27,22 @@ int main(int argc, char** argv)
 
     mesh.calculateStrainAndStress();
 
-    mesh.display(Mesh::MeshData::VANMISES_STRESS, 0, true, false, -200,3500);
-    mesh.display(Mesh::MeshData::VANMISES_STRESS, 0, true, true, -200,3500);
+    mesh.display(Mesh::MeshData::STRESS, 0, false, false, -200,3500);
+    mesh.display(Mesh::MeshData::STRESS, 0, false, true, -200,3500);
+    mesh.display(Mesh::MeshData::STRESS, 1, false, false, -200,3500);
+    mesh.display(Mesh::MeshData::STRESS, 1, false, true, -200,3500);
+    mesh.display(Mesh::MeshData::STRESS, 2, false, false, -200,3500);
+    mesh.display(Mesh::MeshData::STRESS, 2, false, true, -200,3500);
+
+    mesh.display(Mesh::MeshData::STRAIN, 0, false, false, -200,3500);
+    mesh.display(Mesh::MeshData::STRAIN, 0, false, true, -200,3500);
+    mesh.display(Mesh::MeshData::STRAIN, 1, false, false, -200,3500);
+    mesh.display(Mesh::MeshData::STRAIN, 1, false, true, -200,3500);
+    mesh.display(Mesh::MeshData::STRAIN, 2, false, false, -200,3500);
+    mesh.display(Mesh::MeshData::STRAIN, 2, false, true, -200,3500);
+
+    mesh.display(Mesh::MeshData::VANMISES_STRESS, 0, false, false, -200,3500);
+    mesh.display(Mesh::MeshData::VANMISES_STRESS, 0, false, true, -200,3500);
 
     return 0;
 }

@@ -40,7 +40,7 @@ struct Quad4Cell{
     const static double gauss_pt; // 1.0/sqrt(3.0);
             
     //
-    const static std::vector<SymEngine::map_basic_basic> subs;
+    static std::vector<SymEngine::map_basic_basic> subs;
 
     static void deriveShapeFunctions(){
         for(const auto& [i, shapeFunktion] : std::views::enumerate(s_shapeFunctions)){
@@ -586,40 +586,48 @@ public:
             vanMisesStress = std::sqrt(std::pow(stress(0,0),2) + std::pow(stress(1,0),2) - stress(0,0) * stress(1,0) + 3 * std::pow(stress(2,0),2));
         }
 
-        float getData(const MeshData& data, int globKoord, int forQuadraturePoint = -1) const{
+        float getData(const MeshData& data, int globKoord, int forQuadraturePoint = -1, bool returnAbs = false) const{
+
+            float nullRef = 0;
+            float& fdata = nullRef;
+
             switch(data){
                 case MeshData::STRAIN:{
 
                     if(forQuadraturePoint != -1){
-                        return(quadratureStrain[forQuadraturePoint](globKoord,0));
+                        fdata = quadratureStrain[forQuadraturePoint](globKoord,0);
+                    }else{
+                        fdata = strain(globKoord,0);
                     }
 
-                    return strain(globKoord,0);
                     break;
                 }
                 case MeshData::STRESS:{
 
                     if(forQuadraturePoint != -1){
-                        return(quadratureStress[forQuadraturePoint](globKoord,0));
+                        fdata = quadratureStress[forQuadraturePoint](globKoord,0);
+                    } else {
+                        fdata = stress(globKoord,0);
                     }
 
-                    return stress(globKoord,0);
                     break;
                 }
                 case MeshData::VANMISES_STRESS:{
 
                     if(forQuadraturePoint != -1){
-                        return(quadratureMisesStress[forQuadraturePoint]);
+                        fdata = quadratureMisesStress[forQuadraturePoint];
+                    } else {
+                        fdata = vanMisesStress;
                     }
 
-                    return vanMisesStress;
                     break;
                 }
                 default:{
                     break;
                 }
             }
-            return 0.0f;
+
+            return returnAbs ? std::abs(fdata) : fdata;
         }
 
         Eigen::MatrixXd strain, stress;
@@ -718,8 +726,28 @@ public:
     void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
         const int& offset = -200, const int& scaling = 3500){
 
+        std::string dir;
+        switch (globKoord){
+            case 0:{
+                dir = "x";
+                break;
+            }
+            case 1:{
+                dir = "y";
+                break;
+            }
+            case 2:{
+                dir = "xy";
+                break;
+            }
+            default:{
+                dir = "NONE";
+                break;
+            }
+        }
+
         // Render Window
-        sf::RenderWindow window(sf::VideoMode(1200,800), "<> <FEMProc> <>");
+        sf::RenderWindow window(sf::VideoMode(1200,800), std::string(magic_enum::enum_name(displayedData)) + " - " + dir);
         window.setFramerateLimit(0);
 
         while (window.isOpen()) {
@@ -808,11 +836,12 @@ public:
                     points.emplace_back(point1);
                 }
 
-                quad.positionVerticies(points);
-                quad.colorVerticies(getColorByValue(m_cellData[index].getData(displayedData, globKoord), min, max));
-                quad.draw(window);
-
-                if(displayOnQuadraturePoints){
+                if(!displayOnQuadraturePoints){
+                    quad.positionVerticies(points);
+                    quad.colorVerticies(getColorByValue(m_cellData[index].getData(displayedData, globKoord), min, max));
+                    quad.draw(window);
+                }
+                else{
 
                     sf::Vector2f midPoint = {0,0};
 
