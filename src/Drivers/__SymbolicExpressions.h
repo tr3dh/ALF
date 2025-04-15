@@ -3,6 +3,10 @@
 // Sym includes
 #include <symengine/expression.h>
 #include <symengine/symbol.h>
+#include <symengine/expression.h>
+#include <symengine/parser.h>
+#include <symengine/symbol.h>
+#include <symengine/symengine_rcp.h>
 
 typedef SymEngine::RCP<const SymEngine::Symbol> Symbol;
 typedef SymEngine::RCP<const SymEngine::Basic> Expression;

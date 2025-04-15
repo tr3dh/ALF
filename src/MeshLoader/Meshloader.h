@@ -1,7 +1,6 @@
 #pragma once
 
 #include "defines.h"
-#include <symengine/expression.h>
 
 typedef uint16_t NodeIndex; 
 

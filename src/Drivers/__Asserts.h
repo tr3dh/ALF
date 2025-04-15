@@ -14,6 +14,9 @@
 #define _ERROR std::cerr
 #endif // _ERROR
 
+#define TRIGGER_ASSERT  0
+#define PASS_ASSERT     1
+
 #define ASSERT(condition, message) \
     if (!(condition)) { \
         std::ostringstream oss; \
@@ -22,7 +25,7 @@
             << "\t\\ File: " << __FILE__ << "\n" \
             << "\t\\ Line: " << __LINE__ << "\n" \
             << "\t\\ Function: " << __FUNCTION__; \
-        _ERROR << oss.str() << endl; \
+        _ERROR << oss.str() << "\n" << endl; \
     }
 
 #define CRITICAL_ASSERT(condition, message) \

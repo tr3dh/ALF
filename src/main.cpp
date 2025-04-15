@@ -1,14 +1,18 @@
 #include "defines.h"
 
 #include "MeshLoader/Meshloader.h"
-
-using namespace SymEngine;
+#include "Mesh/Mesh.h"
 
 int main(int argc, char** argv)
 {
     //
     LOG << std::fixed << std::setprecision(4);
     LOG << endl;
+
+    Cell quad4 = Cell("Recc/Cells/CPS4R.ISOPARAM");
+
+    //
+    return 0;
 
     //
     Quad4Cell::deriveShapeFunctions();

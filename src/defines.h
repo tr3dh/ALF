@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ranges>
+#include <array>
 
 namespace fs = std::filesystem;
 
@@ -29,10 +30,17 @@ namespace fs = std::filesystem;
 #error "Logging Direktiven können nicht definiert werden, Makros bereits deklariert"
 #endif
 
-#define LOG std::cout
-#define _ERROR std::cerr
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[93m"
+#define BLUE    "\033[34m"
+#define ORANGE  "\033[38;2;255;165;0m"
+#define RESET   "\033[0m"
 
-#define endl "\n";
+#define LOG std::cout << ORANGE
+#define _ERROR std::cerr << RED << "!! <ERROR> !! -> " 
+
+#define endl RESET << "\n";
 
 // Drivers
 #include "Drivers/__Asserts.h"
@@ -46,3 +54,6 @@ namespace fs = std::filesystem;
 
 extern Symbol x,y,z;            // globale Koordinaten  
 extern Symbol r,s,t;            // Koordinaten im isoparametrischen Element
+
+const static std::vector<Symbol> g_globalKoords = {x,y,z};
+const static std::vector<Symbol> g_isometricKoords = {r,s,t};
