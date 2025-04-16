@@ -6,6 +6,33 @@ update:
 	@echo "MinGw Packages updaten..."
 	pacman -Syuu --noconfirm --needed
 
+DXC_RELEASE_URL := https://api.github.com/repos/microsoft/DirectXShaderCompiler/releases/latest
+DXC_DIR := thirdparty/dxc
+
+dxc:
+	@if [ -d "thirdParty/dxc" ]; then \
+		echo "Info: 'thirdParty/dxc' existiert bereits. Überspringe Build.";\
+	else \
+		make setup-dxc;\
+	fi\
+
+setup-dxc:
+	@echo "Suche neueste dxc-Version..."
+	@mkdir -p $(DXC_DIR)
+	@curl -s $(DXC_RELEASE_URL) | grep -oP '"browser_download_url": "\K[^"]+dxc[^"]+\.zip' | head -1 > $(DXC_DIR)/download_url.txt
+	@DXC_DOWNLOAD_URL=$$(cat $(DXC_DIR)/download_url.txt); \
+	if [ -z "$$DXC_DOWNLOAD_URL" ]; then \
+		echo "Fehler: Download-URL nicht gefunden!"; \
+		exit 1; \
+	fi; \
+	echo "Lade dxc herunter: $$DXC_DOWNLOAD_URL"; \
+	curl -L $$DXC_DOWNLOAD_URL -o $(DXC_DIR)/dxc.zip || (echo "Download fehlgeschlagen"; exit 1)
+	@echo "Entpacke dxc..."
+	@unzip -q $(DXC_DIR)/dxc.zip -d $(DXC_DIR) || (echo "Entpacken fehlgeschlagen"; exit 1)
+	@chmod +x $(DXC_DIR)/bin/x64/dxc.exe
+	@echo "Füge dxc zum PATH hinzu..."
+	@export PATH="$$(pwd)/$(DXC_DIR)/bin:$$PATH"
+
 # bislang habe ich die symengine nur mit ninja gebaut bekommen
 # deshalb ist auc die installation erforderlich
 symengine:
@@ -35,6 +62,27 @@ magic_enum:
 			cd thirdParty && git clone https://github.com/Neargye/magic_enum.git; \
 		fi
 
+vulkanSamples:
+	@if [ -d "thirdParty/Vulkan" ]; then \
+			echo "Info: 'thirdParty/Vulkan' existiert bereits. Überspringe Build.";\
+		else \
+			echo "Info: builde vulkan samples."; \
+			cd thirdParty && git clone --recursive https://github.com/SaschaWillems/Vulkan.git; \
+			cd Vulkan && cmake -Bbuild -G "MinGW Makefiles"; \
+			cmake --build build; \
+		fi
+
+	@make dllCopy COPYTARGET=thirdParty/Vulkan/build/bin/
+
+COPYTARGET ?= build/
+dllCopy:
+	mkdir -p $(COPYTARGET);
+	cp /mingw64/bin/libgcc_s_seh-1.dll $(COPYTARGET);
+	cp /mingw64/bin/libstdc++-6.dll $(COPYTARGET);
+	cp /mingw64/bin/libwinpthread-1.dll $(COPYTARGET);
+	cp /mingw64/bin/libgomp-1.dll $(COPYTARGET);
+	echo "DLLs kopiert nach $(COPYTARGET)";
+
 matplot:
 	cd thirdParty && git clone https://github.com/alandefreitas/matplotplusplus
 	cd thirdParty && cd matplotplusplus && mkdir build
@@ -60,10 +108,17 @@ prefab:
 
 	@echo "Installiere Build-Tools..."
 	$(PACMAN) $(MINGW_PREFIX)-cmake $(MINGW_PREFIX)-make $(MINGW_PREFIX)-ninja
+	$(PACMAN) unzip curl
+
 
 	@echo "Installiere Vulkan-Tools..."
 	$(PACMAN) $(MINGW_PREFIX)-spirv-tools $(MINGW_PREFIX)-glslang $(MINGW_PREFIX)-vulkan-devel
 	$(PACMAN) $(MINGW_PREFIX)-assimp $(MINGW_PREFIX)-glm $(MINGW_PREFIX)-vulkanscenegraph
+	$(PACMAN) mingw-w64-x86_64-vulkan-loader
+	$(PACMAN) mingw-w64-x86_64-vulkan-validation-layers
+	$(PACMAN) mingw-w64-x86_64-vulkan-utility-libraries
+	$(PACMAN) mingw-w64-x86_64-glfw
+	$(PACMAN) mingw-w64-x86_64-shaderc
 
 	@echo "Installiere mathematische Bibliotheken..."
 	$(PACMAN) $(MINGW_PREFIX)-gmp $(MINGW_PREFIX)-mpfr $(MINGW_PREFIX)-mpc $(MINGW_PREFIX)-flint
@@ -92,3 +147,5 @@ prefab:
 	@make magic_enum
 
 	@make symengine
+	@make vulkanSamples
+	@make dxc

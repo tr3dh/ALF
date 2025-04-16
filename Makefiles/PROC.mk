@@ -4,6 +4,9 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I/mingw64/include \
 	-I./thirdparty/symengine -I./thirdparty/symengine/build \
 	-I./thirdparty/magic_enum/include \
+	-I./thirdParty/Vulkan/external/ktx/include \
+	-I./thirdParty/Vulkan/external/tinygltf \
+	-I./thirdParty/Vulkan/base \
 	-pthread
 
 LDFLAGS := -L/mingw64/lib \
@@ -12,6 +15,9 @@ LDFLAGS := -L/mingw64/lib \
 	-lassimp \
 	-lws2_32 -lmswsock\
 	-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network -lsfml-audio\
+	-L./thirdParty/Vulkan/external/ktx/lib\
+	-L./thirdparty/Vulkan/build/base -lbase\
+	-lvulkan-1 -lglfw3 -lstdc++fs -lpthread -lgdi32\
 
 SRCDIR := src
 OBJDIR := build

@@ -3,6 +3,11 @@
 #include "MeshLoader/Meshloader.h"
 #include "Mesh/Mesh.h"
 
+#include <vulkan/vulkan.hpp>
+
+#include "vulkanexamplebase.h"
+#include "VulkanglTFModel.h"
+
 int main(int argc, char** argv)
 {
     //
@@ -10,9 +15,6 @@ int main(int argc, char** argv)
     LOG << endl;
 
     Cell quad4 = Cell("Recc/Cells/CPS4R.ISOPARAM");
-
-    //
-    return 0;
 
     //
     Quad4Cell::deriveShapeFunctions();
@@ -50,4 +52,6 @@ int main(int argc, char** argv)
 
     return 0;
 }
+
+
 
