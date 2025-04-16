@@ -3,18 +3,17 @@
 #include "MeshLoader/Meshloader.h"
 #include "Mesh/Mesh.h"
 
-#include <vulkan/vulkan.hpp>
-
-#include "vulkanexamplebase.h"
-#include "VulkanglTFModel.h"
-
 int main(int argc, char** argv)
 {
     //
     LOG << std::fixed << std::setprecision(4);
     LOG << endl;
 
-    Cell quad4 = Cell("Recc/Cells/CPS4R.ISOPARAM");
+    cacheCellPrefab("CPS4R");
+    cacheCellPrefab("CPS4R");
+    cacheCellPrefab("CPS4");
+
+    return 0;
 
     //
     Quad4Cell::deriveShapeFunctions();

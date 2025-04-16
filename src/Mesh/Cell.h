@@ -2,12 +2,12 @@
 
 #include "Node.h"
 
-class Cell{
+class CellPrefab{
 
 public:
 
-    Cell() = default;
-    Cell(const std::string& path) : Cell(){
+    CellPrefab() = default;
+    CellPrefab(const std::string& path) : CellPrefab(){
 
         // Check ob Pfad existiert
         CRITICAL_ASSERT(fs::exists(path), "Angegebener Pfad : '" + path + "' existiert nicht");
@@ -80,9 +80,13 @@ public:
         weights.reserve(nNodes);
         weights = isoParamData["WEIGHTS"].get<std::vector<float>>();
 
-        LOG << GREEN << "** " << "Element " << path << " erfolgreich aus file geladen **" << endl;
+        //
+        label = *string::split(string::split(path,'/').back(), '.').begin();
+
+        LOG << GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen **" << endl;
     }
 
+    std::string label = "__INVALID__";
     uint8_t nDimensions = 0, nNodes = 0;
 
     std::vector<Expression> shapeFunctions = {};

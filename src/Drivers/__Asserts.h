@@ -14,6 +14,10 @@
 #define _ERROR std::cerr
 #endif // _ERROR
 
+#ifndef endl
+#define endl "\n"
+#endif // _ERROR
+
 #define TRIGGER_ASSERT  0
 #define PASS_ASSERT     1
 
