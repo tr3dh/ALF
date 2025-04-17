@@ -57,7 +57,8 @@ struct dynNodeXd {
     dynNodeXd(const size_t& dimension, const std::vector<T>& Coordinates)
         : m_dimension(dimension)
     {
-        CRITICAL_ASSERT(Coordinates.size() == m_dimension, "Zu viele Werte für Initialisierung der Node übergeben");
+        CRITICAL_ASSERT(Coordinates.size() == m_dimension, "Zu viele Werte für Initialisierung der Node übergeben - "
+            + std::to_string(m_dimension) + " dimensionale Node hat " + std::to_string(Coordinates.size()) + " Werte übergeben bekommen");
         m_Coordinates.reserve(m_dimension);
         for (size_t coord = 0; coord < Coordinates.size(); ++coord) {
             m_Coordinates.emplace_back(Coordinates[coord]);

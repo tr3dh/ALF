@@ -2,8 +2,6 @@
 
 #include "defines.h"
 
-typedef uint16_t NodeIndex; 
-
 struct Node2D{
 
     Node2D() = default;
@@ -760,7 +758,7 @@ public:
                 }
             }
 
-            window.clear(sf::Color::Black);
+            window.clear(sf::Color::Transparent);
 
             // Rendere Daten
 

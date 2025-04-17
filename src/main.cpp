@@ -2,6 +2,7 @@
 
 #include "MeshLoader/Meshloader.h"
 #include "Mesh/Mesh.h"
+#include <windows.h>
 
 int main(int argc, char** argv)
 {
@@ -9,9 +10,8 @@ int main(int argc, char** argv)
     LOG << std::fixed << std::setprecision(4);
     LOG << endl;
 
-    cacheCellPrefab("CPS4R");
-    cacheCellPrefab("CPS4R");
-    cacheCellPrefab("CPS4");
+    IsoMesh isomesh;
+    isomesh.loadFromFile("Meshes/Job-1.inp");
 
     return 0;
 

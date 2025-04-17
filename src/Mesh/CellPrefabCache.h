@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Cell.h"
+#include "CellPrefab.h"
 
 // es gibt hier keine statische Optionsauswahl für den Elementtypen
 // damit beliebige Prefabs dynamisch geladen werden können
@@ -13,7 +13,7 @@ inline std::map<prefabIndex, CellPrefab> g_cellPrefabCache = {};
 inline prefabIndex cellPrefabCounter = 0;
 
 //
-inline void cacheCellPrefab(const std::string& prefabLabel){
+inline NodeIndex cacheCellPrefab(const std::string& prefabLabel){
 
     const std::string prefabPath = "Recc/Cells/" + prefabLabel + ".ISOPARAM";
 
@@ -23,7 +23,7 @@ inline void cacheCellPrefab(const std::string& prefabLabel){
         if(cellPref.label == prefabLabel){
 
             ASSERT(TRIGGER_ASSERT, "Prefab mit Label " + prefabLabel + " existiert bereit im Cache");
-            return;
+            return index;
         }
     }
 
@@ -34,7 +34,7 @@ inline void cacheCellPrefab(const std::string& prefabLabel){
     LOG << BLUE << "** Element " << g_cellPrefabCache[cellPrefabCounter].label << " erfolgreich unter ID " << +cellPrefabCounter << " in CellPrefab Laufzeit Cache geladen **" << endl;
 
     //
-    cellPrefabCounter++;
+    return cellPrefabCounter++;
 }
 
 //
