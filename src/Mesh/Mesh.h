@@ -25,6 +25,8 @@ private:
     static constexpr std::string cellToken = "Element";
     static constexpr std::string endToken = "End Part";
 
+    std::string meshPath = NULLSTR;
+
     size_t nDimensions = 0;
     size_t nodeNumOffset = 0;
     std::map<NodeIndex, dynNodeXd<float>> m_Nodes = {}, m_defNodes = {};
@@ -46,6 +48,9 @@ public:
         CRITICAL_ASSERT(fs::exists(fs::path(path)), "Angegebener Pfad für Netzt existiert nicht");
         CRITICAL_ASSERT(string::endsWith(path, "inp"), "Ungültige File Endung, Programm erwartet ein *.inp file");
 
+        //
+        meshPath = path;
+
         // Laden des files
         std::ifstream file(path);
         CRITICAL_ASSERT(file, "Datei konnte nicht geöffnet werden");
@@ -60,7 +65,7 @@ public:
 
         // Stats für Elementprefab dessen Member aktuell eingelesen werden
         NodeIndex cellPrefIndex = -1;                   // Identifikation des Prefabs im entsprechenden Cache
-        std::string cellPrefLabel = "__INVALID__";      // Label des Prefabs
+        std::string cellPrefLabel = NULLSTR;            // Label des Prefabs
         size_t cellPrefNodes = 0;                       // Anzahl an Nodes für Member des Prefabs
 
         while (readFile && std::getline(file, line)) {
@@ -432,11 +437,171 @@ public:
         Eigen::SparseMatrix<float> temp = m_kSystem.transpose().triangularView<Eigen::StrictlyLower>();
         m_kSystem += temp;
 
-        LOG << BLUE << "-- Finished Creating Stiffnes Matrix\n" << endl;
-        LOG << BLUE << m_kSystem.toDense().block(0,0,20,20) << endl;
+        LOG << BLUE << "-- Finished Creating Stiffnes Matrix" << endl;
         LOG << endl;
 
         //
         return true;
+    }
+
+    struct Force{
+        uint8_t direction;
+        float amount;
+    };
+
+
+    void applyForces(const std::map<NodeIndex, std::vector<Force>>& externalForces){
+
+        //
+        LOG << "-- Apllying loads ..." << endl;
+
+        // für Konstruktion der sparse Matrix
+        std::vector<Eigen::Triplet<float>> triplets = {};
+
+        m_fSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * nDimensions, 1);
+
+        for(const auto& [index, forces] : externalForces){
+            for(const auto& force : forces){
+
+                CRITICAL_ASSERT(force.direction < nDimensions, "Ungültige Richtungsangebe");
+                LOG << "   Node " << +index << " Force " << force.amount << " N\t\tin direction " << +force.direction << endl;
+                triplets.emplace_back((index-nodeNumOffset) * nDimensions + force.direction, 0, force.amount);
+            }
+        }
+
+        LOG << endl;
+
+        m_fSystem.setFromTriplets(triplets.begin(), triplets.end());
+    }
+
+    std::vector<NodeIndex> m_indicesToRemove = {};
+    void fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations){
+
+        //
+        LOG << "-- Apllying node Constraints ..." << endl;
+
+        m_indicesToRemove.clear();
+        m_uSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * nDimensions, 1);
+
+        for(const auto& [index, dirVec] : nodeFixations){
+            for(const auto& direction : dirVec){
+
+                //
+                CRITICAL_ASSERT(direction < nDimensions, "Ungültige Richtungsangebe");
+                LOG << "   Fixing node " << index << "\t\t\tin direction " << +direction << endl;
+
+                m_indicesToRemove.emplace_back(nDimensions * (index - nodeNumOffset) + direction);
+            }
+        }
+
+        LOG << endl;
+
+        // Absteigend sortieren
+        std::sort(m_indicesToRemove.begin(), m_indicesToRemove.end(), std::greater<NodeIndex>());
+
+        LOG << "-- Removing indices {";
+        for(const auto& i : m_indicesToRemove){
+            LOG << i << ",";
+        }
+        LOG << "}" << endl;
+        LOG << endl;
+
+        removeSparseRow(m_uSystem, m_indicesToRemove);
+        removeSparseRow(m_fSystem, m_indicesToRemove);
+        removeSparseRowAndCol<NodeIndex>(m_kSystem, m_indicesToRemove);
+
+        CRITICAL_ASSERT(m_fSystem.rows() == m_kSystem.rows() && m_uSystem.rows() == m_kSystem.rows(), "Matritzen Dimensionen von u,f und K stimmen nicht überein");
+    }
+
+    bool readBoundaryConditions(const std::string& path = NULLSTR){
+        
+        std::string boundaryFilePath = path;
+        if(boundaryFilePath == NULLSTR){
+            boundaryFilePath = meshPath.substr(0, meshPath.find_last_of('.')) + ".fem";
+        }        
+
+        CRITICAL_ASSERT(string::endsWith(boundaryFilePath, ".fem"), "Übergebener Pfad endet auf ungültige File Endung, erwartetes format : *.fem");
+
+        LOG << BLUE << "-- Reading file : " << boundaryFilePath << endl;
+        LOG << endl;
+
+        // Check ob Pfad existiert
+        CRITICAL_ASSERT(fs::exists(boundaryFilePath), "Angegebener Pfad : '" + boundaryFilePath + "' existiert nicht");
+
+        // Check ob fstream den file ohne Fehler geladen bekommt
+        std::ifstream BoundaryConditionFile(boundaryFilePath);
+        CRITICAL_ASSERT(BoundaryConditionFile, "Fehler beim Laden von '" + path + "'");
+
+        // Check ob nlohmann json den file geparst bekommt
+        nlohmann::json ffData = nlohmann::json::parse(BoundaryConditionFile, nullptr, true, true);
+        
+        //
+        if(!ffData.contains("Constraints") || !ffData["Constraints"].is_array()){
+
+            ASSERT(TRIGGER_ASSERT, "Constraints konnten nicht gelesen werden");
+
+            return false;  
+        }
+
+        std::map<NodeIndex, std::vector<uint8_t>> constraints = {};
+        for(const auto& constraint : ffData["Constraints"]){
+
+            for(const auto& [node, dirs] : constraint.items()){
+
+                constraints.try_emplace(string::convert<NodeIndex>(node), dirs.get<std::vector<uint8_t>>());
+            }
+        }
+
+        //
+        if(!ffData.contains("Loads") || !ffData["Loads"].is_array()){
+
+            ASSERT(TRIGGER_ASSERT, "Loads konnten nicht gelesen werden");
+
+            return false;  
+        }
+
+        std::map<NodeIndex, std::vector<Force>> loads = {};
+        for(const auto& load : ffData["Loads"]){
+
+            for(const auto& [node, forces] : load.items()){
+
+                const NodeIndex index = string::convert<NodeIndex>(node);
+
+                loads.try_emplace(index);
+                for(const auto& [dir, amount] : forces.items()){
+
+                    const uint8_t direction = string::convert<uint8_t>(dir);
+                    for(const auto& [_,isolatedAmount] : amount.items()){
+                    
+                        loads[index].emplace_back(direction, isolatedAmount.get<float>());
+                    }
+                }
+            }
+        }
+
+        applyForces(loads);
+        fixNodes(constraints);
+
+        return true;
+    }
+
+    void solve(){
+
+        // cholesky solver für dünnbestze/positiv semi definite Matritzen
+        Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> solver;
+        
+        solver.compute(m_kSystem);
+        m_uSystem = solver.solve(m_fSystem);
+
+        std::sort(m_indicesToRemove.begin(), m_indicesToRemove.end());
+        addSparseRow(m_uSystem, m_indicesToRemove);
+
+        m_defNodes = m_Nodes;
+        for(const auto& [index, node] : m_Nodes){
+
+            for(const auto& coord : isoKoords){
+                m_defNodes[index][coord] += m_uSystem.coeff((index-nodeNumOffset) * nDimensions + coord,0);
+            }
+        }
     }
 };

@@ -59,4 +59,6 @@ const static std::vector<Symbol> g_globalKoords = {x,y,z};
 const static std::vector<Symbol> g_isometricKoords = {r,s,t};
 
 typedef uint16_t NodeIndex;
-typedef NodeIndex CellIndex; 
+typedef NodeIndex CellIndex;
+
+constexpr const std::string NULLSTR = "__INVALID__";

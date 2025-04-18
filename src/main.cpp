@@ -14,6 +14,8 @@ int main(int argc, char** argv)
     isomesh.loadFromFile("../Meshes/Job-1.inp");
 
     isomesh.createStiffnessMatrix();
+    isomesh.readBoundaryConditions();
+    isomesh.solve();
 
     //
     Quad4Cell::deriveShapeFunctions();
@@ -24,13 +26,15 @@ int main(int argc, char** argv)
 
     mesh.createStiffnesMatrix();
 
-    return 0;
-
     mesh.applyForces({{121,{{0,2}}}});
     mesh.fixNodes({{1,{0,1}},
                     {11,{1}}});
 
+
     mesh.solve();
+
+    
+    return 0;
 
     mesh.calculateStrainAndStress();
 

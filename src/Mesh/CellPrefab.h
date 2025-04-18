@@ -18,7 +18,6 @@ public:
 
         // Check ob nlohmann json den file geparst bekommt
         nlohmann::json isoParamData = nlohmann::json::parse(isoParamFile, nullptr, true, true);
-        CRITICAL_ASSERT(isoParamFile, "Fehler beim Parsen von '" + path + "'");
 
         //
         if(!isoParamData.contains("NDIMENSIONS") || !isoParamData.contains("NNODES")){
@@ -86,7 +85,7 @@ public:
         LOG << GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen" << endl;
     }
 
-    std::string label = "__INVALID__";
+    std::string label = NULLSTR;
     uint8_t nDimensions = 0, nNodes = 0;
 
     std::vector<Expression> shapeFunctions = {};
