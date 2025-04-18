@@ -81,6 +81,8 @@ dllCopy:
 	cp /mingw64/bin/libstdc++-6.dll $(COPYTARGET);
 	cp /mingw64/bin/libwinpthread-1.dll $(COPYTARGET);
 	cp /mingw64/bin/libgomp-1.dll $(COPYTARGET);
+	cp /mingw64/bin/libgmp-10.dll $(COPYTARGET);
+	cp /mingw64/bin/libmpfr-6.dll $(COPYTARGET);
 	echo "DLLs kopiert nach $(COPYTARGET)";
 
 matplot:
@@ -142,6 +144,9 @@ prefab:
 
 	@echo "Installiere NLohmnann JSON..."
 	$(PACMAN) mingw-w64-x86_64-nlohmann-json
+
+	$(PACMAN) mingw-w64-x86_64-imagemagick
+
 
 	@echo "Installiere Magic Enum..."
 	@make magic_enum

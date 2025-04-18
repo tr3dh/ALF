@@ -15,7 +15,7 @@ inline prefabIndex cellPrefabCounter = 0;
 //
 inline NodeIndex cacheCellPrefab(const std::string& prefabLabel){
 
-    const std::string prefabPath = "Recc/Cells/" + prefabLabel + ".ISOPARAM";
+    const std::string prefabPath = "../Recc/Cells/" + prefabLabel + ".ISOPARAM";
 
     for(const auto& [index, cellPref] : g_cellPrefabCache){
 
@@ -31,7 +31,7 @@ inline NodeIndex cacheCellPrefab(const std::string& prefabLabel){
     g_cellPrefabCache.emplace(cellPrefabCounter, prefabPath);
 
     //
-    LOG << BLUE << "** Element " << g_cellPrefabCache[cellPrefabCounter].label << " erfolgreich unter ID " << +cellPrefabCounter << " in CellPrefab Laufzeit Cache geladen **" << endl;
+    LOG << BLUE << "** Element " << g_cellPrefabCache[cellPrefabCounter].label << " erfolgreich unter ID " << +cellPrefabCounter << " in CellPrefab Laufzeit Cache geladen" << endl;
 
     //
     return cellPrefabCounter++;

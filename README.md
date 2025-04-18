@@ -42,4 +42,11 @@
 # Logging
 - wird über Preprozessor Direktiven LOG und _ERROR angestellt
 - Vorteil, dass diese dann je nach Build (Debug/Release, native/console) über den Preprozessor angepasst werden können
-- z.B kann Log für den Debug Mode in die Konsole Schreiben und im Release in einen Logfile 
+- z.B kann Log für den Debug Mode in die Konsole Schreiben und im Release in einen Logfile
+- Verwendung von endl antstatt std::endl, da für endl (Makro definiert mit \n) nicht jedes mal der Ausgabe buffer geflusht wird 
+
+# Formel einblendung
+![Formel](https://latex.codecogs.com/svg.latex?\frac{a}{b}*etx_x)
+
+
+

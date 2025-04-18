@@ -34,6 +34,14 @@ public:
         return os;
     }
 
+    prefabIndex getPrefabIndex() const{
+        return m_prefabIndex;
+    }
+
+    const CellPrefab& getPrefab() const{
+        return m_cellPrefab;
+    }
+
 private:
 
     const prefabIndex m_prefabIndex = 0;

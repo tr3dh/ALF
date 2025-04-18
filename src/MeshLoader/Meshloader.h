@@ -444,6 +444,7 @@ public:
         m_kSystem += temp;
 
         LOG << "Finished Creating Stiffnes Matrix\n" << endl;
+        LOG << m_kSystem.toDense().block(0,0,20,20) << endl;
         LOG << endl;
     }
 

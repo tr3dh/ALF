@@ -83,7 +83,7 @@ public:
         //
         label = *string::split(string::split(path,'/').back(), '.').begin();
 
-        LOG << GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen **" << endl;
+        LOG << GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen" << endl;
     }
 
     std::string label = "__INVALID__";

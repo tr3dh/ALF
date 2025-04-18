@@ -11,18 +11,20 @@ int main(int argc, char** argv)
     LOG << endl;
 
     IsoMesh isomesh;
-    isomesh.loadFromFile("Meshes/Job-1.inp");
+    isomesh.loadFromFile("../Meshes/Job-1.inp");
 
-    return 0;
+    isomesh.createStiffnessMatrix();
 
     //
     Quad4Cell::deriveShapeFunctions();
 
     //
     Mesh mesh;
-    mesh.loadFromFile("Meshes/Job-1.inp");
+    mesh.loadFromFile("../Meshes/Job-1.inp");
 
     mesh.createStiffnesMatrix();
+
+    return 0;
 
     mesh.applyForces({{121,{{0,2}}}});
     mesh.fixNodes({{1,{0,1}},

@@ -4,8 +4,9 @@ include Makefiles/PROC.mk
 
 all: clean header proc
 
-exec:
-	./$(TARGET)
+exec: $(TARGET)
+	@echo "Wechsel in: $(dir $<)"
+	cd $(dir $<) && ./$(notdir $<)
 
 launch: all exec
 

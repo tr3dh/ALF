@@ -28,7 +28,7 @@ OBJ = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
 PCH = build/precompiledDefines.h.gch
 PCH_SRC = src/defines.h
 
-TARGET := build/proc
+TARGET := build/FEMProc
 
 # Erzeugen der Dependency files
 -include $(OBJ:.o=.d)
@@ -36,7 +36,7 @@ TARGET := build/proc
 # eigentliches Proc/executable
 $(TARGET): $(OBJ)
 	@mkdir -p $(@D)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+	$(CXX) -o $@ $^ Recc/Compilation/proc.res $(LDFLAGS)
 
 proc:
 	@make $(TARGET) -j
@@ -53,6 +53,17 @@ $(PCH): $(PCH_SRC)
 
 header:
 	@make $(PCH) -j
+
+ICON ?= Recc/Compilation/icon
+icon:
+	magick "$(ICON).png" -define icon:auto-resize=16,32,48,64,128,256 "$(ICON).ico"; \
+
+res:
+	windres Recc/Compilation/proc.rc -O coff -o Recc/Compilation/proc.res
+
+# nach ausführung muss exit unter Umständen selbst nochmak in die cmd eingetippt werden damit man zur msys shell zurückkommt
+clearIconCache:
+	@cmd /C "Batch//clearIconCache.bat"
 
 clean:
 	rm -f $(TARGET)
