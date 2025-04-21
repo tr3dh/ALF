@@ -6,6 +6,8 @@ class CellPrefab{
 
 public:
 
+    static CellPrefab nullRef;
+
     CellPrefab() = default;
     CellPrefab(const std::string& path) : CellPrefab(){
 
@@ -82,7 +84,7 @@ public:
         //
         label = *string::split(string::split(path,'/').back(), '.').begin();
 
-        LOG << GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen" << endl;
+        LOG << LOG_GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen" << endl;
     }
 
     std::string label = NULLSTR;
@@ -94,3 +96,5 @@ public:
     std::vector<SymEngine::map_basic_basic> quadraturePoints = {};
     std::vector<float> weights = {};
 };
+
+CellPrefab CellPrefab::nullRef = CellPrefab();

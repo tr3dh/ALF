@@ -30,17 +30,17 @@ namespace fs = std::filesystem;
 #error "Logging Direktiven können nicht definiert werden, Makros bereits deklariert"
 #endif
 
-#define RED     "\033[31m"
-#define GREEN   "\033[32m"
-#define YELLOW  "\033[93m"
-#define BLUE    "\033[34m"
-#define ORANGE  "\033[38;2;255;165;0m"
-#define RESET   "\033[0m"
+#define LOG_RED     "\033[31m"
+#define LOG_GREEN   "\033[32m"
+#define LOG_YELLOW  "\033[93m"
+#define LOG_BLUE    "\033[34m"
+#define LOG_ORANGE  "\033[38;2;255;165;0m"
+#define LOG_RESET   "\033[0m"
 
-#define LOG std::cout << ORANGE
-#define _ERROR std::cerr << RED << "!! <ERROR> !! -> " 
+#define LOG std::cout << LOG_ORANGE
+#define _ERROR std::cerr << LOG_RED << "!! <ERROR> !! -> " 
 
-#define endl RESET << "\n";
+#define endl LOG_RESET << "\n";
 
 // Drivers
 #include "Drivers/__Asserts.h"

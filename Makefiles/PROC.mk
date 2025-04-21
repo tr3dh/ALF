@@ -7,10 +7,13 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I./thirdParty/Vulkan/external/ktx/include \
 	-I./thirdParty/Vulkan/external/tinygltf \
 	-I./thirdParty/Vulkan/base \
+	-I./thirdParty/r3d/include \
 	-pthread
 
 LDFLAGS := -L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
+	-L./thirdParty/r3d/build -lr3d -lraylib \
+	-lopengl32 -lgdi32 -lwinmm \
 	-lgmp -lmpfr \
 	-lassimp \
 	-lws2_32 -lmswsock\

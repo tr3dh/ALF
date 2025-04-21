@@ -55,6 +55,21 @@ symengine:
 		ninja; \
 	fi
 
+# bislang habe ich die symengine nur mit ninja gebaut bekommen
+# deshalb ist auc die installation erforderlich
+r3d:
+	@if [ -d "thirdParty/r3d" ]; then \
+		echo "Info: 'thirdParty/r3d' existiert bereits. Überspringe Build.";\
+	else \
+		cd thirdParty && it clone --recurse-submodules https://github.com/Bigfoot71/r3d; \
+		cd r3d && mkdir -p build; \
+		cmake .. -DCMAKE_BUILD_TYPE=Release; \
+		cmake --build . --config Release; \
+		cmake --build .; \
+	fi \
+	
+	@make dllCopy COPYTARGET=thirdParty/r3d/build/
+
 magic_enum:
 	@if [ -d "thirdParty/magic_enum" ]; then \
 			echo "Info: 'thirdParty/magic_enum' existiert bereits. Überspringe Build.";\
@@ -83,6 +98,8 @@ dllCopy:
 	cp /mingw64/bin/libgomp-1.dll $(COPYTARGET);
 	cp /mingw64/bin/libgmp-10.dll $(COPYTARGET);
 	cp /mingw64/bin/libmpfr-6.dll $(COPYTARGET);
+	cp /mingw64/bin/libraylib.dll $(COPYTARGET);
+	cp /mingw64/bin/glfw3.dll $(COPYTARGET);
 	echo "DLLs kopiert nach $(COPYTARGET)";
 
 matplot:
@@ -146,11 +163,9 @@ prefab:
 	$(PACMAN) mingw-w64-x86_64-nlohmann-json
 
 	$(PACMAN) mingw-w64-x86_64-imagemagick
-
+	$(PACMAN) mingw-w64-x86_64-raylib
 
 	@echo "Installiere Magic Enum..."
 	@make magic_enum
 
 	@make symengine
-	@make vulkanSamples
-	@make dxc

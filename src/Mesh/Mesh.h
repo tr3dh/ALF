@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cell.h"
+#include "Coloration.h"
 
 class IsoMesh{
 
@@ -42,7 +43,7 @@ public:
     bool loadFromFile(const std::string& path){
 
         //
-        LOG << BLUE << "-- Lade Mesh aus file " << path << "" << endl;
+        LOG << LOG_BLUE << "-- Lade Mesh aus file " << path << "" << endl;
 
         // Check ob file existiert und in erforderlichen Format vorhanden ist
         CRITICAL_ASSERT(fs::exists(fs::path(path)), "Angegebener Pfad für Netzt existiert nicht");
@@ -136,8 +137,9 @@ public:
                         ASSERT(string::convert<NodeIndex>(lineSplits[0]) >= 0, "Fehlerhafte Node Indizierung, beginnt mit negativem Wert");
 
                         //
-                        LOG << BLUE << "-- " << nDimensions << " dimensionales Netz wird aus " << path << " generiert" << endl;
-                        LOG << BLUE << "-- Node Bennenung beginnt mit Nr. " << nodeNumOffset << endl; 
+                        LOG << LOG_BLUE << "   Dimension : " << nDimensions << " D" << endl;
+                        LOG << LOG_BLUE << "   Node Bennenung ab Nr. " << nodeNumOffset << endl;
+                        LOG << endl;
                     }
 
                     ASSERT(nodeDimension == nDimensions, "Eingelesenes Mesh hat ungültige Dimension");
@@ -201,15 +203,16 @@ public:
         }
 
         //
-        LOG << BLUE << "-- " << nDimensions << " dimensionales Mesh geladen aus '" << path << "'" << endl;
-        LOG << BLUE << "-- Mesh geladen mit " << m_Nodes.size() << " Nodes | " << m_Cells.size() << " Elementen" << endl;
+        LOG << endl;
+        LOG << LOG_BLUE << "-- Ladevorgang abgeschlossen, geladen : " << m_Nodes.size() << " Nodes | " << m_Cells.size() << " Elemente" << endl;
         LOG << endl;
 
         return true;
     }
 
     //
-    SymEngine::DenseMatrix CMatrix;
+    SymEngine::DenseMatrix SymCMatrix;
+    Eigen::MatrixXd CMatrix;
 
     //
     std::map<NodeIndex, Expression>  m_cachedJDets = {};
@@ -218,7 +221,7 @@ public:
     bool createStiffnessMatrix(){
 
         //
-        LOG << BLUE << "-- Creating Stiffnes Matrix" << endl;
+        LOG << LOG_BLUE << "-- Creating Stiffnes Matrix" << endl;
 
         //
         prefabIndex currentPrefabIndex = m_Cells.begin()->second.getPrefabIndex();
@@ -255,12 +258,12 @@ public:
 
         ASSERT(nDimensions == 2, "für " << std::to_string(nDimensions) << " dimensionales Netz nicht implementiert");
 
-        CMatrix = SymEngine::DenseMatrix(nDimensions + 1, nDimensions + 1,
+        SymCMatrix = SymEngine::DenseMatrix(nDimensions + 1, nDimensions + 1,
                     {One, Poission, Null,
                      Poission, One, Null,
                      Null, Null, (1-Poission)/2});
 
-        CMatrix.mul_scalar(stiffnessCoeff, CMatrix);
+        SymCMatrix.mul_scalar(stiffnessCoeff, SymCMatrix);
 
         // die Ableitungen der ShapeFunktionen hier nochmal in anderer Form abspeichern
         // in der Berechnung für die Einträge der B Matitzen müssen jedes mal
@@ -364,7 +367,7 @@ public:
             // und Jacoby und B Matrix direkt mit den entsprechenden eingesetzten Werte über Eigen berechnet
             // (-> schnellere und weniger umständliche Matrix multiplikation da eigen Kette ermöglicht -> A*B*C'*...)
             // entspricht kInt = B'*C*B*jDet*t
-            BMatrixT.mul_matrix(CMatrix,BMatrixT);
+            BMatrixT.mul_matrix(SymCMatrix,BMatrixT);
             BMatrixT.mul_matrix(BMatrix, kInt);
             kInt.mul_scalar(jDet*thickness, kInt);
 
@@ -377,7 +380,7 @@ public:
             for(uint8_t nodeNum = 0; nodeNum < currentCellPrefab.nNodes; nodeNum++){
 
                 //
-                subMatrix(kInt, kCell, currentCellPrefab.quadraturePoints[nodeNum], true);
+                subMatrix(kInt, kCell, currentCellPrefab.quadraturePoints[nodeNum], currentCellPrefab.weights[nodeNum], true);
             }
 
             // Elementsteifigkeits Matrix [kCell] ermittlelt
@@ -437,7 +440,7 @@ public:
         Eigen::SparseMatrix<float> temp = m_kSystem.transpose().triangularView<Eigen::StrictlyLower>();
         m_kSystem += temp;
 
-        LOG << BLUE << "-- Finished Creating Stiffnes Matrix" << endl;
+        LOG << LOG_BLUE << "-- Finished Creating Stiffnes Matrix" << endl;
         LOG << endl;
 
         //
@@ -449,11 +452,10 @@ public:
         float amount;
     };
 
-
     void applyForces(const std::map<NodeIndex, std::vector<Force>>& externalForces){
 
         //
-        LOG << "-- Apllying loads ..." << endl;
+        LOG << "-- Aplying loads ..." << endl;
 
         // für Konstruktion der sparse Matrix
         std::vector<Eigen::Triplet<float>> triplets = {};
@@ -464,7 +466,7 @@ public:
             for(const auto& force : forces){
 
                 CRITICAL_ASSERT(force.direction < nDimensions, "Ungültige Richtungsangebe");
-                LOG << "   Node " << +index << " Force " << force.amount << " N\t\tin direction " << +force.direction << endl;
+                LOG << "   Node " << +index << " Force " << force.amount << " N\t\tin direction " << g_globalKoords[force.direction] << endl;
                 triplets.emplace_back((index-nodeNumOffset) * nDimensions + force.direction, 0, force.amount);
             }
         }
@@ -478,7 +480,7 @@ public:
     void fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations){
 
         //
-        LOG << "-- Apllying node Constraints ..." << endl;
+        LOG << "-- Aplying node Constraints ..." << endl;
 
         m_indicesToRemove.clear();
         m_uSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * nDimensions, 1);
@@ -488,7 +490,7 @@ public:
 
                 //
                 CRITICAL_ASSERT(direction < nDimensions, "Ungültige Richtungsangebe");
-                LOG << "   Fixing node " << index << "\t\t\tin direction " << +direction << endl;
+                LOG << "   Fixing node " << index << "\t\t\tin direction " << g_globalKoords[direction] << endl;
 
                 m_indicesToRemove.emplace_back(nDimensions * (index - nodeNumOffset) + direction);
             }
@@ -522,7 +524,7 @@ public:
 
         CRITICAL_ASSERT(string::endsWith(boundaryFilePath, ".fem"), "Übergebener Pfad endet auf ungültige File Endung, erwartetes format : *.fem");
 
-        LOG << BLUE << "-- Reading file : " << boundaryFilePath << endl;
+        LOG << LOG_BLUE << "-- Reading file : " << boundaryFilePath << endl;
         LOG << endl;
 
         // Check ob Pfad existiert
@@ -563,17 +565,20 @@ public:
         std::map<NodeIndex, std::vector<Force>> loads = {};
         for(const auto& load : ffData["Loads"]){
 
-            for(const auto& [node, forces] : load.items()){
+            for(const auto& [node, forceList] : load.items()){
 
                 const NodeIndex index = string::convert<NodeIndex>(node);
-
                 loads.try_emplace(index);
-                for(const auto& [dir, amount] : forces.items()){
+                
+                for(const auto& [_, force] : forceList.items()){
 
-                    const uint8_t direction = string::convert<uint8_t>(dir);
-                    for(const auto& [_,isolatedAmount] : amount.items()){
-                    
-                        loads[index].emplace_back(direction, isolatedAmount.get<float>());
+                    for(const auto& [dir, amount] : force.items()){
+
+                        const uint8_t direction = string::convert<uint8_t>(dir);
+                        for(const auto& [_,isolatedAmount] : amount.items()){
+                        
+                            loads[index].emplace_back(direction, isolatedAmount.get<float>());
+                        }
                     }
                 }
             }
@@ -602,6 +607,260 @@ public:
             for(const auto& coord : isoKoords){
                 m_defNodes[index][coord] += m_uSystem.coeff((index-nodeNumOffset) * nDimensions + coord,0);
             }
+        }
+    }
+
+    //
+    void calculateStrainAndStress(){
+
+        LOG << LOG_BLUE << "-- Calculate Strain and Stress" << endl;
+
+        CMatrix = Eigen::MatrixXd(nDimensions + 1, nDimensions + 1);
+        subMatrix(SymCMatrix,CMatrix,{});
+
+        Eigen::MatrixXd BMatrix(3,8);
+        float jDet = 0.0f;
+
+        //
+        int nodeNum = 0;
+        for(const auto& [cellIndex, cell] : m_Cells){
+
+            CellData& r_cellData = m_Cells[cellIndex].getCellData();
+            const CellPrefab& r_prefab = m_Cells[cellIndex].getPrefab();
+
+            // 1, 2, 3, 4, ...
+            for(nodeNum = 0; nodeNum < r_prefab.nNodes; nodeNum++){
+
+                // x, y, z, ...
+                for(const auto& globKoord : globKoords){
+                    
+                    r_cellData.cellDisplacement(nodeNum * nDimensions + globKoord, 0) = m_uSystem.coeffRef((cell[nodeNum] - nodeNumOffset) * nDimensions + globKoord, 0);
+                }
+            }
+
+            // 1, 2, 3, 4, ...
+            for(nodeNum = 0; nodeNum < r_prefab.nNodes; nodeNum++){
+
+                subMatrix(m_cachedBMats[cellIndex], BMatrix, r_prefab.quadraturePoints[nodeNum]);
+                jDet = SymEngine::eval_double(*m_cachedJDets[cellIndex]->subs(r_prefab.quadraturePoints[nodeNum]));
+
+                r_cellData.quadratureStrain.emplace_back(BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum]);
+                r_cellData.quadratureStress.emplace_back(CMatrix * BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum]);
+
+                r_cellData.cellVolume += jDet * r_prefab.weights[nodeNum];
+            }
+
+            r_cellData.calculateCellStrainAndStress();
+        }
+    }
+
+    void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
+        const int& offset = -200, const int& scaling = 3500){
+
+        if(nDimensions != 2){
+            ASSERT(TRIGGER_ASSERT, "Rendering bislang nur für 2D implementiert");
+        }
+
+        // Render Window
+        sf::RenderWindow window(sf::VideoMode(1200,800), std::string(magic_enum::enum_name(displayedData)) + " - " + std::to_string(globKoord));
+        window.setFramerateLimit(0);
+
+        while (window.isOpen()) {
+
+            sf::Event event;
+            while (window.pollEvent(event)) {
+
+                if (event.type == sf::Event::Closed) {
+
+                    window.close();
+                }
+            }
+
+            window.clear(sf::Color::Black);
+
+            // Rendere Daten
+
+            //
+            int rad = 4;
+            sf::CircleShape dot(rad);
+            dot.setOrigin(rad, rad);
+
+            sfLine line;
+            line.setThickness(2);
+
+            sfQuad quad;
+
+            dynNodeXd<float> nullRefNode;
+            dynNodeXd<float>& node1 = nullRefNode, node2 = nullRefNode;
+            dynNodeXd<float>& defnode1 = nullRefNode, defnode2 = nullRefNode;
+
+            NodeIndex nodeNum1, nodeNum2;
+            NodeIndex previousNum, lastNum, nextNum;
+            sf::Vector2f point1, point2;
+
+            float fData = 0.0f, min = 0, max = 0;
+
+            if(displayOnQuadraturePoints){
+
+                for(const auto& [cellIndex, cell] : m_Cells){
+
+                    const CellData& data = cell.getCellData();
+
+                    for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+
+                        fData = data.getData(displayedData, globKoord, localNodeNum);
+    
+                        if(fData < min){
+                            min = fData;
+                        }
+                        else if(fData > max){
+                            max = fData;
+                        }
+
+                    }
+                }
+            } else {
+
+                for(const auto& [cellIndex, cell] : m_Cells){
+                
+                    const CellData& data = cell.getCellData();
+                    fData = data.getData(displayedData, globKoord);
+    
+                    if(fData < min){
+                        min = fData;
+                    }
+                    else if(fData > max){
+                        max = fData;
+                    }
+    
+                }
+            }
+
+            std::vector<sf::Vector2f> points = {}, subpoints = {};
+            for(const auto& [index, cell] : m_Cells){
+
+                const CellPrefab& r_prefab = cell.getPrefab();
+
+                points.clear();
+                points.reserve(4);
+                
+                for(size_t localNodeNum = 0; localNodeNum < r_prefab.nNodes; localNodeNum++){
+
+                    // Refs für weniger overhead
+                    nodeNum1 = localNodeNum;
+                    node1 = (displayOnDeformedMesh ? m_defNodes : m_Nodes)[cell[nodeNum1]];
+                    point1 = {(node1[0] * scaling) - offset, (node1[1] * scaling) - offset};
+                    point1.y = window.getSize().y - point1.y;
+
+                    //
+                    points.emplace_back(point1);
+                }
+
+                if(!displayOnQuadraturePoints){
+                    quad.positionVerticies(points);
+                    quad.colorVerticies(getColorByValue(cell.getCellData().getData(displayedData, globKoord), min, max));
+                    quad.draw(window);
+                }
+                else{
+
+                    sf::Vector2f midPoint = {0,0};
+
+                    for(size_t localNodeNum = 0; localNodeNum < r_prefab.nNodes; localNodeNum++){
+                        midPoint.x += points[localNodeNum].x;
+                        midPoint.y += points[localNodeNum].y;
+                    }
+
+                    midPoint.x /= 4;
+                    midPoint.y /= 4;
+
+                    for(size_t localNodeNum = 0; localNodeNum < r_prefab.nNodes; localNodeNum++){
+
+                        //
+                        subpoints.clear();
+                        subpoints.reserve(4);
+
+                        //
+                        previousNum = localNodeNum;
+                        lastNum = localNodeNum == 0 ? 3 : localNodeNum - 1;
+                        nextNum = localNodeNum == 3 ? 0 : localNodeNum + 1;
+
+                        // Refs für weniger overhead
+                        subpoints.emplace_back(points[localNodeNum]);
+                        subpoints.emplace_back((points[localNodeNum].x + points[nextNum].x)/2, (points[localNodeNum].y + points[nextNum].y)/2);
+                        subpoints.emplace_back(midPoint);
+                        subpoints.emplace_back((points[localNodeNum].x + points[lastNum].x)/2, (points[localNodeNum].y + points[lastNum].y)/2);
+
+                        quad.positionVerticies(subpoints);
+                        quad.colorVerticies(getColorByValue(cell.getCellData().getData(displayedData, globKoord, localNodeNum), min, max));
+                        quad.draw(window);
+                    }
+                }
+            }
+
+            // undef mesh
+            dot.setFillColor(sf::Color::White);
+            line.colorVerticies(sf::Color::White);
+            for(const auto& [index, cell] : m_Cells){
+
+                for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+
+                    // Refs für weniger overhead
+                    nodeNum1 = localNodeNum;
+                    nodeNum2 = (localNodeNum == Quad4Cell::s_nNodes - 1) ? 0 : localNodeNum + 1;
+
+                    node1 = m_Nodes[cell[nodeNum1]];
+                    node2 = m_Nodes[cell[nodeNum2]];
+
+                    //
+                    point1 = {(node1[0] * scaling) - offset, (node1[1] * scaling) - offset};
+                    point2 = {(node2[0] * scaling) - offset, (node2[1] * scaling) - offset};
+
+                    point1.y = window.getSize().y - point1.y;
+                    point2.y = window.getSize().y - point2.y;
+
+                    //
+                    dot.setPosition(point1);
+                    window.draw(dot);
+
+                    //
+                    line.positionVerticies(point1, point2);
+                    line.draw(window);
+                }
+            }
+
+            // deformed mesh
+            dot.setFillColor(sf::Color::Red);
+            line.colorVerticies(sf::Color::Red);
+            for(const auto& [index, cell] : m_Cells){
+
+                for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+
+                    // Refs für weniger overhead
+                    nodeNum1 = localNodeNum;
+                    nodeNum2 = (localNodeNum == Quad4Cell::s_nNodes - 1) ? 0 : localNodeNum + 1;
+
+                    defnode1 = m_defNodes[cell[nodeNum1]];
+                    defnode2 = m_defNodes[cell[nodeNum2]];
+
+                    //
+                    point1 = {(defnode1[0] * scaling) - offset, (defnode1[1] * scaling) - offset};
+                    point2 = {(defnode2[0] * scaling) - offset, (defnode2[1] * scaling) - offset};
+
+                    //
+                    point1.y = window.getSize().y - point1.y;
+                    point2.y = window.getSize().y - point2.y;
+
+                    //
+                    dot.setPosition(point1);
+                    window.draw(dot);
+
+                    //
+                    line.positionVerticies(point1, point2);
+                    line.draw(window);
+                }
+            }
+
+            window.display();
         }
     }
 };

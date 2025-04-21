@@ -75,11 +75,11 @@ struct Quad4Cell{
     NodeIndex m_cellNodes[s_nNodes] = {0,0,0,0};
 };
 
-class Mesh{
+class cMesh{
 
 public:
 
-    Mesh() = default;
+    cMesh() = default;
 
     enum class ReadMode : uint8_t{
 
@@ -383,7 +383,7 @@ public:
             for(int nodeNum = 0; nodeNum < Quad4Cell::s_nNodes; nodeNum++){
 
                 //
-                subMatrix(kInt, kCell, Quad4Cell::subs[nodeNum], true);
+                subMatrix(kInt, kCell, Quad4Cell::subs[nodeNum], 1.0, true);
             }
 
             // Elementsteifigkeits Matrix [kCell] ermittlelt
