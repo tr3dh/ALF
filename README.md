@@ -45,8 +45,10 @@
 - z.B kann Log für den Debug Mode in die Konsole Schreiben und im Release in einen Logfile
 - Verwendung von endl antstatt std::endl, da für endl (Makro definiert mit \n) nicht jedes mal der Ausgabe buffer geflusht wird 
 
-# Formel einblendung
-![Formel](https://latex.codecogs.com/svg.latex?\frac{a}{b}*etx_x)
+# .LINKS
+[LUHCluster]("https://login.cluster.uni-hannover.de/pun/sys/dashboard")
+[PeridicTableOfElements]("https://www-users.cse.umn.edu/~arnold/femtable/")
+[DataSets]("https://people.sc.fsu.edu/~jburkardt/datasets/")
 
 
 

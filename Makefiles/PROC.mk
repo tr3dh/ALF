@@ -10,16 +10,19 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I./thirdParty/r3d/include \
 	-pthread
 
+# -lr3d vor lraylib einfügen falls nötig
+# -lbase nach -L...vulkan/build/base einfügen
 LDFLAGS := -L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
-	-L./thirdParty/r3d/build -lr3d -lraylib \
+	-L./thirdParty/r3d/build \
+	-lraylib \
 	-lopengl32 -lgdi32 -lwinmm \
 	-lgmp -lmpfr \
 	-lassimp \
 	-lws2_32 -lmswsock\
 	-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network -lsfml-audio\
 	-L./thirdParty/Vulkan/external/ktx/lib\
-	-L./thirdparty/Vulkan/build/base -lbase\
+	-L./thirdparty/Vulkan/build/base\
 	-lvulkan-1 -lglfw3 -lstdc++fs -lpthread -lgdi32\
 
 SRCDIR := src

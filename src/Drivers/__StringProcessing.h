@@ -43,4 +43,5 @@ namespace string{
     std::vector<std::string> split(const std::string& str, const char& token = ' ');
 
     bool endsWith(const std::string& str, const std::string& seq);
+    bool startsWith(const std::string& str, const std::string& seq);
 }

@@ -45,4 +45,10 @@ namespace string{
         //
         return findLast(str, seq) == str.length() - seq.length();
     }
+
+    bool startsWith(const std::string& str, const std::string& seq){
+
+        //
+        return findFirst(str, seq) == 0;
+    }
 }

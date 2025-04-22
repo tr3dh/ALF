@@ -49,9 +49,9 @@ struct CellData{
 
         //
         quadratureMisesStress.clear();
-        quadratureMisesStress.reserve(4);
+        quadratureMisesStress.reserve(m_prefab.nNodes);
 
-        for(size_t nodeNum = 0; nodeNum < 4; nodeNum++){
+        for(size_t nodeNum = 0; nodeNum < m_prefab.nNodes; nodeNum++){
 
             quadratureMisesStress.emplace_back(
                 std::sqrt(std::pow(quadratureStress[nodeNum](0,0),2) + std::pow(quadratureStress[nodeNum](1,0),2) -

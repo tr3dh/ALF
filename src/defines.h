@@ -42,6 +42,8 @@ namespace fs = std::filesystem;
 
 #define endl LOG_RESET << "\n";
 
+#define dbug(message) LOG << LOG_YELLOW << "__Passed : " << #message << endl;
+
 // Drivers
 #include "Drivers/__Asserts.h"
 #include "Drivers/__StringProcessing.h"
@@ -50,6 +52,7 @@ namespace fs = std::filesystem;
 #include "Drivers/__EigenMatrix.h"
 #include "Drivers/__SFLine.h"
 #include "Drivers/__SFQuad.h"
+#include "Drivers/__sfPolygon.h"
 #include "Drivers/__jsonSerialize.h"
 
 extern Symbol x,y,z;            // globale Koordinaten  

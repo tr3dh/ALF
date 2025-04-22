@@ -61,10 +61,11 @@ r3d:
 	@if [ -d "thirdParty/r3d" ]; then \
 		echo "Info: 'thirdParty/r3d' existiert bereits. Überspringe Build.";\
 	else \
-		cd thirdParty && it clone --recurse-submodules https://github.com/Bigfoot71/r3d; \
-		cd r3d && mkdir -p build; \
-		cmake .. -DCMAKE_BUILD_TYPE=Release; \
-		cmake --build . --config Release; \
+		cd thirdParty && git clone --recurse-submodules https://github.com/Bigfoot71/r3d; \
+		cd r3d; \
+		mkdir build; \
+		cd build; \
+		cmake ..; \
 		cmake --build .; \
 	fi \
 	
@@ -100,12 +101,8 @@ dllCopy:
 	cp /mingw64/bin/libmpfr-6.dll $(COPYTARGET);
 	cp /mingw64/bin/libraylib.dll $(COPYTARGET);
 	cp /mingw64/bin/glfw3.dll $(COPYTARGET);
+	cp /mingw64/bin/vulkan-1.dll $(COPYTARGET);
 	echo "DLLs kopiert nach $(COPYTARGET)";
-
-matplot:
-	cd thirdParty && git clone https://github.com/alandefreitas/matplotplusplus
-	cd thirdParty && cd matplotplusplus && mkdir build
-	cd thirdParty/matplotplusplus/build && cmake .. -G "MinGW Makefiles" && cmake --build .
 
 # Batch-Datei erstellen
 open_vscode.bat:
@@ -164,8 +161,11 @@ prefab:
 
 	$(PACMAN) mingw-w64-x86_64-imagemagick
 	$(PACMAN) mingw-w64-x86_64-raylib
+	@make r3d
 
 	@echo "Installiere Magic Enum..."
 	@make magic_enum
+
+	@make vulkanSamples
 
 	@make symengine

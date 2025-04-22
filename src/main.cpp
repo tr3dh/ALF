@@ -10,15 +10,16 @@ int main(int argc, char** argv)
     LOG << endl;
 
     IsoMesh isomesh;
-    isomesh.loadFromFile("../Meshes/Job-1.inp");
+    isomesh.loadFromFile("../Meshes/2DQuadMesh.inp");
 
     isomesh.createStiffnessMatrix();
+
     isomesh.readBoundaryConditions();
 
     isomesh.solve();
 
     isomesh.calculateStrainAndStress();
-    isomesh.display(MeshData::VANMISES_STRESS, 0, true, true);
+    isomesh.display(MeshData::VANMISES_STRESS, 0, false, false, {-1200,-800},3500);
 
     return 0;
 }

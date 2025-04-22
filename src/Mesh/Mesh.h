@@ -20,8 +20,8 @@ private:
         NONE,
     };
 
-    static constexpr char tokenIndicator = '*';                 // gibt an mit welchem Token die entsprechenden Zeilen beginnen in denen der
-                                                                // folgende Abschnitt definiert wird 
+    static constexpr char tokenIndicator = '*';                                                     // gibt an mit welchem Token die entsprechenden Zeilen beginnen in denen der
+    static constexpr std::string tokenIndicatorString = "*";                                        // folgende Abschnitt definiert wird 
     static constexpr std::string nodeToken = "Node";
     static constexpr std::string cellToken = "Element";
     static constexpr std::string endToken = "End Part";
@@ -98,13 +98,17 @@ public:
                     for(size_t i = 0; i < cellPrefNodes; i++){
                         nodeIndices.emplace_back(0);
                     }
-
                     continue;
                 }
                 else if(string::contains(line, tokenIndicator + endToken)){
     
                     readMode = ReadMode::PASS;
                     break;
+                }
+                else if(string::startsWith(line, tokenIndicatorString)){
+
+                    readMode = ReadMode::IGNORE;
+                    continue;
                 }
             }
 
@@ -125,6 +129,7 @@ public:
                         nDimensions = nodeDimension;
                     }
                     if(!m_Nodes.size()){
+
                         //
                         nodeKoords.clear();
                         nodeKoords.reserve(nDimensions);
@@ -164,7 +169,8 @@ public:
                     string::trimVec(lineSplits, ' ');
                     
                     nodeCount = lineSplits.size() - 1;
-                    ASSERT(nodeCount == cellPrefNodes, "Eigelesenes Element hat ungültige Anzahl an Nodes");
+                    ASSERT(nodeCount == cellPrefNodes, "Eingelesenes Element hat ungültige Anzahl an Nodes, Prefab Nodes : " + std::to_string(cellPrefNodes)
+                        + " übergebene Nodes : " + std::to_string(nodeCount));
 
                     for(const auto& [i, nodeIndex] : std::views::enumerate(lineSplits)){
                         
@@ -618,7 +624,7 @@ public:
         CMatrix = Eigen::MatrixXd(nDimensions + 1, nDimensions + 1);
         subMatrix(SymCMatrix,CMatrix,{});
 
-        Eigen::MatrixXd BMatrix(3,8);
+        Eigen::MatrixXd BMatrix(nDimensions + 1, nDimensions * m_Cells.begin()->second.getPrefab().nNodes);
         float jDet = 0.0f;
 
         //
@@ -655,14 +661,14 @@ public:
     }
 
     void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
-        const int& offset = -200, const int& scaling = 3500){
+        const sf::Vector2i& offset = {-200,-200}, const int& scaling = 3500){
 
         if(nDimensions != 2){
             ASSERT(TRIGGER_ASSERT, "Rendering bislang nur für 2D implementiert");
         }
 
         // Render Window
-        sf::RenderWindow window(sf::VideoMode(1200,800), std::string(magic_enum::enum_name(displayedData)) + " - " + std::to_string(globKoord));
+        sf::RenderWindow window(sf::VideoMode(2400,1400), std::string(magic_enum::enum_name(displayedData)) + " - " + std::to_string(globKoord));
         window.setFramerateLimit(0);
 
         while (window.isOpen()) {
@@ -699,6 +705,9 @@ public:
             sf::Vector2f point1, point2;
 
             float fData = 0.0f, min = 0, max = 0;
+
+            sfPolygon poly;
+            poly.setPointCount(m_Cells.begin()->second.getPrefab().nNodes);
 
             if(displayOnQuadraturePoints){
 
@@ -742,14 +751,14 @@ public:
                 const CellPrefab& r_prefab = cell.getPrefab();
 
                 points.clear();
-                points.reserve(4);
+                points.reserve(r_prefab.nNodes);
                 
                 for(size_t localNodeNum = 0; localNodeNum < r_prefab.nNodes; localNodeNum++){
 
                     // Refs für weniger overhead
                     nodeNum1 = localNodeNum;
                     node1 = (displayOnDeformedMesh ? m_defNodes : m_Nodes)[cell[nodeNum1]];
-                    point1 = {(node1[0] * scaling) - offset, (node1[1] * scaling) - offset};
+                    point1 = {(node1[0] * scaling) - offset.x, (node1[1] * scaling) - offset.y};
                     point1.y = window.getSize().y - point1.y;
 
                     //
@@ -757,9 +766,14 @@ public:
                 }
 
                 if(!displayOnQuadraturePoints){
-                    quad.positionVerticies(points);
-                    quad.colorVerticies(getColorByValue(cell.getCellData().getData(displayedData, globKoord), min, max));
-                    quad.draw(window);
+
+                    poly.setPoints(points);
+                    poly.setFillColor(getColorByValue(cell.getCellData().getData(displayedData, globKoord), min, max));
+                    poly.draw(window);
+
+                    // quad.positionVerticies(points);
+                    // quad.colorVerticies();
+                    // quad.draw(window);
                 }
                 else{
 
@@ -777,7 +791,7 @@ public:
 
                         //
                         subpoints.clear();
-                        subpoints.reserve(4);
+                        subpoints.reserve(r_prefab.nNodes);
 
                         //
                         previousNum = localNodeNum;
@@ -802,18 +816,20 @@ public:
             line.colorVerticies(sf::Color::White);
             for(const auto& [index, cell] : m_Cells){
 
-                for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+                const CellPrefab& r_prefab = cell.getPrefab();
+
+                for(size_t localNodeNum = 0; localNodeNum < r_prefab.nNodes; localNodeNum++){
 
                     // Refs für weniger overhead
                     nodeNum1 = localNodeNum;
-                    nodeNum2 = (localNodeNum == Quad4Cell::s_nNodes - 1) ? 0 : localNodeNum + 1;
+                    nodeNum2 = (localNodeNum == r_prefab.nNodes - 1) ? 0 : localNodeNum + 1;
 
                     node1 = m_Nodes[cell[nodeNum1]];
                     node2 = m_Nodes[cell[nodeNum2]];
 
                     //
-                    point1 = {(node1[0] * scaling) - offset, (node1[1] * scaling) - offset};
-                    point2 = {(node2[0] * scaling) - offset, (node2[1] * scaling) - offset};
+                    point1 = {(node1[0] * scaling) - offset.x, (node1[1] * scaling) - offset.y};
+                    point2 = {(node2[0] * scaling) - offset.x, (node2[1] * scaling) - offset.y};
 
                     point1.y = window.getSize().y - point1.y;
                     point2.y = window.getSize().y - point2.y;
@@ -833,18 +849,20 @@ public:
             line.colorVerticies(sf::Color::Red);
             for(const auto& [index, cell] : m_Cells){
 
-                for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+                const CellPrefab& r_prefab = cell.getPrefab();
+
+                for(size_t localNodeNum = 0; localNodeNum < r_prefab.nNodes; localNodeNum++){
 
                     // Refs für weniger overhead
                     nodeNum1 = localNodeNum;
-                    nodeNum2 = (localNodeNum == Quad4Cell::s_nNodes - 1) ? 0 : localNodeNum + 1;
+                    nodeNum2 = (localNodeNum == r_prefab.nNodes - 1) ? 0 : localNodeNum + 1;
 
                     defnode1 = m_defNodes[cell[nodeNum1]];
                     defnode2 = m_defNodes[cell[nodeNum2]];
 
                     //
-                    point1 = {(defnode1[0] * scaling) - offset, (defnode1[1] * scaling) - offset};
-                    point2 = {(defnode2[0] * scaling) - offset, (defnode2[1] * scaling) - offset};
+                    point1 = {(defnode1[0] * scaling) - offset.x, (defnode1[1] * scaling) - offset.y};
+                    point2 = {(defnode2[0] * scaling) - offset.x, (defnode2[1] * scaling) - offset.y};
 
                     //
                     point1.y = window.getSize().y - point1.y;
