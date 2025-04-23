@@ -45,10 +45,11 @@
 - z.B kann Log für den Debug Mode in die Konsole Schreiben und im Release in einen Logfile
 - Verwendung von endl antstatt std::endl, da für endl (Makro definiert mit \n) nicht jedes mal der Ausgabe buffer geflusht wird 
 
+# Debugging
+- Debug Message für Pass Test über mbug(MessageString_Without_QuatationMarks)
+- Debug Instance mit Werte und Variablennamen ausgabe per ibug(objekt) !! Objekt Logging muss also definiert sein 
+
 # .LINKS
-[LUHCluster]("https://login.cluster.uni-hannover.de/pun/sys/dashboard")
-[PeridicTableOfElements]("https://www-users.cse.umn.edu/~arnold/femtable/")
-[DataSets]("https://people.sc.fsu.edu/~jburkardt/datasets/")
-
-
-
+- [LUHCluster](https://login.cluster.uni-hannover.de/pun/sys/dashboard)
+- [PeridicTableOfElements](https://www-users.cse.umn.edu/~arnold/femtable)
+- [DataSets](https://people.sc.fsu.edu/~jburkardt/datasets)

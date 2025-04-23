@@ -6,6 +6,6 @@
 
 void clearMatrix(SymEngine::DenseMatrix& matrix);
 
-void subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXd& resultMatrix,  const SymEngine::map_basic_basic& subMap, float koeff = 1.0, bool addUp = false);
+bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXd& resultMatrix,  const SymEngine::map_basic_basic& subMap, float koeff = 1.0, bool addUp = false);
 
 void expandMatrix(SymEngine::DenseMatrix& matrix);

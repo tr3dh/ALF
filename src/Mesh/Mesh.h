@@ -3,6 +3,13 @@
 #include "Cell.h"
 #include "Coloration.h"
 
+// Für Vector2 (z.B. sf::Vector2f, sf::Vector2i, ...)
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const sf::Vector2<T>& v) {
+    os << "(" << v.x << ", " << v.y << ")";
+    return os;
+}
+
 class IsoMesh{
 
 public:
@@ -46,7 +53,7 @@ public:
         LOG << LOG_BLUE << "-- Lade Mesh aus file " << path << "" << endl;
 
         // Check ob file existiert und in erforderlichen Format vorhanden ist
-        CRITICAL_ASSERT(fs::exists(fs::path(path)), "Angegebener Pfad für Netzt existiert nicht");
+        CRITICAL_ASSERT(fs::exists(fs::path(path)), "Angegebener Pfad für Netz existiert nicht");
         CRITICAL_ASSERT(string::endsWith(path, "inp"), "Ungültige File Endung, Programm erwartet ein *.inp file");
 
         //
@@ -386,7 +393,14 @@ public:
             for(uint8_t nodeNum = 0; nodeNum < currentCellPrefab.nNodes; nodeNum++){
 
                 //
-                subMatrix(kInt, kCell, currentCellPrefab.quadraturePoints[nodeNum], currentCellPrefab.weights[nodeNum], true);
+                if(!subMatrix(kInt, kCell, currentCellPrefab.quadraturePoints[nodeNum], currentCellPrefab.weights[nodeNum], true)){
+
+                    _ERROR << "Substitution fehlgeschlagen bei Element " << +cellIndex << endl;
+                    _ERROR << " Weigth " << currentCellPrefab.weights[nodeNum];
+
+                    _ERROR << "kInt " << kInt << endl;
+                    return false;
+                }
             }
 
             // Elementsteifigkeits Matrix [kCell] ermittlelt
@@ -702,10 +716,53 @@ public:
 
         float scaling = (scalingVec.x > scalingVec.y) ? scalingVec.y : scalingVec.x;
 
-        sf::Vector2f midOfMesh = {size.x/2, size.y/2};
+        sf::Vector2f midOfMesh = {min.x + size.x/2, min.y + size.y/2};
         sf::Vector2f midOfWin = {winSize.x/2, winSize.y/2};
 
-        sf::Vector2f offset = {-(midOfWin.x - scaling * midOfMesh.x), -(midOfWin.y - scaling * midOfMesh.y)};
+        sf::Vector2f offset = {-(midOfWin.x - scaling * midOfMesh.x), -(midOfWin.y - (scaling * midOfMesh.y))};
+
+        float fData = 0.0f, fmin = 0, fmax = 0;
+
+        if(displayOnQuadraturePoints){
+
+            for(const auto& [cellIndex, cell] : m_Cells){
+
+                const CellData& data = cell.getCellData();
+
+                for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
+
+                    fData = data.getData(displayedData, globKoord, localNodeNum);
+
+                    if(fData < fmin){
+                        fmin = fData;
+                    }
+                    else if(fData > fmax){
+                        fmax = fData;
+                    }
+
+                }
+            }
+        } else {
+
+            CellIndex maxInd,minInd;
+
+            for(const auto& [cellIndex, cell] : m_Cells){
+            
+                const CellData& data = cell.getCellData();
+                fData = data.getData(displayedData, globKoord);
+
+                if(fData < fmin){
+                    fmin = fData;
+                    minInd = cellIndex;
+                }
+                else if(fData > fmax){
+                    fmax = fData;
+                    maxInd = cellIndex;
+                }
+            }
+            LOG << "   maximale Größe : " << fmax << " bei Elem " << maxInd << endl;
+            LOG << "   minimale Größe : " << fmin << " bei Elem " << minInd << endl;
+        }
 
         // mittiger punkt soll mittig im Fenster liegen
         while (window.isOpen()) {
@@ -738,46 +795,8 @@ public:
             NodeIndex previousNum, lastNum, nextNum;
             sf::Vector2f point1, point2;
 
-            float fData = 0.0f, min = 0, max = 0;
-
             sfPolygon poly;
             poly.setPointCount(m_Cells.begin()->second.getPrefab().nNodes);
-
-            if(displayOnQuadraturePoints){
-
-                for(const auto& [cellIndex, cell] : m_Cells){
-
-                    const CellData& data = cell.getCellData();
-
-                    for(size_t localNodeNum = 0; localNodeNum < Quad4Cell::s_nNodes; localNodeNum++){
-
-                        fData = data.getData(displayedData, globKoord, localNodeNum);
-    
-                        if(fData < min){
-                            min = fData;
-                        }
-                        else if(fData > max){
-                            max = fData;
-                        }
-
-                    }
-                }
-            } else {
-
-                for(const auto& [cellIndex, cell] : m_Cells){
-                
-                    const CellData& data = cell.getCellData();
-                    fData = data.getData(displayedData, globKoord);
-    
-                    if(fData < min){
-                        min = fData;
-                    }
-                    else if(fData > max){
-                        max = fData;
-                    }
-    
-                }
-            }
 
             std::vector<sf::Vector2f> points = {}, subpoints = {};
             for(const auto& [index, cell] : m_Cells){
@@ -802,7 +821,7 @@ public:
                 if(!displayOnQuadraturePoints){
 
                     poly.setPoints(points);
-                    poly.setFillColor(getColorByValue(cell.getCellData().getData(displayedData, globKoord), min, max));
+                    poly.setFillColor(getColorByValue(cell.getCellData().getData(displayedData, globKoord), fmin, fmax));
                     poly.draw(window);
 
                     // quad.positionVerticies(points);
@@ -839,7 +858,7 @@ public:
                         subpoints.emplace_back((points[localNodeNum].x + points[lastNum].x)/2, (points[localNodeNum].y + points[lastNum].y)/2);
 
                         quad.positionVerticies(subpoints);
-                        quad.colorVerticies(getColorByValue(cell.getCellData().getData(displayedData, globKoord, localNodeNum), min, max));
+                        quad.colorVerticies(getColorByValue(cell.getCellData().getData(displayedData, globKoord, localNodeNum), fmin, fmax));
                         quad.draw(window);
                     }
                 }

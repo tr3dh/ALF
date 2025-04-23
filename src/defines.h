@@ -42,7 +42,8 @@ namespace fs = std::filesystem;
 
 #define endl LOG_RESET << "\n";
 
-#define dbug(message) LOG << LOG_YELLOW << "__Passed : " << #message << endl;
+#define mbug(message) LOG << LOG_YELLOW << "__Passed : " << #message << endl;
+#define ibug(objekt) LOG << LOG_YELLOW << "__Objekt : " << #objekt << " " << objekt << endl;
 
 // Drivers
 #include "Drivers/__Asserts.h"
