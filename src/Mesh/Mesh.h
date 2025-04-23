@@ -661,16 +661,53 @@ public:
     }
 
     void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
-        const sf::Vector2i& offset = {-200,-200}, const int& scaling = 3500){
+        const sf::Vector2f& padding = {50,50}){
 
         if(nDimensions != 2){
             ASSERT(TRIGGER_ASSERT, "Rendering bislang nur für 2D implementiert");
         }
 
         // Render Window
-        sf::RenderWindow window(sf::VideoMode(2400,1400), std::string(magic_enum::enum_name(displayedData)) + " - " + std::to_string(globKoord));
+        sf::RenderWindow window(sf::VideoMode(1800,1000), std::string(magic_enum::enum_name(displayedData)) + " - " + std::to_string(globKoord));
         window.setFramerateLimit(0);
 
+        // Autofit
+        sf::Vector2f min = {m_Nodes.begin()->second[0], m_Nodes.begin()->second[1]};
+        sf::Vector2f max = min;
+
+        for(const auto& [index, node] : m_Nodes){
+
+            if(node[0] < min.x){min.x = node[0]; }
+            else if(node[0] > max.x){max.x = node[0]; }
+
+            if(node[1] < min.y){min.y = node[1]; }
+            else if(node[1] > max.y){max.y = node[1]; }
+        }
+
+        for(const auto& [index, node] : m_defNodes){
+
+            if(node[0] < min.x){min.x = node[0]; }
+            else if(node[0] > max.x){max.x = node[0]; }
+
+            if(node[1] < min.y){min.y = node[1]; }
+            else if(node[1] > max.y){max.y = node[1]; }
+        }
+
+        sf::Vector2u winSize = window.getSize();
+
+        // erforderliche Größe -> min bis max muss auf größe winsize - 2 * padding kommen (an jedem Rand einmal)
+        sf::Vector2f targetSize = {winSize.x - 2 * padding.x, winSize.y - 2 * padding.y};
+        sf::Vector2f size = {max.x - min.x, max.y - min.y};
+        sf::Vector2f scalingVec = {targetSize.x/size.x, targetSize.y/size.y};
+
+        float scaling = (scalingVec.x > scalingVec.y) ? scalingVec.y : scalingVec.x;
+
+        sf::Vector2f midOfMesh = {size.x/2, size.y/2};
+        sf::Vector2f midOfWin = {winSize.x/2, winSize.y/2};
+
+        sf::Vector2f offset = {-(midOfWin.x - scaling * midOfMesh.x), -(midOfWin.y - scaling * midOfMesh.y)};
+
+        // mittiger punkt soll mittig im Fenster liegen
         while (window.isOpen()) {
 
             sf::Event event;
@@ -684,9 +721,6 @@ public:
 
             window.clear(sf::Color::Black);
 
-            // Rendere Daten
-
-            //
             int rad = 4;
             sf::CircleShape dot(rad);
             dot.setOrigin(rad, rad);

@@ -19,7 +19,7 @@ int main(int argc, char** argv)
     isomesh.solve();
 
     isomesh.calculateStrainAndStress();
-    isomesh.display(MeshData::VANMISES_STRESS, 0, false, false, {-1200,-800},3500);
+    isomesh.display(MeshData::VANMISES_STRESS, 0, true, false, {100,100});
 
     return 0;
 }
