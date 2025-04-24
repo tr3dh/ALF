@@ -1,4 +1,0 @@
-Veraltete Version der Fem in Meshloader/*
-wird innerhalb der nächsten Commits gelöscht
-
-neue Version in Mesh/*

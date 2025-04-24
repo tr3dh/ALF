@@ -1,14 +1,12 @@
-#pragma once
-
-#include "defines.h"
+#include "__Coloration.h"
 
 sf::Color getColorByValue(float val, float min, float max) {
 
-    // Normalisiere den Wert auf [0, 1]
+    // Normalisierung des Werts auf Intervall (0, 1)
     float normalized = (val - min) / (max - min);
     normalized = std::clamp(normalized, 0.0f, 1.0f);
 
-    // Regenbogenfarben HSB/HSV basiert
+    // Regenbogenfarben (HSB/HSV)
     float hue = (1.0f - normalized) * 0.666f; // Blau (0.666) → Rot (0.0)
     sf::Color color = sf::Color::Black;
 
@@ -29,7 +27,7 @@ sf::Color getColorByValue(float val, float min, float max) {
         color.b = 255;
         color.g = static_cast<sf::Uint8>((0.666f - hue) * 6 * 255);
     } else {
-        // Blau (Vollton)
+        // Blau
         color.b = 255;
     }
 

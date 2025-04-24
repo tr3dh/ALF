@@ -4,9 +4,6 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I/mingw64/include \
 	-I./thirdparty/symengine -I./thirdparty/symengine/build \
 	-I./thirdparty/magic_enum/include \
-	-I./thirdParty/Vulkan/external/ktx/include \
-	-I./thirdParty/Vulkan/external/tinygltf \
-	-I./thirdParty/Vulkan/base \
 	-I./thirdParty/r3d/include \
 	-pthread
 
@@ -15,15 +12,11 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 LDFLAGS := -L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
 	-L./thirdParty/r3d/build \
-	-lraylib \
+	-lraylib -lr3d\
 	-lopengl32 -lgdi32 -lwinmm \
 	-lgmp -lmpfr \
-	-lassimp \
-	-lws2_32 -lmswsock\
 	-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network -lsfml-audio\
-	-L./thirdParty/Vulkan/external/ktx/lib\
-	-L./thirdparty/Vulkan/build/base\
-	-lvulkan-1 -lglfw3 -lstdc++fs -lpthread -lgdi32\
+	-lpthread\
 
 SRCDIR := src
 OBJDIR := build
@@ -45,7 +38,7 @@ $(TARGET): $(OBJ)
 	$(CXX) -o $@ $^ Recc/Compilation/proc.res $(LDFLAGS)
 
 proc:
-	@make $(TARGET) -j
+	make $(TARGET)
 
 # Objekt files
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)

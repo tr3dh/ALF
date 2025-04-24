@@ -2,7 +2,12 @@ include Makefiles/Gitconfig.mk
 include Makefiles/PREFAB.mk
 include Makefiles/PROC.mk
 
-all: clean header proc
+build: clean header proc
+
+all:
+	@echo "--- start Clock ---"
+	@time make build -j
+	@echo "-------------------"
 
 exec: $(TARGET)
 	@echo "Wechsel in: $(dir $<)"

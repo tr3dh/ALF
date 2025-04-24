@@ -51,13 +51,19 @@ namespace fs = std::filesystem;
 #include "Drivers/__SymbolicExpressions.h"
 #include "Drivers/__SymEngineMatrix.h"
 #include "Drivers/__EigenMatrix.h"
-#include "Drivers/__SFLine.h"
-#include "Drivers/__SFQuad.h"
+#include "Drivers/__sfLine.h"
 #include "Drivers/__sfPolygon.h"
 #include "Drivers/__jsonSerialize.h"
+#include "Drivers/__Coloration.h"
+#include "Drivers/__sfLog.h"
 
-extern Symbol x,y,z;            // globale Koordinaten  
-extern Symbol r,s,t;            // Koordinaten im isoparametrischen Element
+inline SYMBOL(x);
+inline SYMBOL(y);
+inline SYMBOL(z);
+
+inline SYMBOL(r);
+inline SYMBOL(s);
+inline SYMBOL(t);
 
 const static std::vector<Symbol> g_globalKoords = {x,y,z};
 const static std::vector<Symbol> g_isometricKoords = {r,s,t};

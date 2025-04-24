@@ -7,45 +7,16 @@
 typedef uint8_t prefabIndex;
 
 // Cache für die erstellten Elementvorlagen
-inline std::map<prefabIndex, CellPrefab> g_cellPrefabCache = {};
+extern std::map<prefabIndex, CellPrefab> g_cellPrefabCache;
+
+// counter für die ID Zuweisung für die CellPrefabs
+extern prefabIndex cellPrefabCounter;
+
+// cellPrefab wird eine ID zugewiesen und es wird in der g_cellPrefabCache map gecached
+// dabei bekommt es eine ID zugewiesen unter der es abjetz abrufbar im Cache bereit liegt
+// diese ID wird beim funktionsaufruf zurückgegeben
+// wenn das Prefab bereits im Cache liegt wird die ID zurückgegeben unter der es erreichnar ist (map key)
+NodeIndex cacheCellPrefab(const std::string& prefabLabel);
 
 //
-inline prefabIndex cellPrefabCounter = 0;
-
-//
-inline NodeIndex cacheCellPrefab(const std::string& prefabLabel){
-
-    const std::string prefabPath = "../Recc/Cells/" + prefabLabel + ".ISOPARAM";
-
-    for(const auto& [index, cellPref] : g_cellPrefabCache){
-
-        //
-        if(cellPref.label == prefabLabel){
-
-            ASSERT(TRIGGER_ASSERT, "Prefab mit Label " + prefabLabel + " existiert bereit im Cache");
-            return index;
-        }
-    }
-
-    //
-    g_cellPrefabCache.emplace(cellPrefabCounter, prefabPath);
-
-    //
-    LOG << LOG_GREEN << "** Element " << g_cellPrefabCache[cellPrefabCounter].label << " erfolgreich unter ID " << +cellPrefabCounter << " in CellPrefab Cache geladen" << endl;
-
-    //
-    return cellPrefabCounter++;
-}
-
-//
-inline const CellPrefab& getCachedCellPrefab(const prefabIndex& index){
-
-    //
-    if(!g_cellPrefabCache.contains(index)){
-
-        //
-        ASSERT(TRIGGER_ASSERT, "Cellprefab für angegebenen Index nicht definiert");
-    }
-
-    return g_cellPrefabCache[index];
-}
+const CellPrefab& getCachedCellPrefab(const prefabIndex& index);

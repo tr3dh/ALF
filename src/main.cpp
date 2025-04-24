@@ -1,6 +1,5 @@
 #include "defines.h"
 
-#include "MeshLoader/Meshloader.h"
 #include "Mesh/Mesh.h"
 
 int main(int argc, char** argv)
@@ -10,20 +9,17 @@ int main(int argc, char** argv)
     LOG << endl;
 
     IsoMesh isomesh;
-    isomesh.loadFromFile("../Meshes/2DTriMesh.inp");
+    isomesh.loadFromFile("../Import/2DTriMesh.inp");
 
     if(isomesh.createStiffnessMatrix()){
 
         isomesh.readBoundaryConditions();
 
         isomesh.solve();
-    
         isomesh.calculateStrainAndStress();
+
         isomesh.display(MeshData::VANMISES_STRESS, 0, false, false, {100,100});
     }
 
     return 0;
 }
-
-
-

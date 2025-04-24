@@ -31,6 +31,7 @@ public:
     }
 
 private:
+
     sf::Vertex vertices[4];
     sf::Color color;
 };

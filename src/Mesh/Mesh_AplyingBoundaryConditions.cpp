@@ -1,0 +1,143 @@
+#include "Mesh.h"
+
+struct IsoMesh::Force{
+    uint8_t direction;
+    float amount;
+};
+
+void IsoMesh::applyForces(const std::map<NodeIndex, std::vector<Force>>& externalForces){
+
+    //
+    LOG << "-- Aplying loads ..." << endl;
+
+    // für Konstruktion der sparse Matrix
+    std::vector<Eigen::Triplet<float>> triplets = {};
+
+    m_fSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * nDimensions, 1);
+
+    for(const auto& [index, forces] : externalForces){
+        for(const auto& force : forces){
+
+            CRITICAL_ASSERT(force.direction < nDimensions, "Ungültige Richtungsangebe");
+            LOG << "   Node " << +index << " Force " << force.amount << " N\t\tin direction " << g_globalKoords[force.direction] << endl;
+            triplets.emplace_back((index-nodeNumOffset) * nDimensions + force.direction, 0, force.amount);
+        }
+    }
+
+    LOG << endl;
+
+    m_fSystem.setFromTriplets(triplets.begin(), triplets.end());
+}
+
+void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations){
+
+    //
+    LOG << "-- Aplying node Constraints ..." << endl;
+
+    m_indicesToRemove.clear();
+    m_uSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * nDimensions, 1);
+
+    for(const auto& [index, dirVec] : nodeFixations){
+        for(const auto& direction : dirVec){
+
+            //
+            CRITICAL_ASSERT(direction < nDimensions, "Ungültige Richtungsangebe");
+            LOG << "   Fixing node " << index << "\t\t\tin direction " << g_globalKoords[direction] << endl;
+
+            m_indicesToRemove.emplace_back(nDimensions * (index - nodeNumOffset) + direction);
+        }
+    }
+
+    LOG << endl;
+
+    // Absteigend sortieren
+    std::sort(m_indicesToRemove.begin(), m_indicesToRemove.end(), std::greater<NodeIndex>());
+
+    LOG << "-- Removing indices {";
+    for(const auto& i : m_indicesToRemove){
+        LOG << i << ",";
+    }
+    LOG << "}" << endl;
+    LOG << endl;
+
+    removeSparseRow(m_uSystem, m_indicesToRemove);
+    removeSparseRow(m_fSystem, m_indicesToRemove);
+    removeSparseRowAndCol<NodeIndex>(m_kSystem, m_indicesToRemove);
+
+    CRITICAL_ASSERT(m_fSystem.rows() == m_kSystem.rows() && m_uSystem.rows() == m_kSystem.rows(), "Matritzen Dimensionen von u,f und K stimmen nicht überein");
+}
+
+bool IsoMesh::readBoundaryConditions(const std::string& path){
+        
+    std::string boundaryFilePath = path;
+    if(boundaryFilePath == NULLSTR){
+        boundaryFilePath = meshPath.substr(0, meshPath.find_last_of('.')) + ".fem";
+    }        
+
+    CRITICAL_ASSERT(string::endsWith(boundaryFilePath, ".fem"), "Übergebener Pfad endet auf ungültige File Endung, erwartetes format : *.fem");
+
+    LOG << LOG_BLUE << "-- Reading file : " << boundaryFilePath << endl;
+    LOG << endl;
+
+    // Check ob Pfad existiert
+    CRITICAL_ASSERT(fs::exists(boundaryFilePath), "Angegebener Pfad : '" + boundaryFilePath + "' existiert nicht");
+
+    // Check ob fstream den file ohne Fehler geladen bekommt
+    std::ifstream BoundaryConditionFile(boundaryFilePath);
+    CRITICAL_ASSERT(BoundaryConditionFile, "Fehler beim Laden von '" + path + "'");
+
+    // Check ob nlohmann json den file geparst bekommt
+    nlohmann::json ffData = nlohmann::json::parse(BoundaryConditionFile, nullptr, true, true);
+    
+    //
+    if(!ffData.contains("Constraints") || !ffData["Constraints"].is_array()){
+
+        ASSERT(TRIGGER_ASSERT, "Constraints konnten nicht gelesen werden");
+
+        return false;  
+    }
+
+    std::map<NodeIndex, std::vector<uint8_t>> constraints = {};
+    for(const auto& constraint : ffData["Constraints"]){
+
+        for(const auto& [node, dirs] : constraint.items()){
+
+            constraints.try_emplace(string::convert<NodeIndex>(node), dirs.get<std::vector<uint8_t>>());
+        }
+    }
+
+    //
+    if(!ffData.contains("Loads") || !ffData["Loads"].is_array()){
+
+        ASSERT(TRIGGER_ASSERT, "Loads konnten nicht gelesen werden");
+
+        return false;  
+    }
+
+    std::map<NodeIndex, std::vector<Force>> loads = {};
+    for(const auto& load : ffData["Loads"]){
+
+        for(const auto& [node, forceList] : load.items()){
+
+            const NodeIndex index = string::convert<NodeIndex>(node);
+            loads.try_emplace(index);
+            
+            for(const auto& [_, force] : forceList.items()){
+
+                for(const auto& [dir, amount] : force.items()){
+
+                    const uint8_t direction = string::convert<uint8_t>(dir);
+                    for(const auto& [_,isolatedAmount] : amount.items()){
+                    
+                        loads[index].emplace_back(direction, isolatedAmount.get<float>());
+                    }
+                }
+            }
+        }
+    }
+
+    applyForces(loads);
+    fixNodes(constraints);
+
+    return true;
+}
