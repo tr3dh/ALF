@@ -13,7 +13,7 @@ void IsoMesh::applyForces(const std::map<NodeIndex, std::vector<Force>>& externa
     // für Konstruktion der sparse Matrix
     std::vector<Eigen::Triplet<float>> triplets = {};
 
-    m_fSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * nDimensions, 1);
+    m_fSystem = Eigen::SparseMatrix<float>(m_nodes.size() * nDimensions, 1);
 
     for(const auto& [index, forces] : externalForces){
         for(const auto& force : forces){
@@ -35,7 +35,7 @@ void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixa
     LOG << "-- Aplying node Constraints ..." << endl;
 
     m_indicesToRemove.clear();
-    m_uSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * nDimensions, 1);
+    m_uSystem = Eigen::SparseMatrix<float>(m_nodes.size() * nDimensions, 1);
 
     for(const auto& [index, dirVec] : nodeFixations){
         for(const auto& direction : dirVec){

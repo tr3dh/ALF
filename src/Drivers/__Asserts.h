@@ -38,6 +38,16 @@
         std::terminate(); \
     }
 
+// für
+#define RETURNING_ASSERT(condition, message, returnVal) \
+    ASSERT(condition, message); \
+    if (!(condition)) { \
+        return returnVal; \
+    }
+
+#define RETURNING_VOID_ASSERT(condition, message, returnVal) \
+    RETURNING_ASSERT(condition,message,)
+
 // define dient eigentlich nur dazu, dass der file nicht auf eine durch '\' angehängte Zeile oder '//' endet
 // das führt zu einer Warnung im GCC da Skripte so nicht enden dürfen
 #define ASSERTS_DEFINED

@@ -20,15 +20,9 @@ public:
 
     const CellPrefab& getPrefab() const;
 
-    CellData& getCellData();
-
-    const CellData& getCellData() const;
-
 private:
 
     const prefabIndex m_prefabIndex = 0;
     const CellPrefab& m_cellPrefab;
     const std::vector<NodeIndex> m_nodeIndices = {};
-
-    CellData m_cellData;
 };

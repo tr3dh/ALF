@@ -103,7 +103,7 @@ bool IsoMesh::loadFromFile(const std::string& path){
                     // Dimension für Netz anhand der ersten eigelesenen Node setzen
                     nDimensions = nodeDimension;
                 }
-                if(!m_Nodes.size()){
+                if(!m_nodes.size()){
 
                     //
                     nodeKoords.clear();
@@ -134,7 +134,7 @@ bool IsoMesh::loadFromFile(const std::string& path){
                     nodeKoords[i-1] = string::convert<float>(lineSplits[i]);
                 }
                 
-                m_Nodes.try_emplace(string::convert<NodeIndex>(lineSplits[0]), nDimensions, nodeKoords);
+                m_nodes.try_emplace(string::convert<NodeIndex>(lineSplits[0]), nDimensions, nodeKoords);
 
                 break;
             }
@@ -185,8 +185,16 @@ bool IsoMesh::loadFromFile(const std::string& path){
 
     //
     LOG << endl;
-    LOG << LOG_BLUE << "-- Ladevorgang abgeschlossen, geladen : " << m_Nodes.size() << " Nodes | " << m_Cells.size() << " Elemente" << endl;
+    LOG << LOG_BLUE << "-- Ladevorgang abgeschlossen, geladen : " << m_nodes.size() << " Nodes | " << m_Cells.size() << " Elemente" << endl;
     LOG << endl;
+
+    return true;
+}
+
+bool IsoMesh::loadMaterial(const std::string& path){
+
+    m_material.loadFromFile(path == NULLSTR ?
+        meshPath.substr(0, string::findLast(meshPath, ".")) + Material::fileSuffix : path);
 
     return true;
 }

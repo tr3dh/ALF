@@ -23,37 +23,19 @@ bool IsoMesh::createStiffnessMatrix(){
     SymEngine::DenseMatrix kInt(currentCellPrefab.nNodes * nDimensions, currentCellPrefab.nNodes * nDimensions);
     Eigen::MatrixXd kCell(currentCellPrefab.nNodes * nDimensions, currentCellPrefab.nNodes * nDimensions);
 
-    m_kSystem = Eigen::SparseMatrix<float>(m_Nodes.size() * nDimensions, m_Nodes.size() * nDimensions);
+    m_kSystem = Eigen::SparseMatrix<float>(m_nodes.size() * nDimensions, m_nodes.size() * nDimensions);
 
     // Entspricht numerischesLimit vom unsignedInt der für als NodeIndex definiert worden ist -1
     // für uint16_t : 65535 -> Wert der sicher nie in den Nodeindices vorkommt und wenn doch muss
     // Nodeindex dann über einen größeren uint definiert werden
     NodeIndex globalNodeNum_Row = -1, globalNodeNum_Col = -1;
     
-    //
-    Expression thickness = toExpression(0.1);
-    Expression ElastModule = toExpression(20000);
-    Expression Poission = toExpression(0.2); 
-    Expression stiffnessCoeff = ElastModule/(1-Poission*Poission);
-    Expression One = toExpression(1);
-    Expression Null = toExpression(0);
+    // Material erstellt mit geladenen Materialparametern E,v,t den Elastizitätstensor E
+    m_material.createElasticityTensor(SymCMatrix, nDimensions);
 
-    ASSERT(nDimensions == 2, "für " << std::to_string(nDimensions) << " dimensionales Netz nicht implementiert");
-
-    SymCMatrix = SymEngine::DenseMatrix(nDimensions + 1, nDimensions + 1,
-                {One, Poission, Null,
-                 Poission, One, Null,
-                 Null, Null, (1-Poission)/2});
-
-    SymCMatrix.mul_scalar(stiffnessCoeff, SymCMatrix);
-
-    // die Ableitungen der ShapeFunktionen hier nochmal in anderer Form abspeichern
-    // in der Berechnung für die Einträge der B Matitzen müssen jedes mal
-    // [dN1Dr dN1ds], [dN2Dr dN2ds], ... mit der Invertierte Jacoby multipliziert werden
-    // um nicht jedes Mal (pro Element) die gleichen 4 Matritzen mit Zugriffen in das Array
-    // und herauskopieren der Expression in eine neue 2 * 2 Matrix erstellen zu müssen
-    // wird das hier vorab erledig
-    // -> evtl SpeicherStruktur im Element (hier Quad4Cell) direkt auf diese Form anpassen
+    // Hier werden die Multiplikationen der Ansatzfunktionsableitungen (liegen in Prefab vor als SymengineMatrix)
+    // und der Jacoby Inversen zwischengespeichert für die einzelnen Elementnodes
+    // also shapeFDerivsForGlobKoords[localNode] = jInv @ shapeFDerivsForGlobKoords[locNode]
     std::vector<SymEngine::DenseMatrix> shapeFDerivsForGlobKoords = {};
 
     // für Konstruktion der sparse Matrix
@@ -91,7 +73,7 @@ bool IsoMesh::createStiffnessMatrix(){
 
                     // entspricht Jacoby[global, local] += shapeFunktion * globKoord
                     sum = sum + currentCellPrefab.shapeFunctionDerivatives[locNode].get(0,locKoord) *\
-                                    m_Nodes[cell[locNode]][globKoord];
+                                    m_nodes[cell[locNode]][globKoord];
                 } 
 
                 Jacoby.set(globKoord, locKoord, sum);
@@ -151,7 +133,7 @@ bool IsoMesh::createStiffnessMatrix(){
         // entspricht kInt = B'*C*B*jDet*t
         BMatrixT.mul_matrix(SymCMatrix,BMatrixT);
         BMatrixT.mul_matrix(BMatrix, kInt);
-        kInt.mul_scalar(jDet*thickness, kInt);
+        kInt.mul_scalar(jDet*m_material.t, kInt);
 
         // aufsummieren der KMatritzen Einträge für die verschiedenen Integrationspunkte
 
@@ -183,7 +165,7 @@ bool IsoMesh::createStiffnessMatrix(){
         //                                                                                          // erwartete Schreibzugriffe auf triplets Vektor (-> in glob KMatrix) :
         triplets.reserve((std::pow(currentCellPrefab.nNodes*nDimensions, 2)/2                       // + hälfte aller Einträge aus der Elementsteifigkeitsmatrix  
                             + currentCellPrefab.nNodes*nDimensions/2)                               // + hälfte der Diagonalelemente -> alle Einträge aus der oberen Dreiecksmatrix
-                            * m_Nodes.size());                                                      // * anzahl elemente 
+                            * m_nodes.size());                                                      // * anzahl elemente 
         //
         for(nodeNum_Row = 0; nodeNum_Row < currentCellPrefab.nNodes; nodeNum_Row++){
 

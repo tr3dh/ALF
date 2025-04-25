@@ -88,6 +88,10 @@ struct dynNodeXd {
         return os;
     }
 
+    size_t getDimension() const{
+        return m_dimension;
+    }
+
 private:
     size_t m_dimension = 0;
     std::vector<T> m_Coordinates = {};

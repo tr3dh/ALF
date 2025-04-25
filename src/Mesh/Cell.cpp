@@ -1,10 +1,9 @@
 #include "Cell.h"
 
-Cell::Cell() : m_cellPrefab(CellPrefab::nullRef), m_cellData(m_cellPrefab){};
+Cell::Cell() : m_cellPrefab(CellPrefab::nullRef){};
 
 Cell::Cell(const prefabIndex& prefIndex, const std::vector<NodeIndex>& nodeIndices) :
-    m_prefabIndex(prefIndex), m_nodeIndices(nodeIndices), m_cellPrefab(getCachedCellPrefab(prefIndex)),
-    m_cellData(m_cellPrefab){
+    m_prefabIndex(prefIndex), m_nodeIndices(nodeIndices), m_cellPrefab(getCachedCellPrefab(prefIndex)){
 
     //
     ASSERT(m_nodeIndices.size() == m_cellPrefab.nNodes, "Ungültige Anzahl an Nodes übergeben, " +
@@ -36,12 +35,4 @@ prefabIndex Cell::getPrefabIndex() const{
 
 const CellPrefab& Cell::getPrefab() const{
     return m_cellPrefab;
-}
-
-CellData& Cell::getCellData(){
-    return m_cellData;
-}
-
-const CellData& Cell::getCellData() const{
-    return m_cellData;
 }

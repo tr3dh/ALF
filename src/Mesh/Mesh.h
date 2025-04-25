@@ -1,6 +1,12 @@
 #pragma once
 
 #include "Cell.h"
+#include "Material.h"
+
+typedef std::map<NodeIndex, dynNodeXd<float>> NodeSet;
+typedef std::unordered_map<CellIndex, CellData> DataSet;
+
+void acvanceDataSet(const DataSet& source, DataSet& target, const Coeffs& coeffs);
 
 class IsoMesh{
 
@@ -12,6 +18,8 @@ private:
 
     enum class ReadMode : uint8_t;
 
+    struct Force;
+
     static const char tokenIndicator;                                                     // gibt an mit welchem Token die entsprechenden Zeilen beginnen in denen der
     static const std::string tokenIndicatorString;                                        // folgende Abschnitt definiert wird 
     static const std::string nodeToken;
@@ -22,17 +30,14 @@ private:
 
     size_t nDimensions = 0;
     size_t nodeNumOffset = 0;
-    std::map<NodeIndex, dynNodeXd<float>> m_Nodes = {}, m_defNodes = {};
+    NodeSet m_nodes = {}, m_defNodes = {};
+    DataSet m_cellData;
     std::map<CellIndex, Cell> m_Cells = {};
 
     std::vector<uint8_t> isoKoords = {};
     std::vector<uint8_t> globKoords = {};
 
     Eigen::SparseMatrix<float> m_kSystem, m_uSystem, m_fSystem;
-
-public:
-
-    bool loadFromFile(const std::string& path);
 
     //
     SymEngine::DenseMatrix SymCMatrix;
@@ -42,22 +47,34 @@ public:
     std::map<NodeIndex, Expression>  m_cachedJDets = {};
     std::map<NodeIndex, SymEngine::DenseMatrix> m_cachedBMats = {};
 
-    bool createStiffnessMatrix();
+    std::vector<NodeIndex> m_indicesToRemove = {};
 
-    struct Force;
+    Material m_material;
+
+public:
+
+    bool loadFromFile(const std::string& path);
+
+    bool loadMaterial(const std::string& path = NULLSTR);
+
+    bool createStiffnessMatrix();
 
     void applyForces(const std::map<NodeIndex, std::vector<Force>>& externalForces);
 
-    std::vector<NodeIndex> m_indicesToRemove = {};
     void fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations);
 
     bool readBoundaryConditions(const std::string& path = NULLSTR);
 
+    static void displaceNodes(NodeSet& nodes, const Eigen::SparseMatrix<float>& displacement, size_t nodeNumOffset);
     void solve();
 
-    //
     void calculateStrainAndStress();
 
     void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
         const sf::Vector2f& padding = {50,50});
+
+    const NodeSet& getUndeformedNodes() const;
+    const NodeSet& getDeformedNodes() const;
+    const DataSet& getCellData() const;
+    const Eigen::SparseMatrix<float>& getDisplacement() const;
 };

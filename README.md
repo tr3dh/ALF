@@ -52,4 +52,4 @@
 # .LINKS
 - [LUHCluster](https://login.cluster.uni-hannover.de/pun/sys/dashboard)
 - [PeridicTableOfElements](https://www-users.cse.umn.edu/~arnold/femtable)
-- [DataSets](https://people.sc.fsu.edu/~jburkardt/datasets)
+- [DataSets](https://people.sc.fsu.edu/~jburkardt/DataSets)

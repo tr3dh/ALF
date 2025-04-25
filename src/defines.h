@@ -10,6 +10,7 @@
 #include <fstream>
 #include <ranges>
 #include <array>
+#include <tuple>
 
 namespace fs = std::filesystem;
 

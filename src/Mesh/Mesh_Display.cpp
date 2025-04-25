@@ -19,10 +19,10 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, bool 
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
 
     // Autofit
-    sf::Vector2f min = {m_Nodes.begin()->second[0], m_Nodes.begin()->second[1]};
+    sf::Vector2f min = {m_nodes.begin()->second[0], m_nodes.begin()->second[1]};
     sf::Vector2f max = min;
 
-    for(const auto& [index, node] : m_Nodes){
+    for(const auto& [index, node] : m_nodes){
 
         if(node[0] < min.x){min.x = node[0]; }
         else if(node[0] > max.x){max.x = node[0]; }
@@ -60,7 +60,7 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, bool 
 
         for(const auto& [cellIndex, cell] : m_Cells){
 
-            const CellData& data = cell.getCellData();
+            const CellData& data = m_cellData.at(cellIndex);
 
             for(size_t localNodeNum = 0; localNodeNum < cell.getPrefab().nNodes; localNodeNum++){
 
@@ -81,7 +81,7 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, bool 
 
         for(const auto& [cellIndex, cell] : m_Cells){
         
-            const CellData& data = cell.getCellData();
+            const CellData& data = m_cellData.at(cellIndex);
             fData = data.getData(displayedData, globKoord);
 
             if(fData < fmin){
@@ -95,6 +95,7 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, bool 
         }
         LOG << "   maximaler " << magic_enum::enum_name(displayedData) << " : " << fmax << " bei Elem " << maxInd << endl;
         LOG << "   minimaler " << magic_enum::enum_name(displayedData) << " : " << fmin << " bei Elem " << minInd << endl;
+        LOG << endl;
     }
 
     // mittiger punkt soll mittig im Fenster liegen
@@ -143,7 +144,7 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, bool 
 
                 // Refs für weniger overhead
                 nodeNum1 = localNodeNum;
-                node1 = (displayOnDeformedMesh ? m_defNodes : m_Nodes)[cell[nodeNum1]];
+                node1 = (displayOnDeformedMesh ? m_defNodes : m_nodes)[cell[nodeNum1]];
                 point1 = {(node1[0] * scaling) - offset.x, (node1[1] * scaling) - offset.y};
                 point1.y = window.getSize().y - point1.y;
 
@@ -154,7 +155,7 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, bool 
             if(!displayOnQuadraturePoints){
 
                 poly.setPoints(points);
-                poly.setFillColor(getColorByValue(cell.getCellData().getData(displayedData, globKoord), fmin, fmax));
+                poly.setFillColor(getColorByValue(m_cellData.at(index).getData(displayedData, globKoord), fmin, fmax));
                 poly.draw(window);
 
                 // quad.positionVerticies(points);
@@ -210,8 +211,8 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, bool 
                 nodeNum1 = localNodeNum;
                 nodeNum2 = (localNodeNum == r_prefab.nNodes - 1) ? 0 : localNodeNum + 1;
 
-                node1 = m_Nodes[cell[nodeNum1]];
-                node2 = m_Nodes[cell[nodeNum2]];
+                node1 = m_nodes[cell[nodeNum1]];
+                node2 = m_nodes[cell[nodeNum2]];
 
                 //
                 point1 = {(node1[0] * scaling) - offset.x, (node1[1] * scaling) - offset.y};

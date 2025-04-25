@@ -1,5 +1,23 @@
 #include "Mesh.h"
 
+void IsoMesh::displaceNodes(NodeSet& nodes, const Eigen::SparseMatrix<float>& displacement, size_t nodeNumOffset){
+
+    // size gibt hier rows * cols zurück
+    size_t dimension = nodes.begin()->second.getDimension();
+    if((size_t)displacement.size() != dimension * nodes.size()){
+        
+        ASSERT(TRIGGER_ASSERT, "übergebene Nodes und Displacement sind inkompatibel");
+        return;
+    }
+
+    for(const auto& [index, node] : nodes){
+
+        for(size_t coord = 0; coord < dimension; coord++){
+            nodes[index][coord] += displacement.coeff((index-nodeNumOffset) * dimension + coord,0);
+        }
+    }
+}
+
 void IsoMesh::solve(){
 
     // cholesky solver für dünnbestze/positiv semi definite Matritzen
@@ -11,19 +29,14 @@ void IsoMesh::solve(){
     std::sort(m_indicesToRemove.begin(), m_indicesToRemove.end());
     addSparseRow(m_uSystem, m_indicesToRemove);
 
-    m_defNodes = m_Nodes;
-    for(const auto& [index, node] : m_Nodes){
-
-        for(const auto& coord : isoKoords){
-            m_defNodes[index][coord] += m_uSystem.coeff((index-nodeNumOffset) * nDimensions + coord,0);
-        }
-    }
+    m_defNodes = m_nodes;
+    displaceNodes(m_defNodes, m_uSystem, nodeNumOffset);
 }
 
 //
 void IsoMesh::calculateStrainAndStress(){
 
-    LOG << LOG_BLUE << "-- Calculate Strain and Stress" << endl;
+    LOG << "-- Calculate Strain and Stress" << endl;
 
     CMatrix = Eigen::MatrixXd(nDimensions + 1, nDimensions + 1);
     subMatrix(SymCMatrix,CMatrix,{});
@@ -32,10 +45,15 @@ void IsoMesh::calculateStrainAndStress(){
     float jDet = 0.0f;
 
     //
+    m_cellData.reserve(m_Cells.size());
+
+    //
     int nodeNum = 0;
     for(const auto& [cellIndex, cell] : m_Cells){
 
-        CellData& r_cellData = m_Cells[cellIndex].getCellData();
+        m_cellData.try_emplace(cellIndex, cell.getPrefab());
+
+        CellData& r_cellData = m_cellData.at(cellIndex);
         const CellPrefab& r_prefab = m_Cells[cellIndex].getPrefab();
 
         // 1, 2, 3, 4, ...

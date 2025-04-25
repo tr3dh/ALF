@@ -3,10 +3,14 @@
 // Sym includes
 #include <symengine/expression.h>
 #include <symengine/symbol.h>
-#include <symengine/expression.h>
 #include <symengine/parser.h>
-#include <symengine/symbol.h>
 #include <symengine/symengine_rcp.h>
+#include <symengine/basic.h>
+#include <symengine/functions.h>
+#include <symengine/sets.h>
+#include <symengine/solve.h>
+#include <set>
+#include <iostream>
 
 typedef SymEngine::RCP<const SymEngine::Symbol> Symbol;
 typedef SymEngine::RCP<const SymEngine::Basic> Expression;
@@ -130,4 +134,5 @@ inline Expression pow(const Expression& a, const T& b) {
 }
 
 #define SYMBOL(prefix) Symbol prefix = SymEngine::symbol(#prefix)
-#define NULL_EXPR SymEngine::integer(0);
+#define NULL_EXPR toExpression(0)
+#define ONE_EXPR toExpression(1)
