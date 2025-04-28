@@ -30,7 +30,7 @@ bool IsoMesh::createStiffnessMatrix(){
     // Nodeindex dann über einen größeren uint definiert werden
     NodeIndex globalNodeNum_Row = -1, globalNodeNum_Col = -1;
     
-    // Material erstellt mit geladenen Materialparametern E,v,t den Elastizitätstensor E
+    // IsoMeshMaterial erstellt mit geladenen IsoMeshMaterialparametern E,v,t den Elastizitätstensor E
     m_material.createElasticityTensor(SymCMatrix, nDimensions);
 
     // Hier werden die Multiplikationen der Ansatzfunktionsableitungen (liegen in Prefab vor als SymengineMatrix)

@@ -2,12 +2,12 @@
 
 #include "defines.h"
 
-struct Material{
+struct IsoMeshMaterial{
 
     const static std::string fileSuffix;
 
     //
-    Material() = default;
+    IsoMeshMaterial() = default;
 
     bool loadFromFile(const std::string& path = NULLSTR);
 

@@ -49,13 +49,13 @@ private:
 
     std::vector<NodeIndex> m_indicesToRemove = {};
 
-    Material m_material;
+    IsoMeshMaterial m_material;
 
 public:
 
     bool loadFromFile(const std::string& path);
 
-    bool loadMaterial(const std::string& path = NULLSTR);
+    bool loadIsoMeshMaterial(const std::string& path = NULLSTR);
 
     bool createStiffnessMatrix();
 

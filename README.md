@@ -49,6 +49,13 @@
 - Debug Message für Pass Test über mbug(MessageString_Without_QuatationMarks)
 - Debug Instance mit Werte und Variablennamen ausgabe per ibug(objekt) !! Objekt Logging muss also definiert sein 
 
+# Pfadangaben
+- der makefile setzt vor ausführung innerhalb des 'exec' Befehls das cwd auf das Elternverzeichnis der executable
+- das liegt daran das bei Ausführung über 'make exec' ohne den cwd Wechsel sich dieses in einem anderen Verzeichnis befindeen würde (Projektverzeichnis)
+- Damit würden die Pfadangaben, die gemacht werden müssten inkonsistet sein (bspl Recc/... für 'make exec' ../Recc für ececutable)
+- Um diese Probleme der abweichenden Pfadangaben zu umgehen befindet sich das cwd auch für exec im Elternverzeichnis der executable (build/*)
+- Pfadangaben die relativ zum Projektverzeichnis sind (z.b src/main.cpp) müssen also angepasst werden (folglich ../src/main.cpp)
+
 # .LINKS
 - [LUHCluster](https://login.cluster.uni-hannover.de/pun/sys/dashboard)
 - [PeridicTableOfElements](https://www-users.cse.umn.edu/~arnold/femtable)

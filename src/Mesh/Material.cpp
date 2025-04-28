@@ -1,8 +1,8 @@
 #include "Material.h"
 
-const std::string Material::fileSuffix = ".mat";
+const std::string IsoMeshMaterial::fileSuffix = ".mat";
 
-bool Material::loadFromFile(const std::string& path){
+bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
     RETURNING_ASSERT(string::endsWith(path, fileSuffix), "Invalide Dateiendung beim Laden eines Materials aus " + path, false);
     RETURNING_ASSERT(fs::exists(path), path + "existiert nicht", false);
@@ -30,7 +30,7 @@ bool Material::loadFromFile(const std::string& path){
     return true;
 }
 
-void Material::createElasticityTensor(SymEngine::DenseMatrix& target, const size_t& dimension){
+void IsoMeshMaterial::createElasticityTensor(SymEngine::DenseMatrix& target, const size_t& dimension){
 
     RETURNING_ASSERT(dimension == 2, "Erstellung des Elastizitätstensors bislang nur für 2D implementiert",);
 

@@ -27,6 +27,20 @@ namespace fs = std::filesystem;
 #include <SFML/Graphics.hpp>
 
 //
+#include <raylib.h>
+#include <raymath.h>
+#include <r3d.h>
+
+#include <rlImGui/rlImGui.h>
+
+#include <imgui/imgui.h>
+
+// aufgrund von Konflikten mit der WinAPI
+#define NOGDI
+#define NOUSER
+#include <imgui-filebrowser/imfilebrowser.h>
+
+//
 #if defined(LOG) | defined(_ERROR)
 #error "Logging Direktiven können nicht definiert werden, Makros bereits deklariert"
 #endif
@@ -47,16 +61,22 @@ namespace fs = std::filesystem;
 #define ibug(objekt) LOG << LOG_YELLOW << "__Objekt : " << #objekt << " " << objekt << endl;
 
 // Drivers
-#include "Drivers/__Asserts.h"
-#include "Drivers/__StringProcessing.h"
-#include "Drivers/__SymbolicExpressions.h"
-#include "Drivers/__SymEngineMatrix.h"
-#include "Drivers/__EigenMatrix.h"
-#include "Drivers/__sfLine.h"
-#include "Drivers/__sfPolygon.h"
-#include "Drivers/__jsonSerialize.h"
-#include "Drivers/__Coloration.h"
-#include "Drivers/__sfLog.h"
+#include "Drivers/ReccHandling/__Asserts.h"
+#include "Drivers/ReccHandling/__StringProcessing.h"
+#include "Drivers/ReccHandling/__jsonSerialize.h"
+#include "Drivers/ReccHandling/__lineCounter.h"
+
+#include "Drivers/Calculations/__SymbolicExpressions.h"
+#include "Drivers/Calculations/__SymEngineMatrix.h"
+#include "Drivers/Calculations/__EigenMatrix.h"
+
+#include "Drivers/SFML/__sfLine.h"
+#include "Drivers/SFML/__sfPolygon.h"
+#include "Drivers/SFML/__sfLog.h"
+
+#include "Drivers/Visualisation/__Coloration.h"
+
+#include "Drivers/UI/__fileBrowser.h"
 
 inline SYMBOL(x);
 inline SYMBOL(y);

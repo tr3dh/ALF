@@ -140,5 +140,5 @@
         "<C-z>": false,
         "<C-y>": false,
 },
-"cmake.sourceDirectory": "X:/Studienarbeit/Studienarbeit/thirdParty/symengine"
+"cmake.sourceDirectory": "C:/Uni/StudienarbeitIKM/SourceCode/FEMProc/thirdParty/magic_enum"
 }

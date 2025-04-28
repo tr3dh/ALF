@@ -1,18 +1,24 @@
 CXX := g++
 CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I./src \
+	-I./thirdParty \
 	-I/mingw64/include \
 	-I./thirdparty/symengine -I./thirdparty/symengine/build \
 	-I./thirdparty/magic_enum/include \
 	-I./thirdParty/r3d/include \
+	-I./thirdParty/imgui \
+	-I./thirdParty/raylibImgui \
+	-I./thirdParty/imgui-filebrowser \
 	-pthread
 
 # -lr3d vor lraylib einfügen falls nötig
 # -lbase nach -L...vulkan/build/base einfügen
 LDFLAGS := -L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
+	-L./thirdParty/rlImGui/bin -lrlimgui \
+	-L./thirdParty/imgui/bin -limgui \
 	-L./thirdParty/r3d/build \
-	-lraylib -lr3d\
+	-lr3d -lraylib \
 	-lopengl32 -lgdi32 -lwinmm \
 	-lgmp -lmpfr \
 	-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network -lsfml-audio\

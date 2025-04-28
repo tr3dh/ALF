@@ -55,6 +55,76 @@ symengine:
 		ninja; \
 	fi
 
+raylibCpp:
+	@if [ -d "thirdParty/raylib-cpp" ]; then \
+		echo "Info: 'thirdParty/raylib' existiert bereits. Überspringe Build."; \
+	else \
+		cd thirdParty && git clone https://github.com/RobLoach/raylib-cpp.git; \
+	fi
+
+# Quell- und Objektdateien
+RLIMGUI_DIR = thirdParty/rlImgui
+RLIMGUI_SRC = $(wildcard $(RLIMGUI_DIR)/*.cpp)
+RLIMGUI_OBJ = $(patsubst $(RLIMGUI_DIR)/%.cpp,thirdParty/rlImgui/bin/%.o,$(RLIMGUI_SRC))
+
+# ImGui Kompilieren
+thirdParty/rlImgui/bin%.o: $(RLIMGUI_DIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< -I./thirdParty/imgui
+
+librlimgui: $(RLIMGUI_OBJ)
+	ar rcs thirdParty/rlImgui/bin/librlimgui.a $^
+
+raylibImgui:
+	@if [ -d "thirdParty/rlImGui" ]; then \
+		echo "Info: 'thirdParty/rlImGui' existiert bereits. Überspringe Build."; \
+	else \
+		cd thirdParty && git clone https://github.com/raylib-extras/rlImGui.git; \
+	fi
+
+	@if [ -d "thirdParty/rlImGui/bin" ]; then \
+		echo "Info: 'thirdParty/rlImGui/bin' existiert bereits. Überspringe Build."; \
+	else \
+		cd thirdParty && cd rlImgui && mkdir bin; \
+		cd ../../; \
+		make librlimgui; \
+	fi
+
+# Quell- und Objektdateien
+IMGUI_DIR = thirdParty/imgui
+IMGUI_SRC = $(wildcard $(IMGUI_DIR)/*.cpp)
+IMGUI_OBJ = $(patsubst $(IMGUI_DIR)/%.cpp,thirdParty/imgui/bin/%.o,$(IMGUI_SRC))
+
+# ImGui Kompilieren
+thirdParty/imgui/bin%.o: $(IMGUI_DIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $<
+
+libimgui: $(IMGUI_OBJ)
+	ar rcs thirdParty/imgui/bin/libimgui.a $^
+
+imgui:
+	@if [ -d "thirdParty/imGui" ]; then \
+		echo "Info: 'thirdParty/imGui' existiert bereits. Überspringe Build."; \
+	else \
+		cd thirdParty && git clone https://github.com/ocornut/imgui.git; \
+	fi
+
+	@if [ -d "thirdParty/imGui/bin" ]; then \
+		echo "Info: 'thirdParty/imGui/bin' existiert bereits. Überspringe Build."; \
+	else \
+		cd thirdParty && cd imgui && mkdir bin; \
+		cd ../../; \
+		make libimgui; \
+	fi
+
+filebrowser:
+	@if [ -d "thirdParty/imgui-filebrowser" ]; then \
+		echo "Info: 'thirdParty/imgui-filebrowser' existiert bereits. Überspringe Build."; \
+	else \
+		cd thirdParty && git clone https://github.com/AirGuanZ/imgui-filebrowser.git; \
+	fi
+
 # bislang habe ich die symengine nur mit ninja gebaut bekommen
 # deshalb ist auc die installation erforderlich
 r3d:
@@ -103,14 +173,6 @@ dllCopy:
 	cp /mingw64/bin/glfw3.dll $(COPYTARGET);
 	cp /mingw64/bin/vulkan-1.dll $(COPYTARGET);
 	echo "DLLs kopiert nach $(COPYTARGET)";
-
-# Batch-Datei erstellen
-open_vscode.bat:
-	@echo @echo off > open_vscode.bat
-	@echo code . >> open_vscode.bat
-	@echo exit >> open_vscode.bat
-
-batchOpen: open_vscode.bat
 
 prefab:
 
@@ -162,10 +224,13 @@ prefab:
 	$(PACMAN) mingw-w64-x86_64-imagemagick
 	$(PACMAN) mingw-w64-x86_64-raylib
 	@make r3d
+	@make raylibCpp
 
 	@echo "Installiere Magic Enum..."
 	@make magic_enum
 
-	@make vulkanSamples
-
 	@make symengine
+
+	@make imgui
+	@make filebrowser
+	@make raylibImgui

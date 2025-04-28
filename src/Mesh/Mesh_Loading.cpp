@@ -10,7 +10,7 @@ enum class IsoMesh::ReadMode : uint8_t{
 
     NODES,                      // Nodes einlesen
     CELLS,                      // Elemente einlesen
-    IGNORE,                     // Übergehe aktuelle Sektion
+    SUPPRESS,                   // Übergehe aktuelle Sektion
     PASS,                       // Lesevorgang bzw. Zeilenweise Auswertung wird abgebrochen
     NONE,                       // Default wert
 };
@@ -82,7 +82,7 @@ bool IsoMesh::loadFromFile(const std::string& path){
             }
             else if(string::startsWith(line, tokenIndicatorString)){
 
-                readMode = ReadMode::IGNORE;
+                readMode = ReadMode::SUPPRESS;
                 continue;
             }
         }
@@ -191,10 +191,10 @@ bool IsoMesh::loadFromFile(const std::string& path){
     return true;
 }
 
-bool IsoMesh::loadMaterial(const std::string& path){
+bool IsoMesh::loadIsoMeshMaterial(const std::string& path){
 
     m_material.loadFromFile(path == NULLSTR ?
-        meshPath.substr(0, string::findLast(meshPath, ".")) + Material::fileSuffix : path);
+        meshPath.substr(0, string::findLast(meshPath, ".")) + IsoMeshMaterial::fileSuffix : path);
 
     return true;
 }
