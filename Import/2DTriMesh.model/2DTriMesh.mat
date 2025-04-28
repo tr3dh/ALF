@@ -1,0 +1,12 @@
+{
+    "E" : 20000,
+    "v" : 0.2,
+    "t" : 0.1,
+    "pdf" : {
+        "function" : "-xi**2-xi+offset*a",
+        "params" : {
+            "offset" : 1,
+            "a" : 4
+        }
+    }
+}

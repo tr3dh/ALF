@@ -3,8 +3,8 @@
 Für die Unsicherheitsberechnung wird weiterhin lineares Materialverhalten (Hooksches Gesetz) angenommen mit :
 
 $$
-\underline{K} \cdot \vec{u} = \vec{f} \mid \,
-\underline{K} = \int_{\Omega} \underline{\mathbb{B}}^T \, \underline{\mathbb{E}} \, \, \underline{\mathbb{B}}^T d\Omega
+\underline{K} \cdot \vec{u} = \vec{f} \mid 
+\underline{K} = \int_{\Omega} \underline{\mathbb{B}}^T  \underline{\mathbb{E}}   \underline{\mathbb{B}}^T d\Omega
 $$
 
 $\underline{\mathbb{E}}$ ist dabei eine Funktion mehrerer Materialparameter.
@@ -23,14 +23,14 @@ Im Folgenden wird eine stochastische Verteilung $\xi$ angenommen.
 Eine mögliche Verteilungsfunktion ist die Normal Verteilung.
 
 $$
-p(\xi) = \frac{1}{\sqrt{2\pi}\,\sigma}\exp\left(-\frac{(\xi-\mu)^2}{2\sigma^2}\right)
+p(\xi) = \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\xi-\mu)^2}{2\sigma^2}\right)
 $$
 
 Dabei sind $\mu$ und $\sigma$ Erwartungswert und Standardverteilung. Die Funktion gibt die Wahrscheinlichkeitsdichte an der Stelle $\xi$ an.
 Die Wahrscheinlichkeit dafür, dass ein Wert zwischen den Stellen $a$ und $b$ liegt ist damit
 
 $$
-P(a \leq \xi \leq b) = \int_a^b p(\xi)\,d\xi
+P(a \leq \xi \leq b) = \int_a^b p(\xi)d\xi
 $$
 
 Im folgenden wird der Elastizitätstensor $\underline{\mathbb{E}}$ als stochastisch verteilt angenommen. Diese Verteilung wird mit der Verteilungsfunktion $p = p(\xi)$ beschrieben. Dabei ist $\xi$ die Zufallsvariable mit dem Erwartungswert $0$. Die verteilte Größe $\underline{\mathbb{E}}$ kann damit beschrieben werden als $\underline{\mathbb{E}}(\xi) = \underline{\mathbb{E}}_0 \cdot (1+\xi)$ mit $\underline{\mathbb{E}}_0 = \underline{\mathbb{E}}(E,\nu)$
@@ -38,13 +38,13 @@ Im folgenden wird der Elastizitätstensor $\underline{\mathbb{E}}$ als stochasti
 Damit ergibt sich die Steifigkeitsmatrix des Systems als
 
 $$
-\underline{K} = \underline{K}(\xi) = \int_{\Omega} \underline{\mathbb{B}}^T \, \underline{\mathbb{E}}_0 \cdot (1+\xi) \, \, \underline{\mathbb{B}}^T d\Omega
+\underline{K} = \underline{K}(\xi) = \int_{\Omega} \underline{\mathbb{B}}^T  \underline{\mathbb{E}}_0 \cdot (1+\xi)   \underline{\mathbb{B}}^T d\Omega
 $$
 
 Der Fakor $(1+\xi)$ kann aus dem Integral herausgezogen werden.
 
 $$
-\underline{K}(\xi) = (1+\xi) \cdot \int_{\Omega} \underline{\mathbb{B}}^T \, \underline{\mathbb{E}}_0 \, \, \underline{\mathbb{B}}^T d\Omega = (1+\xi) \cdot \underline{K}_0
+\underline{K}(\xi) = (1+\xi) \cdot \int_{\Omega} \underline{\mathbb{B}}^T  \underline{\mathbb{E}}_0   \underline{\mathbb{B}}^T d\Omega = (1+\xi) \cdot \underline{K}_0
 $$
 
 Setzt man die Steifigkeitsmatrix nun in das globale Gleichungssystem des Systems ein ergibt sich

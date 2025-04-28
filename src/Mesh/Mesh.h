@@ -77,4 +77,6 @@ public:
     const NodeSet& getDeformedNodes() const;
     const DataSet& getCellData() const;
     const Eigen::SparseMatrix<float>& getDisplacement() const;
+
+    const IsoMeshMaterial& getMaterial() const;
 };

@@ -4,6 +4,7 @@
 #include "defines.h"
 #include "Model/Model.h"
 #include "GUI/ImGuiStyleDecls.h"
+#include <implot.h>
 
 #define MODELCACHE "../bin/.CACHE"
 
@@ -13,10 +14,52 @@ void RaylibLogCallback(int logType, const char* text, va_list args) {
     char formatted[512];
     vsnprintf(formatted, sizeof(formatted), text, args);
 
-    LOG << "[redirected RaylibLog] " << formatted << endl;  // Weiterleitung LOG Makro
+    // Logging aktiviert/deaktiviert
+    // LOG << "[redirected RaylibLog] " << formatted << endl;  // Weiterleitung LOG Makro
 }
 
-int main() {
+int cubemain() {
+
+    //
+    LOG << std::fixed << std::setprecision(4);
+    LOG << endl;
+
+    IsoMesh isomesh;
+    isomesh.loadFromFile("../Import/2DQuadMesh.model/2DQuadMesh.inp");
+    isomesh.loadIsoMeshMaterial();
+
+    if(isomesh.createStiffnessMatrix()){
+
+        isomesh.readBoundaryConditions();
+
+        isomesh.solve();
+        isomesh.calculateStrainAndStress();
+
+        //isomesh.display(MeshData::VANMISES_STRESS, 0, false, false, {100,100});
+    }
+
+    // roadmap unsicherheitsanalyse
+
+    // für zufallsverteilte variable xi
+    int Xi = 0.1;
+
+    DataSet advancedData;
+    acvanceDataSet(isomesh.getCellData(), advancedData, {1.0f-Xi,1.0f-Xi,1.0f-Xi*Xi});
+
+    NodeSet n0 = isomesh.getUndeformedNodes();
+    Eigen::SparseMatrix<float> u_xi = isomesh.getDisplacement() * (1-Xi);
+
+    IsoMesh::displaceNodes(n0, u_xi, n0.begin()->first);
+
+    //
+    std::vector<float> samples = {};
+
+    // Monte Carlo für pdf
+    Expression pdf = xi*xi-xi+1;
+    rejectionSampling(-pow(xi,2)-xi+1,samples,1000000);
+
+    //
+    processSamples(samples);
 
     //
     LOG << "** FemPROC | total Lines of Code " << countLinesInDirectory("../src") << endl;
@@ -29,7 +72,9 @@ int main() {
     SetTraceLogCallback(RaylibLogCallback); 
 
     // Raylib Fenster init
-    InitWindow(800, 600, "<><FEMProc><>");
+    const int screenWidth = 1600;
+    const int screenHeight = 1200;
+    InitWindow(screenWidth, screenHeight, "<><FEMProc><>");
     SetTargetFPS(60);
 
     Image icon = LoadImage("../Recc/Compilation/icon.png");
@@ -43,6 +88,14 @@ int main() {
 
     SetWindowIcon(icon);
     UnloadImage(icon);
+
+    //
+    ImGui::CreateContext();       // ImGui-Kontext anlegen
+    ImPlot::CreateContext();      // ImPlot-Kontext anlegen (nach ImGui!)
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->AddFontDefault();
+
+    ImPlot::CreateContext();
 
     //
     rlImGuiSetup(true);
@@ -96,6 +149,9 @@ int main() {
     
     int colDiffuseLoc = GetShaderLocation(lightingShader, "colDiffuse");
     SetShaderValue(lightingShader, colDiffuseLoc, &colDiffuseVec, SHADER_UNIFORM_VEC4);
+
+    //
+    scaleImguiUI(2);
 
     //
     while (!WindowShouldClose()) {
@@ -182,6 +238,13 @@ int main() {
             ImGui::EndMainMenuBar();
         }
 
+        // if (ImPlot::BeginPlot("Mein Histogramm")) {
+        //     // samples.data() ist ein Zeiger auf die Daten, samples.size() die Anzahl
+        //     // 50 ist die Anzahl der Bins (kannst du anpassen)
+        //     //ImPlot::PlotHistogram("Samples", samples.data(), samples.size(), 50);
+        //     ImPlot::EndPlot();
+        // }
+
         //
         RenderFileDialog();
 
@@ -200,40 +263,128 @@ int main() {
     rlImGuiShutdown();
     CloseWindow();
 
+    //ImPlot::DestroyContext();
+    ImGui::DestroyContext();
+
+    return 0;
+}
+
+
+int main(void)
+{
     //
     LOG << std::fixed << std::setprecision(4);
     LOG << endl;
 
-    IsoMesh isomesh;
-    isomesh.loadFromFile("../Import/2DQuadMesh.model/2DQuadMesh.inp");
-    isomesh.loadIsoMeshMaterial();
+    FemModel model;
 
-    if(isomesh.createStiffnessMatrix()){
+    //
+    SetTraceLogCallback(RaylibLogCallback); 
 
-        isomesh.readBoundaryConditions();
+    // Raylib Fenster init
+    const int screenWidth = 1600;
+    const int screenHeight = 1200;
+    InitWindow(screenWidth, screenHeight, "<><FEMProc><>");
+    SetTargetFPS(60);
 
-        isomesh.solve();
-        isomesh.calculateStrainAndStress();
+    Image icon = LoadImage("../Recc/Compilation/icon.png");
 
-        isomesh.display(MeshData::VANMISES_STRESS, 0, false, false, {100,100});
+    // RGB zu RGBA falls alpha Kanal fehlt
+    if (icon.format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) {
+        LOG << "-- Konvertiere icon.png zu RGBA -> ergänze alpha channel" << endl;
+        LOG << endl;
+        ImageFormat(&icon, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
     }
 
-    // roadmap unsicherheitsanalyse
+    SetWindowIcon(icon);
+    UnloadImage(icon);
 
-    // für zufallsverteilte variable xi
-    int Xi = 0.1;
+    // rlImGui initialisieren (ImGui-Kontext wird angelegt)
+    rlImGuiSetup(true);
 
-    DataSet advancedData;
-    acvanceDataSet(isomesh.getCellData(), advancedData, {1.0f-Xi,1.0f-Xi,1.0f-Xi*Xi});
+    // ImPlot-Kontext anlegen (nach ImGui!)
+    ImPlot::CreateContext();
 
-    NodeSet n0 = isomesh.getUndeformedNodes();
-    Eigen::SparseMatrix<float> u_xi = isomesh.getDisplacement() * (1-Xi);
+    //
+    SetupImGuiStyle();
+    scaleImguiUI(2);
 
-    IsoMesh::displaceNodes(n0, u_xi, n0.begin()->first);
+    // Haupt-Loop
+    while (!WindowShouldClose())
+    {
+        BeginDrawing();
+        ClearBackground(DARKGRAY);
 
-    // Monte Carlo für pdf
-    Expression pdf = xi*xi-xi+1;
-    rejectionSampling(-pow(xi,2)-xi+1, 0.01, 0.01);
+        //
+        rlImGuiBegin();
+
+        //
+        ImGui::Begin("ImPlot Histogramm");
+
+        // ImPlot-Histogramm
+        if (ImPlot::BeginPlot("Histogramm")) {
+            ImPlot::PlotHistogram("Samples", model.getSamples().data(), model.getSamples().size(), 50);
+            ImPlot::EndPlot();
+        }
+
+        if (ImGui::BeginMainMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                if (ImGui::BeginMenu("New"))
+                {
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Open"))
+                {
+
+                    if(ImGui::MenuItem("Model")){
+
+                        OpenFileDialog("Open femModel", { ".model" }, false, true, "../Import", [&](const std::string& chosenFilePath) {
+                            
+                            model.loadFromFile(chosenFilePath);
+                            model.storePathInCache();
+                        });
+                    }
+
+                    ImGui::EndMenu();
+                }
+
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Settings"))
+            {
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Credits"))
+            {
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Hardware"))
+            {
+
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndMainMenuBar();
+        }
+
+        RenderFileDialog();
+
+        ImGui::End();
+
+        rlImGuiEnd();
+
+        EndDrawing();
+
+        HandleFileDialog();
+
+    }
+
+    //
+    ImPlot::DestroyContext();
+    rlImGuiShutdown();
+    CloseWindow();
 
     return 0;
 }

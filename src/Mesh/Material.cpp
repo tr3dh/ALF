@@ -25,6 +25,37 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
     LOG << LOG_GREEN << "** Material aus " << path << " geladen" << endl;
     LOG << LOG_GREEN << "   Parameter : [E|" << E << "]; [v|" << v << "]; [t|" << t << "]" << endl; 
+
+    if(matData.contains("pdf")){
+       
+        // wenn key nicht in jsondata, bleibt pdf auf NULL_EXPR
+        ASSERT(matData["pdf"].contains("function"), "pdf Funktion wurde nicht deklariert");
+
+        pdf = SymEngine::parse(matData["pdf"]["function"].get<std::string>());
+        LOG << LOG_GREEN << "   pdf(xi) = " << pdf << endl;
+
+        ASSERT(matData["pdf"].contains("params"), "Parameter für pdf wurden nicht deklariert");
+        SymEngine::map_basic_basic subs = {};
+
+        for (const auto& [param, value] : matData["pdf"]["params"].items()) {
+            subs.try_emplace(SymEngine::symbol(param), toExpression(value.get<float>()));
+            LOG << LOG_GREEN << "   substitution [" << param << "|" << value << "]" << endl; 
+        }
+        LOG << endl;
+
+        pdf = pdf->subs(subs);
+        LOG << LOG_GREEN << "   substituted pdf(xi) = " << pdf << endl;
+    }
+
+    try{
+        float pdf_xi0 = SymEngine::eval_double(*pdf->subs({{xi, toExpression(0)}}));
+        LOG << LOG_GREEN << "   pdf(xi = 0) = " << pdf_xi0 << endl;
+    }
+    catch(const std::exception& exc){
+        ASSERT(TRIGGER_ASSERT, "Die pdf Funktion ist mit den angegebenen Substitutionen immer noch von mehr Symbolen als xi abhängig");
+        pdf = NULL_EXPR;
+    }
+
     LOG << endl;
 
     return true;

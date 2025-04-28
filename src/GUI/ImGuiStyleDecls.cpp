@@ -1,5 +1,11 @@
 #include "ImGuiStyleDecls.h"
 
+void scaleImguiUI(const float& UIZoom){
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.FontGlobalScale = UIZoom;
+}
+
 // Funktion muss einmal aufgerufen werden bevor die while-Schleife startet
 void SetupImGuiStyle()
 {

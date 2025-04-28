@@ -1,5 +1,17 @@
 #include "RejectionSampling.h"
 
+void seedFloatGenerator(){
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+}
+
+// Gibt Zufalls Float im Intervall [a, b] zurück
+// rand gibt zahl zwischen 0 und RAND_MAX zurück
+// wird über die Division mit dem Limit auf Wert zwischen null und 1 normalisiert und dann über (b - a) auf
+// zahlenbereich gestreckt und mit minimum a geoffsettet
+float randFloat(float a, float b) {
+    return a + (static_cast<float>(rand()) / (static_cast<float>(RAND_MAX)) * (b - a));
+}
+
 std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& tolerance, const float& segmentation){
 
     //
@@ -32,8 +44,8 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& tole
     p_xi = 2 * tolerance;
     while(p_xi > tolerance){
 
-        // Punkt auf pdensity ermitteln -> p(currentXi) = p_xi                                                   // Stelle xi
-        p_xi = SymEngine::eval_double(*pdensity->subs({{xi, toExpression(currentXi)}}));   // Funktionswert
+        // Punkt auf pdensity ermitteln -> p(currentXi) = p_xi                              // Stelle xi
+        p_xi = SymEngine::eval_double(*pdensity->subs({{xi, toExpression(currentXi)}}));    // Funktionswert
 
         // Check ob Maximum übertroffen wurde
         if(p_xi > maxP_Xi){
@@ -51,7 +63,7 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& tole
     return {max_Xi, maxP_Xi, leftBorder, rightBorder};
 }
 
-void rejectionSampling(const Expression& pdensity, const float& tolerance, const float& segmentation){
+void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, unsigned int nSamples, const float& tolerance, const float& segmentation){
 
     // Check benötigt sodass pdensity nur von Symbol xi abhängig ist
 
@@ -64,4 +76,51 @@ void rejectionSampling(const Expression& pdensity, const float& tolerance, const
     //
     LOG << "   Max at p(" << max_Xi << ") = " << maxP_Xi << " " << endl;
     LOG << "   Borders : (" << leftBorder << "|"<< rightBorder << ")" << endl;
+    LOG << endl;
+
+    // rejection sampling
+    // . zufallszahl xi_random zwischen linker und rechter grenze generieren -> stelle xi
+    // . zufallszahl q zwischen 0 und pmax generieren
+    // . wenn p(xi_random) < q -> sample wird aufgenommen
+    // . ansonsten ablgelehnt ('rejection')
+    // . damit lässt sich eine zufallsverteilung samplen durch die gleichmäßige verteilung der stellen x_random
+    //   und das Hinzufügen dieser mit wahrscheinlichkeit p(xi_random)
+
+    // allokierung
+    samples.clear();
+    samples.reserve(nSamples);
+
+    //
+    unsigned int generatedSamples = 0;
+    seedFloatGenerator();
+
+    float xi_random, p_xi, q_random;
+
+    while(generatedSamples < nSamples){
+
+        xi_random = randFloat(leftBorder, rightBorder);                                     // zufällige Stelle
+        p_xi = SymEngine::eval_double(*pdensity->subs({{xi, toExpression(xi_random)}}));    // Funktionswert bzw Wahrscheinlichkeitsdichte an Stelle
+
+        q_random = randFloat(0,maxP_Xi);                                                    // Zufallswert zwischen max pd und 0 
+
+        if(q_random < p_xi){
+
+            samples.emplace_back(xi_random);
+            generatedSamples++;
+        }
+    }
+}
+
+void processSamples(const std::vector<float>& samples){
+
+    float mean = 0.0f, deviation = 0.0f;
+    size_t nSamples = samples.size();
+
+    for(const auto& sample : samples){ mean += sample;}
+    mean /= nSamples;
+
+    for(const auto& sample : samples){ deviation += std::pow(sample - mean,2);}
+    deviation = std::sqrt(deviation/(nSamples-1));
+
+    LOG << "Processed Samples : [Mean|" << mean << "], [Deviation|" << deviation << "]" << endl; 
 }

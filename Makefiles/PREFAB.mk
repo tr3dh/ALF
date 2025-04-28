@@ -125,6 +125,34 @@ filebrowser:
 		cd thirdParty && git clone https://github.com/AirGuanZ/imgui-filebrowser.git; \
 	fi
 
+# Quell- und Objektdateien
+IMPLOT_DIR = thirdParty/implot
+IMPLOT_SRC = $(wildcard $(IMPLOT_DIR)/*.cpp)
+IMPLOT_OBJ = $(patsubst $(IMPLOT_DIR)/%.cpp,thirdParty/implot/bin/%.o,$(IMPLOT_SRC))
+
+# ImGui Kompilieren
+thirdParty/implot/bin%.o: $(IMPLOT_DIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< -I./thirdParty/imgui/
+
+libimplot: $(IMPLOT_OBJ)
+	ar rcs thirdParty/implot/bin/libimplot.a $^
+
+implot:
+	@if [ -d "thirdParty/implot" ]; then \
+		echo "Info: 'thirdParty/implot' existiert bereits. Überspringe Build."; \
+	else \
+		cd thirdParty && git clone https://github.com/epezent/implot.git; \
+	fi
+
+	@if [ -d "thirdParty/implot/bin" ]; then \
+		echo "Info: 'thirdParty/implot/bin' existiert bereits. Überspringe Build."; \
+	else \
+		cd thirdParty && cd implot && mkdir bin; \
+		cd ../../; \
+		make libimplot; \
+	fi
+
 # bislang habe ich die symengine nur mit ninja gebaut bekommen
 # deshalb ist auc die installation erforderlich
 r3d:
@@ -163,15 +191,30 @@ vulkanSamples:
 COPYTARGET ?= build/
 dllCopy:
 	mkdir -p $(COPYTARGET);
-	cp /mingw64/bin/libgcc_s_seh-1.dll $(COPYTARGET);
-	cp /mingw64/bin/libstdc++-6.dll $(COPYTARGET);
-	cp /mingw64/bin/libwinpthread-1.dll $(COPYTARGET);
-	cp /mingw64/bin/libgomp-1.dll $(COPYTARGET);
-	cp /mingw64/bin/libgmp-10.dll $(COPYTARGET);
-	cp /mingw64/bin/libmpfr-6.dll $(COPYTARGET);
-	cp /mingw64/bin/libraylib.dll $(COPYTARGET);
-	cp /mingw64/bin/glfw3.dll $(COPYTARGET);
-	cp /mingw64/bin/vulkan-1.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libgcc_s_seh-1.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libstdc++-6.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libwinpthread-1.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libgomp-1.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libgmp-10.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libmpfr-6.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libraylib.dll $(COPYTARGET);
+	cp -n /mingw64/bin/glfw3.dll $(COPYTARGET);
+	cp -n /mingw64/bin/vulkan-1.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libsfml-graphics-2.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libsfml-system-2.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libsfml-audio-2.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libsfml-window-2.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libfreetype-6.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libbrotlidec.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libbrotlicommon.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libbz2-1.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libharfbuzz-0.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libpng16-16.dll $(COPYTARGET);
+	cp -n /mingw64/bin/zlib1.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libglib-2.0-0.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libgraphite2.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libintl-8.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libiconv-2.dll $(COPYTARGET);
 	echo "DLLs kopiert nach $(COPYTARGET)";
 
 prefab:
@@ -179,15 +222,12 @@ prefab:
 	@mkdir -p build
 	@mkdir -p thirdParty
 
-	@make batchOpen
-
 	@echo "Installiere Toolchain..."
 	$(PACMAN) $(MINGW_PREFIX)-toolchain base-devel
 
 	@echo "Installiere Build-Tools..."
 	$(PACMAN) $(MINGW_PREFIX)-cmake $(MINGW_PREFIX)-make $(MINGW_PREFIX)-ninja
 	$(PACMAN) unzip curl
-
 
 	@echo "Installiere Vulkan-Tools..."
 	$(PACMAN) $(MINGW_PREFIX)-spirv-tools $(MINGW_PREFIX)-glslang $(MINGW_PREFIX)-vulkan-devel
@@ -234,3 +274,4 @@ prefab:
 	@make imgui
 	@make filebrowser
 	@make raylibImgui
+	@make implot

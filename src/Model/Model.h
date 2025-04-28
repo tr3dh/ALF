@@ -19,7 +19,11 @@ public:
     bool loadFromFile(const std::string& path);
     void storePathInCache();
 
+    const std::vector<float>& getSamples();
+
 private:
 
     std::string m_modelPath = NULLSTR;
+    std::string m_meshPath = NULLSTR;
+    std::vector<float> m_samples = {};
 };

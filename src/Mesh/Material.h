@@ -2,6 +2,8 @@
 
 #include "defines.h"
 
+inline SYMBOL(xi);
+
 struct IsoMeshMaterial{
 
     const static std::string fileSuffix;
@@ -13,5 +15,6 @@ struct IsoMeshMaterial{
 
     void createElasticityTensor(SymEngine::DenseMatrix& target, const size_t& dimension);
 
-    float E,v,t;
+    float E = 0,v = 0,t = 0;
+    Expression pdf = NULL_EXPR;
 };

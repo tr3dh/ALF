@@ -26,3 +26,7 @@ const DataSet& IsoMesh::getCellData() const{
 const Eigen::SparseMatrix<float>& IsoMesh::getDisplacement() const{
     return m_uSystem;
 }
+
+const IsoMeshMaterial& IsoMesh::getMaterial() const{
+    return m_material;
+}

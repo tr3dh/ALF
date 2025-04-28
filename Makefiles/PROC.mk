@@ -9,6 +9,7 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I./thirdParty/imgui \
 	-I./thirdParty/raylibImgui \
 	-I./thirdParty/imgui-filebrowser \
+	-I./thirdParty/implot \
 	-pthread
 
 # -lr3d vor lraylib einfügen falls nötig
@@ -16,6 +17,7 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 LDFLAGS := -L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
 	-L./thirdParty/rlImGui/bin -lrlimgui \
+	-L./thirdParty/implot/bin -limplot \
 	-L./thirdParty/imgui/bin -limgui \
 	-L./thirdParty/r3d/build \
 	-lr3d -lraylib \

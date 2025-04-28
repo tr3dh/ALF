@@ -9,9 +9,9 @@ all:
 	@time make build -j
 	@echo "-------------------"
 
-exec: $(TARGET)
-	@echo "Wechsel in: $(dir $<)"
-	cd $(dir $<) && ./$(notdir $<)
+exec:
+	@echo "Wechsel in: $(dir $(TARGET))"
+	cd $(dir $(TARGET)) && ./$(notdir $(TARGET))
 
 launch: all exec
 
