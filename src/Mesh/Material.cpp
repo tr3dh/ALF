@@ -34,22 +34,39 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
         pdf = SymEngine::parse(matData["pdf"]["function"].get<std::string>());
         LOG << LOG_GREEN << "   pdf(xi) = " << pdf << endl;
 
-        ASSERT(matData["pdf"].contains("params"), "Parameter für pdf wurden nicht deklariert");
-        SymEngine::map_basic_basic subs = {};
+        if(matData["pdf"].contains("borders")){
 
+            xi_min = matData["pdf"]["borders"]["xi_min"].get<float>();
+            xi_max = matData["pdf"]["borders"]["xi_max"].get<float>();
+
+            LOG << LOG_GREEN << "   Xi Borders geladen : [" << xi_min << "|" << xi_max << "]" << endl;
+        }
+
+        ASSERT(matData["pdf"].contains("pdfPreprocessing"), "pdf preprocessing nicht definiert");
+
+        segmentation = matData["pdf"]["pdfPreprocessing"]["segmentation"].get<float>();
+        tolerance = matData["pdf"]["pdfPreprocessing"]["tolerance"].get<float>();
+
+        ASSERT(matData["pdf"].contains("pdfSampling"), "pdf sampling nicht definiert");
+
+        nSamples = matData["pdf"]["pdfSampling"]["samples"].get<unsigned int>();
+
+        ASSERT(matData["pdf"].contains("params"), "Parameter für pdf wurden nicht deklariert");
+        
         for (const auto& [param, value] : matData["pdf"]["params"].items()) {
             subs.try_emplace(SymEngine::symbol(param), toExpression(value.get<float>()));
             LOG << LOG_GREEN << "   substitution [" << param << "|" << value << "]" << endl; 
         }
         LOG << endl;
 
-        pdf = pdf->subs(subs);
-        LOG << LOG_GREEN << "   substituted pdf(xi) = " << pdf << endl;
+        pdf_xi = pdf->subs(subs);
+        LOG << LOG_GREEN << "   substituted pdf(xi) = " << pdf_xi << endl;
     }
 
     try{
-        float pdf_xi0 = SymEngine::eval_double(*pdf->subs({{xi, toExpression(0)}}));
+        float pdf_xi0 = SymEngine::eval_double(*pdf_xi->subs({{xi, toExpression(0)}}));
         LOG << LOG_GREEN << "   pdf(xi = 0) = " << pdf_xi0 << endl;
+        ASSERT(pdf_xi0 > 0, "pdf Funktion muss an Stelle xi = 0 größer null sein");
     }
     catch(const std::exception& exc){
         ASSERT(TRIGGER_ASSERT, "Die pdf Funktion ist mit den angegebenen Substitutionen immer noch von mehr Symbolen als xi abhängig");

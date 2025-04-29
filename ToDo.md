@@ -8,6 +8,9 @@
 . cachen von Kmatrix, fem Ergebnisse in modell ordner und nur laden wenn änderungsdatum sich verändert hat
 . compute shader mit raylib
 
+# 
+. histogramm normalisieren
+
 # Markdowns
 . lin Fem
 . (nicht lin fem -> entsprechende Verfahren)

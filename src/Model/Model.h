@@ -15,15 +15,28 @@ public:
 
     FemModel();
     FemModel(const std::string& path);
+    void reload();
+    void unload();
 
+    bool loadFromCache();
     bool loadFromFile(const std::string& path);
     void storePathInCache();
 
+    void sampling();
+
     const std::vector<float>& getSamples();
+    bool initialzed() const;
+
+    const std::string& getSource() const;
+
+    const IsoMesh& getMesh() const;
+    IsoMesh& getMesh();
 
 private:
 
     std::string m_modelPath = NULLSTR;
     std::string m_meshPath = NULLSTR;
     std::vector<float> m_samples = {};
+
+    IsoMesh m_isoMesh;
 };

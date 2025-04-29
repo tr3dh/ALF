@@ -30,3 +30,7 @@ const Eigen::SparseMatrix<float>& IsoMesh::getDisplacement() const{
 const IsoMeshMaterial& IsoMesh::getMaterial() const{
     return m_material;
 }
+
+IsoMeshMaterial& IsoMesh::getMaterial(){
+    return m_material;
+}

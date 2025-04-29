@@ -11,8 +11,8 @@ void seedFloatGenerator();
 // zahlenbereich gestreckt und mit minimum a geoffsettet
 float randFloat(float a, float b);
 
-std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& tolerance, const float& segmentation);
+std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& xi_min, const float& xi_max, const float& tolerance, const float& segmentation);
 
-void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, unsigned int nSamples = 1000, const float& tolerance = 0.01, const float& segmentation = 0.01);
+void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, unsigned int nSamples, const float& xi_min, const float& xi_max,const float& tolerance = 0.01, const float& segmentation = 0.01);
 
 void processSamples(const std::vector<float>& samples);

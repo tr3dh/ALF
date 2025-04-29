@@ -18,258 +18,6 @@ void RaylibLogCallback(int logType, const char* text, va_list args) {
     // LOG << "[redirected RaylibLog] " << formatted << endl;  // Weiterleitung LOG Makro
 }
 
-int cubemain() {
-
-    //
-    LOG << std::fixed << std::setprecision(4);
-    LOG << endl;
-
-    IsoMesh isomesh;
-    isomesh.loadFromFile("../Import/2DQuadMesh.model/2DQuadMesh.inp");
-    isomesh.loadIsoMeshMaterial();
-
-    if(isomesh.createStiffnessMatrix()){
-
-        isomesh.readBoundaryConditions();
-
-        isomesh.solve();
-        isomesh.calculateStrainAndStress();
-
-        //isomesh.display(MeshData::VANMISES_STRESS, 0, false, false, {100,100});
-    }
-
-    // roadmap unsicherheitsanalyse
-
-    // für zufallsverteilte variable xi
-    int Xi = 0.1;
-
-    DataSet advancedData;
-    acvanceDataSet(isomesh.getCellData(), advancedData, {1.0f-Xi,1.0f-Xi,1.0f-Xi*Xi});
-
-    NodeSet n0 = isomesh.getUndeformedNodes();
-    Eigen::SparseMatrix<float> u_xi = isomesh.getDisplacement() * (1-Xi);
-
-    IsoMesh::displaceNodes(n0, u_xi, n0.begin()->first);
-
-    //
-    std::vector<float> samples = {};
-
-    // Monte Carlo für pdf
-    Expression pdf = xi*xi-xi+1;
-    rejectionSampling(-pow(xi,2)-xi+1,samples,1000000);
-
-    //
-    processSamples(samples);
-
-    //
-    LOG << "** FemPROC | total Lines of Code " << countLinesInDirectory("../src") << endl;
-    LOG << endl;
-
-    //
-    FemModel model;
-
-    //
-    SetTraceLogCallback(RaylibLogCallback); 
-
-    // Raylib Fenster init
-    const int screenWidth = 1600;
-    const int screenHeight = 1200;
-    InitWindow(screenWidth, screenHeight, "<><FEMProc><>");
-    SetTargetFPS(60);
-
-    Image icon = LoadImage("../Recc/Compilation/icon.png");
-
-    // RGB zu RGBA falls alpha Kanal fehlt
-    if (icon.format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) {
-        LOG << "-- Konvertiere icon.png zu RGBA -> ergänze alpha channel" << endl;
-        LOG << endl;
-        ImageFormat(&icon, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
-    }
-
-    SetWindowIcon(icon);
-    UnloadImage(icon);
-
-    //
-    ImGui::CreateContext();       // ImGui-Kontext anlegen
-    ImPlot::CreateContext();      // ImPlot-Kontext anlegen (nach ImGui!)
-    ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->AddFontDefault();
-
-    ImPlot::CreateContext();
-
-    //
-    rlImGuiSetup(true);
-
-    //
-    SetupImGuiStyle();
-
-    // Define the camera to look into our 3d world
-    Camera camera = { 0 };
-    camera.position = (Vector3){ 2.0f, 4.0f, 6.0f }; 
-    camera.target = (Vector3){ 0.0f, 2.0f, 0.0f }; 
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
-
-    // Mesh generieren
-    Mesh cubeMesh = GenMeshCube(2.0f, 2.0f, 2.0f);
-    Model cubeModel = LoadModelFromMesh(cubeMesh);
-
-    //
-    Shader lightingShader = LoadShader("../shader/lighting.vs", "../shader/tex.fs");
-    // Shader texShader = LoadShader("../shader/lighting.vs", "../shader/tex.fs");
-
-    //Material mat = LoadMaterialDefault();
-    //mat.shader = lightingShader;
-
-    //cubeModel.materials[0] = mat;
-
-    Texture2D texture = LoadTexture("../Recc/Compilation/icon.png");
-    cubeModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-    cubeModel.materials[0].shader = lightingShader;
-
-    //
-    float ambientStr = 0.2f;
-    float specularStr = 0.4f;
-    int shininess = 1.0;
-
-    Vector4 materialRed = {1.0f, 0.0f, 0.0f, 1.0f};
-    Vector4 materialBlack = {0.0f, 0.0f, 0.0f, 1.0f};
-    SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "ambientStr"), &ambientStr, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "specularStr"), &specularStr, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "shininess"), &shininess, SHADER_UNIFORM_INT);
-    SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "materialColor"), &materialRed, SHADER_UNIFORM_VEC4);
-
-    Vector4 colDiffuseVec = {
-        255,
-        0,
-        0,
-        255.0f
-    };
-    
-    int colDiffuseLoc = GetShaderLocation(lightingShader, "colDiffuse");
-    SetShaderValue(lightingShader, colDiffuseLoc, &colDiffuseVec, SHADER_UNIFORM_VEC4);
-
-    //
-    scaleImguiUI(2);
-
-    //
-    while (!WindowShouldClose()) {
-
-        if (IsKeyPressed(KEY_SPACE)) {
-            LOG << "SPACE gedrückt" << endl;
-        }
-        
-        if (IsKeyReleased(KEY_SPACE)) {
-            LOG << "SPACE losgelassen" << endl;
-        }
-
-        UpdateCamera(&camera, CAMERA_ORBITAL);
-        float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
-
-        BeginDrawing();
-        ClearBackground(Color{40,40,40,0});
-
-        BeginMode3D(camera);
-
-        //
-        Vector3 lightPos = { 2.0f, 4.0f, 5.0f };
-        Vector3 lightColor = { 1.0f, 60.0f, 1.0f };
-        
-        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "lightPos"), &lightPos, SHADER_UNIFORM_VEC3);
-        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "lightColor"), &lightColor, SHADER_UNIFORM_VEC3);
-        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "viewPos"), &camera.position, SHADER_UNIFORM_VEC3);
-
-        // 
-        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "materialColor"), &materialRed, SHADER_UNIFORM_VEC4);
-        DrawModel(cubeModel, {0,1,0}, 1.0f, WHITE);
-
-        SetShaderValue(lightingShader, GetShaderLocation(lightingShader, "materialColor"), &materialBlack, SHADER_UNIFORM_VEC4);
-        //DrawModelWires(cubeModel, {0,1,0}, 1.0f, BLACK);
-
-        DrawPlane(Vector3Zero(), (Vector2) { 12.0, 12.0 }, BLACK);
-        
-        DrawGrid(6, 2.0f);
-
-        EndMode3D();
-
-        //
-        rlImGuiBegin();
-
-        if (ImGui::BeginMainMenuBar())
-        {
-            if (ImGui::BeginMenu("File"))
-            {
-                if (ImGui::BeginMenu("New"))
-                {
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Open"))
-                {
-
-                    if(ImGui::MenuItem("Model")){
-
-                        OpenFileDialog("Open femModel", { ".model" }, false, true, "../Import", [&](const std::string& chosenFilePath) {
-                            
-                            model.loadFromFile(chosenFilePath);
-                            model.storePathInCache();
-                        });
-                    }
-
-                    ImGui::EndMenu();
-                }
-
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Settings"))
-            {
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Credits"))
-            {
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Hardware"))
-            {
-
-                ImGui::EndMenu();
-            }
-
-            ImGui::EndMainMenuBar();
-        }
-
-        // if (ImPlot::BeginPlot("Mein Histogramm")) {
-        //     // samples.data() ist ein Zeiger auf die Daten, samples.size() die Anzahl
-        //     // 50 ist die Anzahl der Bins (kannst du anpassen)
-        //     //ImPlot::PlotHistogram("Samples", samples.data(), samples.size(), 50);
-        //     ImPlot::EndPlot();
-        // }
-
-        //
-        RenderFileDialog();
-
-        //
-        rlImGuiEnd();
-
-        //
-        HandleFileDialog();
-        
-        EndDrawing();
-    }
-
-    UnloadModel(cubeModel);
-
-    //
-    rlImGuiShutdown();
-    CloseWindow();
-
-    //ImPlot::DestroyContext();
-    ImGui::DestroyContext();
-
-    return 0;
-}
-
-
 int main(void)
 {
     //
@@ -277,15 +25,29 @@ int main(void)
     LOG << endl;
 
     FemModel model;
+    model.loadFromCache();
 
     //
     SetTraceLogCallback(RaylibLogCallback); 
 
+    InitWindow(600, 600, "<><FEMProc><>");
+
     // Raylib Fenster init
-    const int screenWidth = 1600;
-    const int screenHeight = 1200;
-    InitWindow(screenWidth, screenHeight, "<><FEMProc><>");
-    SetTargetFPS(60);
+    float winSizeFaktor = 0.5f; // z.B. halbe Bildschirmgröße
+
+    int monitor = GetCurrentMonitor();
+    int screenWidth = GetMonitorWidth(monitor);
+    int screenHeight = GetMonitorHeight(monitor);
+
+    int windowWidth = screenWidth * winSizeFaktor;
+    int windowHeight = screenHeight * winSizeFaktor;
+
+    bool fullScreen = false;
+
+    SetWindowSize(windowWidth, windowHeight);
+    SetWindowPosition((screenWidth - windowWidth)/2, (screenHeight - windowHeight)/2);
+
+    LOG << "-- init auf Bildsirm mit Screensize [" << screenWidth << "|" << screenHeight << "]" << endl
 
     Image icon = LoadImage("../Recc/Compilation/icon.png");
 
@@ -307,13 +69,31 @@ int main(void)
 
     //
     SetupImGuiStyle();
-    scaleImguiUI(2);
+    scaleImguiUI(1.6);
 
     // Haupt-Loop
     while (!WindowShouldClose())
     {
+        static std::string modelSource = fs::path(model.getSource()).filename().string();
+        
+        if(IsKeyPressed(KEY_F11)){
+
+            LOG << "++ toggleScreen" << endl;
+
+            if(!fullScreen){
+                SetWindowSize(screenWidth, screenHeight);
+                SetWindowPosition(0,0);
+            } else {
+                // resize auf originalGröße
+                SetWindowSize(windowWidth, windowHeight);
+                SetWindowPosition((screenWidth - windowWidth)/2, (screenHeight - windowHeight)/2);
+            }
+
+            fullScreen = !fullScreen;
+        }
+
         BeginDrawing();
-        ClearBackground(DARKGRAY);
+        ClearBackground(Color(30,30,30,255));
 
         //
         rlImGuiBegin();
@@ -321,11 +101,14 @@ int main(void)
         //
         ImGui::Begin("ImPlot Histogramm");
 
-        // ImPlot-Histogramm
+        // ImPlot Histogramm
+        ImPlot::SetNextAxesToFit();
         if (ImPlot::BeginPlot("Histogramm")) {
-            ImPlot::PlotHistogram("Samples", model.getSamples().data(), model.getSamples().size(), 50);
+            ImPlot::PlotHistogram("Samples", model.getSamples().data(), model.getSamples().size(), 50, (1.0), ImPlotRange(), ImPlotHistogramFlags_Density);
             ImPlot::EndPlot();
         }
+
+        ImGui::End();
 
         if (ImGui::BeginMainMenuBar())
         {
@@ -344,6 +127,8 @@ int main(void)
                             
                             model.loadFromFile(chosenFilePath);
                             model.storePathInCache();
+
+                            modelSource = fs::path(model.getSource()).filename().string();
                         });
                     }
 
@@ -369,16 +154,153 @@ int main(void)
             ImGui::EndMainMenuBar();
         }
 
-        RenderFileDialog();
+        // Größe und Position des Vert tabbars fürs model editing berechnen
+        int winWidth = GetScreenWidth();
+        int winHeight = GetScreenHeight();
+        float panelWidth = winWidth * (1.0f/2.5f); // Breite des Panels
+        ImVec2 panelPos(winWidth - panelWidth, ImGui::GetFrameHeight());
+        ImVec2 panelSize(panelWidth, winHeight - ImGui::GetFrameHeight());
+
+        // Fenster an rechter Seite über volle Höhe
+        ImGui::SetNextWindowPos(panelPos, ImGuiCond_Always);
+        ImGui::SetNextWindowSize(panelSize, ImGuiCond_Always);
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar;
+
+        ImGui::Begin(("Edit Model " + modelSource).c_str(), nullptr, flags);
+
+        ImGui::Text(("Edit Model : " + modelSource).c_str());
+
+        ImGui::SameLine();
+
+        //
+        static const std::map<const char*, std::function<void()>> buttons = {
+            {"Unload", [&](){ model.unload();}},
+            {"Reload", [&](){ model.reload();}},
+            {"Save", [&](){ LOG << "!! not implemented yet" << endl;}}
+        };
+
+        //
+        float maxWidth = 0.0f;
+        for (const auto& [label, func] : buttons) {
+            float w = ImGui::CalcTextSize(label).x;
+            if (w > maxWidth) maxWidth = w;
+        }
+        float previewWidth = ImGui::CalcTextSize("...").x;
+        if (previewWidth > maxWidth) maxWidth = previewWidth;
+
+        //
+        maxWidth += ImGui::GetStyle().FramePadding.x * 4.0f;
+
+        ImGui::SetNextItemWidth(maxWidth);
+        if (ImGui::BeginCombo("##Model Interaction", "...")) {
+            
+            for (const auto& [label, func] : buttons) {
+                if(ImGui::Button(label)){
+                    func();
+                }
+            }
+            ImGui::EndCombo();
+        }
+
+        static int selectedTab = 3;
+        const char* tabNames[] = { "Model", "Constraints", "Isomparam", "Material" };
+
+        maxWidth = 0;
+        for (const auto& label : tabNames) {
+            float w = ImGui::CalcTextSize(label).x;
+            if (w > maxWidth) maxWidth = w;
+        }
+
+        // Create a child window for the tab bar
+        ImGui::BeginChild("VertTabBar", ImVec2(maxWidth + ImGui::GetStyle().FramePadding.x * 4.0f, 0), true);
+        for (int i = 0; i < IM_ARRAYSIZE(tabNames); i++)
+        {
+            if (ImGui::Selectable(tabNames[i], selectedTab == i))
+            {
+                selectedTab = i;
+            }
+        }
+        ImGui::EndChild();
+
+        ImGui::SameLine();
+
+        // Create a child window for the tab content
+        ImGui::BeginChild("TabContent", ImVec2(0, 0), true);
+        switch (selectedTab)
+        {
+        case 0:
+            ImGui::Text("Mesh Tab");
+            break;
+        case 1:
+            ImGui::Text("constraint Tab");
+            break;
+        case 2:
+            ImGui::Text("isoparam tab");
+            break;
+        case 3:{
+
+            ImGui::Text("Edit Material...");
+
+            ImGui::Separator();
+
+            //
+            static IsoMeshMaterial& mat = model.getMesh().getMaterial();
+            mat = model.getMesh().getMaterial();
+
+            static std::string pdfBuffer;
+            pdfBuffer = mat.pdf->__str__();
+
+            //
+            ImGui::Text("pdf : ");
+            ImGui::SetNextItemWidth(ImGui::CalcTextSize(pdfBuffer.c_str()).x + ImGui::GetStyle().FramePadding.x * 4.0f);
+            if (ImGui::InputText("##pd Function", pdfBuffer.data(), pdfBuffer.capacity() + 1, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                mat.pdf = SymEngine::parse(pdfBuffer);
+            }
+
+            ImGui::Separator();
+
+            static float valBuffer;
+
+            for(auto& [symbol,sub] : mat.subs){
+
+                valBuffer = string::convert<float>(sub->__str__());
+
+                ImGui::Text(("Params['" + symbol->__str__() + "']").c_str());
+                
+                //
+                if(ImGui::SliderFloat(("##slider"+symbol->__str__()).c_str(), &valBuffer, -5*valBuffer, 5*valBuffer)){
+                    //sub = toExpression(valBuffer);
+                };
+
+                if (ImGui::IsItemDeactivatedAfterEdit()) {
+                    // wenn Slider losgelassen wurde
+                    sub = toExpression(valBuffer);
+                }
+
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(ImGui::CalcTextSize(std::to_string(valBuffer).c_str()).x + ImGui::GetStyle().FramePadding.x * 4);
+                if (ImGui::InputFloat(("##" + symbol->__str__()).c_str(), &valBuffer,0, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                    sub = toExpression(valBuffer);
+                }
+
+            }
+
+            ImGui::Separator();
+
+            break;
+        }
+        }
+        ImGui::EndChild();
 
         ImGui::End();
+
+        RenderFileDialog();
 
         rlImGuiEnd();
 
         EndDrawing();
 
         HandleFileDialog();
-
     }
 
     //

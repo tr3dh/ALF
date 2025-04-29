@@ -16,5 +16,10 @@ struct IsoMeshMaterial{
     void createElasticityTensor(SymEngine::DenseMatrix& target, const size_t& dimension);
 
     float E = 0,v = 0,t = 0;
-    Expression pdf = NULL_EXPR;
+
+    Expression pdf = NULL_EXPR, pdf_xi = NULL_EXPR;
+    float xi_min = 0, xi_max = 0;
+    SymEngine::map_basic_basic subs = {};
+    float segmentation = 0, tolerance = 0;
+    unsigned int nSamples = 0;
 };

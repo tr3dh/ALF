@@ -12,7 +12,7 @@ float randFloat(float a, float b) {
     return a + (static_cast<float>(rand()) / (static_cast<float>(RAND_MAX)) * (b - a));
 }
 
-std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& tolerance, const float& segmentation){
+std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& xi_min, const float& xi_max, const float& tolerance, const float& segmentation){
 
     //
     float leftBorder = 0, rightBorder = 0;
@@ -22,7 +22,7 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& tole
     float p_xi = 2 * tolerance;
 
     currentXi = 0;
-    while(p_xi > tolerance){
+    while(p_xi > tolerance && (xi_max != 0 ? currentXi < xi_max : 1)){
 
         // Punkt auf pdensity ermitteln                                                  // Stelle xi
         p_xi = SymEngine::eval_double(*pdensity->subs({{xi, toExpression(currentXi)}}));   // Funktionswert
@@ -33,16 +33,15 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& tole
             max_Xi = currentXi;
         }
 
-        // check nach Abbruchbedingung
-        if(p_xi <= tolerance){ rightBorder = currentXi; }
-
         //
         currentXi += segmentation;
     }
+    // nach abbruch zuweisen
+    rightBorder = currentXi - segmentation;
 
     currentXi = 0;
     p_xi = 2 * tolerance;
-    while(p_xi > tolerance){
+    while(p_xi > tolerance && (xi_min != 0 ? currentXi > xi_min : 1)){
 
         // Punkt auf pdensity ermitteln -> p(currentXi) = p_xi                              // Stelle xi
         p_xi = SymEngine::eval_double(*pdensity->subs({{xi, toExpression(currentXi)}}));    // Funktionswert
@@ -53,17 +52,16 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& tole
             max_Xi = currentXi;
         }
 
-        // check nach Abbruchbedingung
-        if(p_xi <= tolerance){ leftBorder = currentXi; }
-
         //
         currentXi -= segmentation;
     }
+    // nach abbruch zuweisen
+    leftBorder = currentXi + segmentation;
 
     return {max_Xi, maxP_Xi, leftBorder, rightBorder};
 }
 
-void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, unsigned int nSamples, const float& tolerance, const float& segmentation){
+void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, unsigned int nSamples, const float& xi_min, const float& xi_max, const float& tolerance, const float& segmentation){
 
     // Check benötigt sodass pdensity nur von Symbol xi abhängig ist
 
@@ -71,7 +69,7 @@ void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, 
     LOG << "-- Untersuche pdf(xi) = " << pdensity << endl;
 
     //
-    auto [max_Xi, maxP_Xi, leftBorder, rightBorder] = preprocessPDF(pdensity, tolerance, segmentation);
+    auto [max_Xi, maxP_Xi, leftBorder, rightBorder] = preprocessPDF(pdensity, xi_min, xi_max, tolerance, segmentation);
 
     //
     LOG << "   Max at p(" << max_Xi << ") = " << maxP_Xi << " " << endl;
@@ -122,5 +120,6 @@ void processSamples(const std::vector<float>& samples){
     for(const auto& sample : samples){ deviation += std::pow(sample - mean,2);}
     deviation = std::sqrt(deviation/(nSamples-1));
 
-    LOG << "Processed Samples : [Mean|" << mean << "], [Deviation|" << deviation << "]" << endl; 
+    LOG << "-- Processed Samples : [Mean|" << mean << "], [Deviation|" << deviation << "]" << endl; 
+    LOG << endl;
 }

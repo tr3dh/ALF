@@ -27,15 +27,32 @@ void FemModel::cacheFilePath(const std::string& path){
     file << j.dump(4); // 4 für Einrücken
 }
 
-FemModel::FemModel(){
+FemModel::FemModel() = default;
+
+bool FemModel::loadFromCache(){
 
     //
     const std::string modelPath = getPathFromCache();
-    
+
     if(modelPath != NULLSTR){
-        loadFromFile(modelPath);
+        return loadFromFile(modelPath);
     }
-};
+
+    return false;
+}
+
+void FemModel::reload(){
+
+    if(initialzed()){
+        *this = FemModel(m_modelPath);
+    } else {
+        _ERROR << "kein valider Pfad im Modell hinterlegt\n" << endl;
+    }
+}
+
+void FemModel::unload(){
+    *this = FemModel();
+}
 
 FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
@@ -46,18 +63,17 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     LOG << "   Lade Mesh aus " << m_meshPath << endl;
     LOG << endl;
 
-    IsoMesh isomesh;
-    isomesh.loadFromFile(m_meshPath);
-    isomesh.loadIsoMeshMaterial();
+    m_isoMesh.loadFromFile(m_meshPath);
+    m_isoMesh.loadIsoMeshMaterial();
 
-    if(isomesh.createStiffnessMatrix()){
+    if(m_isoMesh.createStiffnessMatrix()){
 
-        isomesh.readBoundaryConditions();
+        m_isoMesh.readBoundaryConditions();
 
-        isomesh.solve();
-        isomesh.calculateStrainAndStress();
+        m_isoMesh.solve();
+        m_isoMesh.calculateStrainAndStress();
 
-        //isomesh.display(MeshData::VANMISES_STRESS, 0, false, false, {100,100});
+        //m_isoMesh.display(MeshData::VANMISES_STRESS, 0, false, false, {100,100});
     }
 
     // roadmap unsicherheitsanalyse
@@ -66,15 +82,21 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     int Xi = 0.1;
 
     DataSet advancedData;
-    acvanceDataSet(isomesh.getCellData(), advancedData, {1.0f-Xi,1.0f-Xi,1.0f-Xi*Xi});
+    acvanceDataSet(m_isoMesh.getCellData(), advancedData, {1.0f-Xi,1.0f-Xi,1.0f-Xi*Xi});
 
-    NodeSet n0 = isomesh.getUndeformedNodes();
-    Eigen::SparseMatrix<float> u_xi = isomesh.getDisplacement() * (1-Xi);
+    NodeSet n0 = m_isoMesh.getUndeformedNodes();
+    Eigen::SparseMatrix<float> u_xi = m_isoMesh.getDisplacement() * (1-Xi);
 
     IsoMesh::displaceNodes(n0, u_xi, n0.begin()->first);
 
+    sampling();
+}
+
+void FemModel::sampling(){
+
     // Monte Carlo für pdf
-    rejectionSampling(isomesh.getMaterial().pdf, m_samples, 100000);
+    const IsoMeshMaterial& mat = m_isoMesh.getMaterial();
+    rejectionSampling(mat.pdf_xi, m_samples, 100000, mat.xi_min, mat.xi_max, mat.tolerance, mat.segmentation);
 
     //
     processSamples(m_samples);
@@ -101,4 +123,21 @@ void FemModel::storePathInCache(){
 
 const std::vector<float>& FemModel::getSamples(){
     return m_samples;
+}
+
+bool FemModel::initialzed() const{
+
+    return m_modelPath != NULLSTR;
+}
+
+const std::string& FemModel::getSource() const{
+    return m_modelPath;
+};
+
+const IsoMesh& FemModel::getMesh() const{
+    return m_isoMesh;
+}
+
+IsoMesh& FemModel::getMesh(){
+    return m_isoMesh;
 }
