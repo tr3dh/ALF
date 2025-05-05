@@ -49,6 +49,7 @@ private:
 
     std::vector<NodeIndex> m_indicesToRemove = {};
 
+    std::string m_matPath = NULLSTR;
     IsoMeshMaterial m_material;
 
 public:
@@ -78,6 +79,7 @@ public:
     const DataSet& getCellData() const;
     const Eigen::SparseMatrix<float>& getDisplacement() const;
 
+    void saveMaterial();
     const IsoMeshMaterial& getMaterial() const;
     IsoMeshMaterial& getMaterial();
 };

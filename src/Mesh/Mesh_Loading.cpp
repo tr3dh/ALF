@@ -193,8 +193,12 @@ bool IsoMesh::loadFromFile(const std::string& path){
 
 bool IsoMesh::loadIsoMeshMaterial(const std::string& path){
 
-    m_material.loadFromFile(path == NULLSTR ?
-        meshPath.substr(0, string::findLast(meshPath, ".")) + IsoMeshMaterial::fileSuffix : path);
+    m_matPath = meshPath.substr(0, string::findLast(meshPath, ".")) + IsoMeshMaterial::fileSuffix;
+    m_material.loadFromFile(path == NULLSTR ? m_matPath : path);
 
     return true;
+}
+
+void IsoMesh::saveMaterial(){
+    m_material.save(m_matPath);
 }

@@ -9,9 +9,16 @@ all:
 	@time make build -j
 	@echo "-------------------"
 
+TARGET = build/FEMProcUI
 exec:
 	@echo "Wechsel in: $(dir $(TARGET))"
 	cd $(dir $(TARGET)) && ./$(notdir $(TARGET))
+
+demo:
+	@make launch TARGET=build/3dRenderingDemo
+
+flush:
+	rm build/*.ini
 
 launch: all exec
 

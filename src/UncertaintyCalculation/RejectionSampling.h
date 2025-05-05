@@ -3,7 +3,7 @@
 #include "defines.h"
 #include "Mesh/Material.h"
 
-void seedFloatGenerator();
+void seedFloatGenerator(const float& seed = 0);
 
 // Gibt Zufalls Float im Intervall [a, b] zurück
 // rand gibt zahl zwischen 0 und RAND_MAX zurück
@@ -15,4 +15,4 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& xi_m
 
 void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, unsigned int nSamples, const float& xi_min, const float& xi_max,const float& tolerance = 0.01, const float& segmentation = 0.01);
 
-void processSamples(const std::vector<float>& samples);
+std::array<float,2> processSamples(const std::vector<float>& samples);

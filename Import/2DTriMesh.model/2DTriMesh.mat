@@ -1,23 +1,20 @@
 {
-    "E" : 20000,
-    "v" : 0.2,
-    "t" : 0.1,
-    "pdf" : {
-        "function" : "-xi**2-xi+offset*a",
-        "borders" : {
-            "xi_min" : 0,
-            "xi_max" : 0
+    "E": 20000.0,
+    "pdf": {
+        "function": "a*offset - xi**2",
+        "params": {
+            "a": 1.0,
+            "offset": 1.0,
+            "sigma": 4.0
         },
-        "pdfPreprocessing" : {
-            "segmentation" : 0.01,
-            "tolerance" : 0.01
+        "pdfPreprocessing": {
+            "segmentation": 0.009999999776482582,
+            "tolerance": 0.009999999776482582
         },
-        "pdfSampling" : {
-            "samples" : 100000
-        },
-        "params" : {
-            "offset" : 1,
-            "a" : 1
+        "pdfSampling": {
+            "samples": 370079
         }
-    }
+    },
+    "t": 0.10000000149011612,
+    "v": 0.578000009059906
 }

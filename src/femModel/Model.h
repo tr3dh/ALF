@@ -32,10 +32,13 @@ public:
     const IsoMesh& getMesh() const;
     IsoMesh& getMesh();
 
+    float m_deviation = 0, m_mean = 0;
+
 private:
 
     std::string m_modelPath = NULLSTR;
     std::string m_meshPath = NULLSTR;
+    std::string m_matPath = NULLSTR;
     std::vector<float> m_samples = {};
 
     IsoMesh m_isoMesh;

@@ -14,3 +14,8 @@
 # Markdowns
 . lin Fem
 . (nicht lin fem -> entsprechende Verfahren)
+
+#
+https://catlikecoding.com/unity/tutorials/pseudorandom-noise/simplex-noise/
+https://cgvr.cs.uni-bremen.de/teaching/cg_literatur/simplexnoise.pdf
+https://www.youtube.com/watch?v=zI41iCSwEFs&t=2s

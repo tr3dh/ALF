@@ -78,7 +78,9 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
     // roadmap unsicherheitsanalyse
 
-    // für zufallsverteilte variable xi
+    sampling();
+
+    // fÜr Werte von xi plotten und berechnen
     int Xi = 0.1;
 
     DataSet advancedData;
@@ -88,18 +90,18 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     Eigen::SparseMatrix<float> u_xi = m_isoMesh.getDisplacement() * (1-Xi);
 
     IsoMesh::displaceNodes(n0, u_xi, n0.begin()->first);
-
-    sampling();
 }
 
 void FemModel::sampling(){
 
     // Monte Carlo für pdf
     const IsoMeshMaterial& mat = m_isoMesh.getMaterial();
-    rejectionSampling(mat.pdf_xi, m_samples, 100000, mat.xi_min, mat.xi_max, mat.tolerance, mat.segmentation);
+    rejectionSampling(mat.pdf_xi, m_samples, mat.nSamples, mat.xi_min, mat.xi_max, mat.tolerance, mat.segmentation);
 
     //
-    processSamples(m_samples);
+    auto [mean, deviation] = processSamples(m_samples);
+    m_mean = mean;
+    m_deviation = deviation;
 }
 
 bool FemModel::loadFromFile(const std::string& path){
@@ -111,7 +113,7 @@ bool FemModel::loadFromFile(const std::string& path){
 
     // reset
     *this = FemModel(path);
-
+    
     //
     return true;
 }

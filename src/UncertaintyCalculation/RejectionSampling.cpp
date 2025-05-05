@@ -1,7 +1,8 @@
 #include "RejectionSampling.h"
 
-void seedFloatGenerator(){
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+void seedFloatGenerator(const float& seed){
+
+    std::srand(static_cast<unsigned int>((seed == 0 ? std::time(nullptr) : seed)));
 }
 
 // Gibt Zufalls Float im Intervall [a, b] zurück
@@ -22,6 +23,10 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& xi_m
     float p_xi = 2 * tolerance;
 
     currentXi = 0;
+    if(SymEngine::eval_double(*pdensity->subs({{xi, toExpression(currentXi)}})) == 0){
+        return {0,0,0,0};
+    };
+
     while(p_xi > tolerance && (xi_max != 0 ? currentXi < xi_max : 1)){
 
         // Punkt auf pdensity ermitteln                                                  // Stelle xi
@@ -76,6 +81,10 @@ void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, 
     LOG << "   Borders : (" << leftBorder << "|"<< rightBorder << ")" << endl;
     LOG << endl;
 
+    if(maxP_Xi <= 0 || leftBorder == rightBorder){
+        return;
+    }
+
     // rejection sampling
     // . zufallszahl xi_random zwischen linker und rechter grenze generieren -> stelle xi
     // . zufallszahl q zwischen 0 und pmax generieren
@@ -109,7 +118,7 @@ void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, 
     }
 }
 
-void processSamples(const std::vector<float>& samples){
+std::array<float,2> processSamples(const std::vector<float>& samples){
 
     float mean = 0.0f, deviation = 0.0f;
     size_t nSamples = samples.size();
@@ -122,4 +131,6 @@ void processSamples(const std::vector<float>& samples){
 
     LOG << "-- Processed Samples : [Mean|" << mean << "], [Deviation|" << deviation << "]" << endl; 
     LOG << endl;
+
+    return {mean, deviation};
 }

@@ -188,6 +188,17 @@ vulkanSamples:
 
 	@make dllCopy COPYTARGET=thirdParty/Vulkan/build/bin/
 
+enet:
+	@if [ -d "thirdParty/enet" ]; then \
+			echo "Info: 'thirdParty/enet' existiert bereits. Überspringe Build.";\
+		else \
+			echo "Info: builde enet."; \
+			cd thirdParty && git clone https://github.com/lsalzman/enet.git; \
+			cd enet;\
+			cmake -B build -DENET_STATIC=1 -DCMAKE_BUILD_TYPE=Release;\
+			cmake --build build;\
+		fi
+
 COPYTARGET ?= build/
 dllCopy:
 	mkdir -p $(COPYTARGET);
@@ -215,6 +226,8 @@ dllCopy:
 	cp -n /mingw64/bin/libgraphite2.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libintl-8.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libiconv-2.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libpcre2-8-0.dll $(COPYTARGET);
+
 	echo "DLLs kopiert nach $(COPYTARGET)";
 
 prefab:

@@ -57,11 +57,20 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
             subs.try_emplace(SymEngine::symbol(param), toExpression(value.get<float>()));
             LOG << LOG_GREEN << "   substitution [" << param << "|" << value << "]" << endl; 
         }
-        LOG << endl;
-
-        pdf_xi = pdf->subs(subs);
-        LOG << LOG_GREEN << "   substituted pdf(xi) = " << pdf_xi << endl;
+        LOG << endl; 
     }
+
+    substitutePdf();
+
+    LOG << endl;
+
+    return true;
+}
+
+void IsoMeshMaterial::substitutePdf(){
+
+    pdf_xi = pdf->subs(subs);
+    LOG << LOG_GREEN << "   substituted pdf(xi) = " << pdf_xi << endl;
 
     try{
         float pdf_xi0 = SymEngine::eval_double(*pdf_xi->subs({{xi, toExpression(0)}}));
@@ -72,10 +81,6 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
         ASSERT(TRIGGER_ASSERT, "Die pdf Funktion ist mit den angegebenen Substitutionen immer noch von mehr Symbolen als xi abhängig");
         pdf = NULL_EXPR;
     }
-
-    LOG << endl;
-
-    return true;
 }
 
 void IsoMeshMaterial::createElasticityTensor(SymEngine::DenseMatrix& target, const size_t& dimension){
@@ -93,4 +98,51 @@ void IsoMeshMaterial::createElasticityTensor(SymEngine::DenseMatrix& target, con
                  NULL_EXPR, NULL_EXPR, (1-_v)/2});
 
     target.mul_scalar(_E/(1-_v*_v), target);
+}
+
+void IsoMeshMaterial::save(const std::string& path){
+
+    RETURNING_ASSERT(string::endsWith(path, fileSuffix), "Invalide Dateiendung beim Speichern eines Materials nach " + path,);
+
+    LOG << LOG_BLUE << "-- Writing Material to file : " << path << endl;
+
+    std::ofstream matFile(path);
+    RETURNING_ASSERT(matFile, "Fehler beim Öffnen von '" + path + "' zum Schreiben",);
+
+    nlohmann::json matData;
+
+    // Basisparameter speichern
+    matData["E"] = E;
+    matData["v"] = v;
+    matData["t"] = t;
+
+    // PDF-Informationen speichern, falls vorhanden
+    if (pdf != NULL_EXPR) {
+        matData["pdf"]["function"] = pdf->__str__();
+
+        if (xi_min != 0.0f || xi_max != 0.0f) {
+            matData["pdf"]["borders"]["xi_min"] = xi_min;
+            matData["pdf"]["borders"]["xi_max"] = xi_max;
+        }
+
+        matData["pdf"]["pdfPreprocessing"]["segmentation"] = segmentation;
+        matData["pdf"]["pdfPreprocessing"]["tolerance"] = tolerance;
+
+        matData["pdf"]["pdfSampling"]["samples"] = nSamples;
+
+        // Parameter für PDF (subs)
+        nlohmann::json params;
+        for (auto& [sym, expr] : subs) {
+            std::string paramName = sym->__str__();
+            double value = SymEngine::eval_double(*expr);
+            params[paramName] = value;
+        }
+        matData["pdf"]["params"] = params;
+    }
+
+    // JSON in Datei schreiben
+    matFile << matData.dump(4);
+    matFile.close();
+
+    LOG << LOG_GREEN << "** Material nach " << path << " gespeichert" << endl;
 }

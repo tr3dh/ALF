@@ -15,6 +15,10 @@ struct IsoMeshMaterial{
 
     void createElasticityTensor(SymEngine::DenseMatrix& target, const size_t& dimension);
 
+    void substitutePdf();
+
+    void save(const std::string& path);
+
     float E = 0,v = 0,t = 0;
 
     Expression pdf = NULL_EXPR, pdf_xi = NULL_EXPR;

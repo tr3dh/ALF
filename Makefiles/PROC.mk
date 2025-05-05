@@ -1,4 +1,6 @@
 CXX := g++
+
+#	-I./thirdParty/enet/include 
 CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I./src \
 	-I./thirdParty \
@@ -14,6 +16,7 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 
 # -lr3d vor lraylib einfügen falls nötig
 # -lbase nach -L...vulkan/build/base einfügen
+# -L./thirdParty/enet/build -lenet vor winsocks
 LDFLAGS := -L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
 	-L./thirdParty/rlImGui/bin -lrlimgui \
@@ -21,7 +24,7 @@ LDFLAGS := -L/mingw64/lib \
 	-L./thirdParty/imgui/bin -limgui \
 	-L./thirdParty/r3d/build \
 	-lr3d -lraylib \
-	-lopengl32 -lgdi32 -lwinmm \
+	-lopengl32 -lgdi32 -lwinmm -lws2_32\
 	-lgmp -lmpfr \
 	-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network -lsfml-audio\
 	-lpthread\
@@ -35,20 +38,39 @@ OBJ = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
 PCH = build/precompiledDefines.h.gch
 PCH_SRC = src/defines.h
 
-TARGET := build/FEMProc
+#TARGET := build/FEMProcUI__
 
 # Erzeugen der Dependency files
 -include $(OBJ:.o=.d)
 
 # eigentliches Proc/executable
-$(TARGET): $(OBJ)
+#$(TARGET): $(OBJ)
+#	@mkdir -p $(@D)
+#	$(CXX) -o $@ $^ Recc/Compilation/proc.res $(LDFLAGS)
+
+proc:
+	make targets
+
+# Objekt files
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)
+	@mkdir -p $(@D)
+	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
+
+PROC_DIR = Procs
+PROCS_CPP = $(shell find $(PROC_DIR) -name '*.cpp')
+PROCS_OBJ = $(patsubst $(PROC_DIR)/%.cpp, build/%.o, $(PROCS_CPP))
+PROCS_TARGETS = $(patsubst $(PROC_DIR)/%.cpp, build/%, $(PROCS_CPP))
+
+build/%.o: $(PROC_DIR)/%.cpp $(PCH)
+	@mkdir -p $(@D)
+	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
+
+build/% : build/%.o $(OBJ)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ $^ Recc/Compilation/proc.res $(LDFLAGS)
 
-proc:
-	make $(TARGET)
+targets: $(PROCS_OBJ) $(PROCS_TARGETS)
 
-# Objekt files
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
@@ -73,6 +95,6 @@ clearIconCache:
 	@cmd /C "Batch//clearIconCache.bat"
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(PROCS_TARGETS)
 
 .DEFAULT_GOAL := all
