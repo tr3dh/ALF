@@ -3,7 +3,7 @@
 std::map<prefabIndex, CellPrefab> g_cellPrefabCache = {};
 
 //
-prefabIndex cellPrefabCounter = 0;
+prefabIndex cellPrefabCounter = 1;
 
 //
 NodeIndex cacheCellPrefab(const std::string& prefabLabel){
@@ -22,6 +22,7 @@ NodeIndex cacheCellPrefab(const std::string& prefabLabel){
 
     //
     g_cellPrefabCache.emplace(cellPrefabCounter, prefabPath);
+    g_cellPrefabCache[cellPrefabCounter].pID = cellPrefabCounter;
 
     //
     LOG << LOG_GREEN << "** Element " << g_cellPrefabCache[cellPrefabCounter].label << " erfolgreich unter ID " << +cellPrefabCounter << " in CellPrefab Cache geladen" << endl;

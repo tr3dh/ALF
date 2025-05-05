@@ -201,7 +201,7 @@ public:
     }
 
     float movementSensitivity = 15;
-    float pitchSensitivity = 500;
+    float pitchSensitivity = 51;
     float scrollSensitivity = -1000;
 
     void updateCamera(){

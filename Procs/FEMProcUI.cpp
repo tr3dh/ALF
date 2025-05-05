@@ -209,6 +209,10 @@ int main(void)
         bool currentCtrlState = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
         static std::string modelSource = fs::path(model.getSource()).filename().string();
         
+        int monitor = GetCurrentMonitor();
+        Vector2 monitorSize = {GetMonitorWidth(monitor), GetMonitorHeight(monitor)};
+        Vector2 winSize = {GetScreenWidth(), GetScreenHeight()};
+
         // Nur bei gedrückter Strg-Taste reagieren
         if(currentCtrlState) {
 
@@ -278,6 +282,33 @@ int main(void)
         //
         rlImGuiBegin();
 
+        //
+        static bool openVertTabWin = false;
+
+        // Größe und Position des Vert tabbars fürs model editing berechnen
+        float panelWidth = winSize.x * (1.0f/2.5f); // Breite des Panels
+
+        ImVec2 panelPos;
+        ImVec2 panelSize;
+
+        if(!openVertTabWin){
+
+            panelPos = {winSize.x - ImGui::CalcTextSize("<-").x - ImGui::GetStyle().FramePadding.x * 4.0f,
+                        ImGui::GetFrameHeight()};
+            panelSize = {ImGui::CalcTextSize("<-").x + ImGui::GetStyle().FramePadding.x * 4.0f,
+                winSize.y - ImGui::GetFrameHeight()};
+        } else {
+            panelPos = {winSize.x - panelWidth, ImGui::GetFrameHeight()};
+            panelSize = {panelWidth, winSize.y - ImGui::GetFrameHeight()};
+        }
+
+        Vector2 leftFrameCorner = {0,panelPos.y};                           // linke obere Ecke zeichenfläche
+        Vector2 displayFrame = {panelPos.x - leftFrameCorner.x, winSize.y - leftFrameCorner.y};    // Größe Frame
+        Vector2 displayFrameCenter = {leftFrameCorner.x + displayFrame.x/2, leftFrameCorner.y + displayFrame.y/2}; // Center des Frames
+
+        //
+        model.display(MeshData::VANMISES_STRESS, 0, false, false, displayFrame, displayFrameCenter, {100,100});
+
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
@@ -319,259 +350,294 @@ int main(void)
                 ImGui::EndMenu();
             }
 
+            float buttonWidth = ImGui::CalcTextSize("X").x + ImGui::GetStyle().FramePadding.x * 2.0f;
+            float rightEdge = ImGui::GetWindowWidth() - buttonWidth - ImGui::GetStyle().FramePadding.x;
+        
+            ImGui::SetCursorPosX(rightEdge);
+            if (ImGui::Button("X")) {
+                closeWindow = true;
+            }
+
             ImGui::EndMainMenuBar();
         }
 
-        // Größe und Position des Vert tabbars fürs model editing berechnen
-        int winWidth = GetScreenWidth();
-        int winHeight = GetScreenHeight();
-        float panelWidth = winWidth * (1.0f/2.5f); // Breite des Panels
-        ImVec2 panelPos(winWidth - panelWidth, ImGui::GetFrameHeight());
-        ImVec2 panelSize(panelWidth, winHeight - ImGui::GetFrameHeight());
+        if(!openVertTabWin){
 
-        // Fenster an rechter Seite über volle Höhe
-        ImGui::SetNextWindowPos(panelPos, ImGuiCond_Always);
-        ImGui::SetNextWindowSize(panelSize, ImGuiCond_Always);
-        ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar;
+            // Fenster an rechter Seite über volle Höhe
+            ImGui::SetNextWindowPos(panelPos, ImGuiCond_Always);
+            ImGui::SetNextWindowSize({ImGui::CalcTextSize("<-").x + ImGui::GetStyle().FramePadding.x * 4.0f,
+                                     winSize.y - ImGui::GetFrameHeight()}, ImGuiCond_Always);
+            ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 
-        ImGui::Begin(("Edit Model " + modelSource).c_str(), nullptr, flags);
+            ImGui::Begin(("Collapsed Edit Model Win" + modelSource).c_str(), &openVertTabWin, flags);
 
-        ImGui::Text(("Edit Model " + modelSource).c_str());
+            //ImGui::SetCursorPosY(winSize.y/2 + ImGui::GetFrameHeight()/2);
 
-        ImGui::SameLine();
-
-        //
-        static const std::map<const char*, std::function<void()>> buttons = {
-            {"Unload", [&](){ model.unload();}},
-            {"Reload", [&](){ model.reload();}},
-            {"Save", [&](){ model.getMesh().saveMaterial();}}
-        };
-
-        //
-        float maxWidth = 0.0f;
-        for (const auto& [label, func] : buttons) {
-            float w = ImGui::CalcTextSize(label).x;
-            if (w > maxWidth) maxWidth = w;
-        }
-        float previewWidth = ImGui::CalcTextSize("...").x;
-        if (previewWidth > maxWidth) maxWidth = previewWidth;
-
-        //
-        maxWidth += ImGui::GetStyle().FramePadding.x * 4.0f;
-
-        ImGui::SetNextItemWidth(maxWidth);
-        if (ImGui::BeginCombo("##Model Interaction", "...")) {
-            
-            for (const auto& [label, func] : buttons) {
-                if(ImGui::Button(label)){
-                    func();
-                }
+            if(ImGui::Button("<-")){
+                openVertTabWin = true;
             }
-            ImGui::EndCombo();
+
+            ImGui::End();
         }
+        else{
 
-        static int selectedTab = 3;
-        static std::map<int, int> selectedSubTab; // selectedSubTab[tabID] = subTabID
+            // Fenster an rechter Seite über volle Höhe
+            ImGui::SetNextWindowPos(panelPos, ImGuiCond_Always);
+            ImGui::SetNextWindowSize(panelSize, ImGuiCond_Always);
+            ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 
-        const char* tabNames[] = { "Model", "Constraints", "Isomparam", "Material" };
-        std::map<int, std::vector<const char*>> subTabNames = {
-            {0, {"Import", "Export", "Settings"}},
-            {1, {}},
-            {2, {}},
-            {3, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}}
-        };
+            ImGui::Begin(("Edit Model " + modelSource).c_str(), &openVertTabWin, flags);
 
-        maxWidth = 0.0f;
-        float indentWidth = ImGui::GetStyle().IndentSpacing;
+            ImGui::Text(("Edit Model " + modelSource).c_str());
 
-        for (int i = 0; i < IM_ARRAYSIZE(tabNames); ++i) {
-            // Breite des Tab-Labels
-            float tabWidth = ImGui::CalcTextSize(tabNames[i]).x;
-            if (tabWidth > maxWidth) maxWidth = tabWidth;
-        }
-
-        // Breite der Subtab-Labels (falls vorhanden)
-        for (const char* subLabel : subTabNames[selectedTab]) {
-
-            float subTabWidth = ImGui::CalcTextSize(subLabel).x + indentWidth;
-            if (subTabWidth > maxWidth) maxWidth = subTabWidth;
-        }
-        
-        // Zusätzlich Padding für den Rahmen und Abstand
-        float framePadding = ImGui::GetStyle().FramePadding.x * 4.0f;
-        ImGui::BeginChild("VertTabBar", ImVec2(maxWidth + framePadding, 0), true);
-
-        for (int i = 0; i < IM_ARRAYSIZE(tabNames); ++i) {
-            if (ImGui::Selectable(tabNames[i], selectedTab == i)) {
-                selectedTab = i;
-            }
-        
-            // Subtabs unter dem aktuellen Tab
-            if (selectedTab == i && subTabNames.count(i) > 0) {
-                for (size_t j = 0; j < subTabNames[i].size(); ++j) {
-                    ImGui::Bullet();
-                    ImGui::SameLine();
-                    if (ImGui::Selectable(subTabNames[i][j], selectedSubTab[i] == j)) {
-                        selectedSubTab[i] = j;
-                    }
-                }
-            }
-        }
-        ImGui::EndChild();
-
-        ImGui::SameLine();
-
-        // Create a child window for the tab content
-        ImGui::BeginChild("TabContent", ImVec2(0, 0), true);
-
-        if (subTabNames[selectedTab].size() > 0)
-        {
-            ImGui::Text("Edit %s::%s", tabNames[selectedTab], subTabNames[selectedTab][selectedSubTab[selectedTab]]);
-        }
-        else
-        {
-            ImGui::Text("Edit %s", tabNames[selectedTab]);
-        }
-
-        ImGui::Separator();
-
-        switch (selectedTab)
-        {
-        case 0:
-            ImGui::Text("Mesh Tab");
-            break;
-        case 1:
-            ImGui::Text("constraint Tab");
-            break;
-        case 2:
-            ImGui::Text("isoparam tab");
-            break;
-        case 3:{
+            ImGui::SameLine();
 
             //
-            static IsoMeshMaterial& mat = model.getMesh().getMaterial();
-            mat = model.getMesh().getMaterial();
+            static const std::map<const char*, std::function<void()>> buttons = {
+                {"Unload", [&](){ model.unload();}},
+                {"Reload", [&](){ model.reload();}},
+                {"Save", [&](){ model.getMesh().saveMaterial();}}
+            };
 
-            switch (selectedSubTab[selectedTab]){
+            //
+            float maxWidth = 0.0f;
+            for (const auto& [label, func] : buttons) {
+                float w = ImGui::CalcTextSize(label).x;
+                if (w > maxWidth) maxWidth = w;
+            }
+            float previewWidth = ImGui::CalcTextSize("...").x;
+            if (previewWidth > maxWidth) maxWidth = previewWidth;
 
-                case 0:{
-                    InputSliderFloat("E", mat.E, 10000,20000, true);
-                    InputSliderFloat("v", mat.v, 0.1,1, true);
-                    InputSliderFloat("t", mat.t, 0.01, 0.5, true);
-                    break;
-                }
-                case 1:{
+            //
+            maxWidth += ImGui::GetStyle().FramePadding.x * 4.0f;
 
-                    ImPlot::SetNextAxesToFit();
-                    if (ImPlot::BeginPlot("Sample Histogramm", ImVec2(-1,0))) {
-                        ImPlot::PlotHistogram("Samples", model.getSamples().data(), model.getSamples().size(), 50, (1.0), ImPlotRange(), ImPlotHistogramFlags_Density);
-                        ImPlot::EndPlot();
-                    }
-
-                    ImGui::Text("Mean : %.3f", model.m_mean);
-                    ImGui::Text("Deviation : %.3f", model.m_deviation);
-
-                    break;
-                }
-                case 2:{
-
-                    InputExpression("pdf", mat.pdf);
-                    ImGui::Separator();
-
-                    displayExpression("pdf(xi)", mat.pdf_xi);
-
-                    ImGui::Separator();
-
-                    break;
-                }
-                case 3:{
-
-                    ImGui::Text("Params");
-                    ImGui::Separator();
-
-                    for(auto& [symbol,sub] : mat.subs){
-                        InputSliderFloatExpression("Params['" + symbol->__str__() + "']", sub, -2,10);
-                    }
+            ImGui::SetNextItemWidth(maxWidth);
+            if (ImGui::BeginCombo("##Model Interaction", "...")) {
                 
-                    ImGui::Separator();
-
-                    ImGui::Text("Add Param");
-
-                    static bool openParamDialog = false;
-                    if(!openParamDialog && ImGui::Button("Add")){
-                        openParamDialog = true;
+                for (const auto& [label, func] : buttons) {
+                    if(ImGui::Button(label)){
+                        func();
                     }
+                }
+                ImGui::EndCombo();
+            }
 
-                    if(openParamDialog){
+            ImGui::SameLine();
 
-                        static char textBuffer[24];
-                        static float valBuffer = 0.0f;
+            float ButtonWidth = ImGui::CalcTextSize("->").x + ImGui::GetStyle().FramePadding.x * 4;
+            ImGui::SetNextItemWidth(ButtonWidth);
 
-                        ImGui::Text("Param ");
+            ImGui::SetCursorPosX(ImGui::GetWindowSize().x - ButtonWidth - ImGui::GetStyle().FramePadding.x * 2);
+
+            if (ImGui::Button("->")) {
+                openVertTabWin = !openVertTabWin;
+                ImGui::SetWindowCollapsed(openVertTabWin, ImGuiCond_Always);
+            }
+
+            static int selectedTab = 3;
+            static std::map<int, int> selectedSubTab; // selectedSubTab[tabID] = subTabID
+
+            const char* tabNames[] = { "Model", "Constraints", "Isomparam", "Material" };
+            std::map<int, std::vector<const char*>> subTabNames = {
+                {0, {"Import", "Export", "Settings"}},
+                {1, {}},
+                {2, {}},
+                {3, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}}
+            };
+
+            maxWidth = 0.0f;
+            float indentWidth = ImGui::GetStyle().IndentSpacing;
+
+            for (int i = 0; i < IM_ARRAYSIZE(tabNames); ++i) {
+                // Breite des Tab-Labels
+                float tabWidth = ImGui::CalcTextSize(tabNames[i]).x;
+                if (tabWidth > maxWidth) maxWidth = tabWidth;
+            }
+
+            // Breite der Subtab-Labels (falls vorhanden)
+            for (const char* subLabel : subTabNames[selectedTab]) {
+
+                float subTabWidth = ImGui::CalcTextSize(subLabel).x + indentWidth;
+                if (subTabWidth > maxWidth) maxWidth = subTabWidth;
+            }
+            
+            // Zusätzlich Padding für den Rahmen und Abstand
+            float framePadding = ImGui::GetStyle().FramePadding.x * 4.0f;
+            ImGui::BeginChild("VertTabBar", ImVec2(maxWidth + framePadding, 0), true);
+
+            for (int i = 0; i < IM_ARRAYSIZE(tabNames); ++i) {
+                if (ImGui::Selectable(tabNames[i], selectedTab == i)) {
+                    selectedTab = i;
+                }
+            
+                // Subtabs unter dem aktuellen Tab
+                if (selectedTab == i && subTabNames.count(i) > 0) {
+                    for (size_t j = 0; j < subTabNames[i].size(); ++j) {
+                        ImGui::Bullet();
                         ImGui::SameLine();
-                        if(ImGui::InputText("##addParamLabel",textBuffer, ImGuiInputTextFlags_EnterReturnsTrue)){
-                            //openParamDialog = false;
+                        if (ImGui::Selectable(subTabNames[i][j], selectedSubTab[i] == j)) {
+                            selectedSubTab[i] = j;
+                        }
+                    }
+                }
+            }
+            ImGui::EndChild();
+
+            ImGui::SameLine();
+
+            // Create a child window for the tab content
+            ImGui::BeginChild("TabContent", ImVec2(0, 0), true);
+
+            if (subTabNames[selectedTab].size() > 0)
+            {
+                ImGui::Text("Edit %s::%s", tabNames[selectedTab], subTabNames[selectedTab][selectedSubTab[selectedTab]]);
+            }
+            else
+            {
+                ImGui::Text("Edit %s", tabNames[selectedTab]);
+            }
+
+            ImGui::Separator();
+
+            switch (selectedTab)
+            {
+            case 0:
+                ImGui::Text("Mesh Tab");
+                break;
+            case 1:
+                ImGui::Text("constraint Tab");
+                break;
+            case 2:
+                ImGui::Text("isoparam tab");
+                break;
+            case 3:{
+
+                //
+                static IsoMeshMaterial& mat = model.getMesh().getMaterial();
+                mat = model.getMesh().getMaterial();
+
+                switch (selectedSubTab[selectedTab]){
+
+                    case 0:{
+                        InputSliderFloat("E", mat.E, 10000,20000, true);
+                        InputSliderFloat("v", mat.v, 0.1,1, true);
+                        InputSliderFloat("t", mat.t, 0.01, 0.5, true);
+                        break;
+                    }
+                    case 1:{
+
+                        ImPlot::SetNextAxesToFit();
+                        if (ImPlot::BeginPlot("Sample Histogramm", ImVec2(-1,0))) {
+                            ImPlot::PlotHistogram("Samples", model.getSamples().data(), model.getSamples().size(), 50, (1.0), ImPlotRange(), ImPlotHistogramFlags_Density);
+                            ImPlot::EndPlot();
                         }
 
-                        ImGui::Text("Value ");
-                        ImGui::SameLine();
-                        if(ImGui::InputFloat("##addParamValue", &valBuffer, 0, ImGuiInputTextFlags_EnterReturnsTrue)){
-                            //openParamDialog = false;
+                        ImGui::Text("Mean : %.3f", model.m_mean);
+                        ImGui::Text("Deviation : %.3f", model.m_deviation);
+
+                        break;
+                    }
+                    case 2:{
+
+                        InputExpression("pdf", mat.pdf);
+                        ImGui::Separator();
+
+                        displayExpression("pdf(xi)", mat.pdf_xi);
+
+                        ImGui::Separator();
+
+                        break;
+                    }
+                    case 3:{
+
+                        ImGui::Text("Params");
+                        ImGui::Separator();
+
+                        for(auto& [symbol,sub] : mat.subs){
+                            InputSliderFloatExpression("Params['" + symbol->__str__() + "']", sub, -2,10);
+                        }
+                    
+                        ImGui::Separator();
+
+                        ImGui::Text("Add Param");
+
+                        static bool openParamDialog = false;
+                        if(!openParamDialog && ImGui::Button("Add")){
+                            openParamDialog = true;
                         }
 
-                        if(IsKeyPressed(KEY_ENTER)){
-                        
-                            Symbol sym = SymEngine::symbol(textBuffer);
-                            
-                            if(!mat.subs.contains(sym) && sym->__str__() != ""){
-                                mat.subs.try_emplace(SymEngine::symbol(textBuffer), toExpression(valBuffer));
+                        if(openParamDialog){
+
+                            static char textBuffer[24];
+                            static float valBuffer = 0.0f;
+
+                            ImGui::Text("Param ");
+                            ImGui::SameLine();
+                            if(ImGui::InputText("##addParamLabel",textBuffer, ImGuiInputTextFlags_EnterReturnsTrue)){
+                                //openParamDialog = false;
                             }
 
-                            valBuffer = 0;
-                            memset(textBuffer, 0, sizeof(textBuffer));
+                            ImGui::Text("Value ");
+                            ImGui::SameLine();
+                            if(ImGui::InputFloat("##addParamValue", &valBuffer, 0, ImGuiInputTextFlags_EnterReturnsTrue)){
+                                //openParamDialog = false;
+                            }
 
-                            openParamDialog = false;
+                            if(IsKeyPressed(KEY_ENTER)){
+                            
+                                Symbol sym = SymEngine::symbol(textBuffer);
+                                
+                                if(!mat.subs.contains(sym) && sym->__str__() != ""){
+                                    mat.subs.try_emplace(SymEngine::symbol(textBuffer), toExpression(valBuffer));
+                                }
+
+                                valBuffer = 0;
+                                memset(textBuffer, 0, sizeof(textBuffer));
+
+                                openParamDialog = false;
+                            }
                         }
+
+                        ImGui::Separator();
+                        ImGui::Text("Borders");
+                        ImGui::Separator();
+                        InputSliderFloat("xi min", mat.xi_min, -2,2,true);
+                        InputSliderFloat("xi max", mat.xi_max, -2,2,true);
+                        ImGui::Separator();
+
+                        break;
                     }
+                    case 4:{
 
-                    ImGui::Separator();
-                    ImGui::Text("Borders");
-                    ImGui::Separator();
-                    InputSliderFloat("xi min", mat.xi_min, -2,2,true);
-                    InputSliderFloat("xi max", mat.xi_max, -2,2,true);
-                    ImGui::Separator();
+                        InputSliderInt("nSamples ", mat.nSamples, 1, 1000000);
 
-                    break;
+                        InputSliderFloat("tolerance", mat.tolerance, 0.001,0.2);
+                        InputSliderFloat("segmentation", mat.segmentation, 0.001,0.2);
+
+                        ImGui::Separator();
+
+                        break;
+                    }
+                    default:{
+
+                        break;
+                    }   
                 }
-                case 4:{
 
-                    InputSliderInt("nSamples ", mat.nSamples, 1, 1000000);
-
-                    InputSliderFloat("tolerance", mat.tolerance, 0.001,0.2);
-                    InputSliderFloat("segmentation", mat.segmentation, 0.001,0.2);
-
-                    ImGui::Separator();
-
-                    break;
+                if(IsKeyPressed(KEY_ENTER)){
+                        
+                    mat.substitutePdf();
+                    model.sampling();
                 }
-                default:{
 
-                    break;
-                }   
+                break;
             }
-
-            if(IsKeyPressed(KEY_ENTER)){
-                    
-                mat.substitutePdf();
-                model.sampling();
             }
+            ImGui::EndChild();
 
-            break;
-        }
-        }
-        ImGui::EndChild();
+            ImGui::End();
 
-        ImGui::End();
+        }
 
         RenderFileDialog();
 

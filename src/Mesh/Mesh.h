@@ -71,8 +71,10 @@ public:
 
     void calculateStrainAndStress();
 
-    void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
-        const sf::Vector2f& padding = {50,50});
+    void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0,
+        const std::vector<const NodeSet*>& nodeSets = {}, const std::vector<Color> setColors = {}, int displayOnNodeSet = 0,
+        bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
+        const Vector2& winSize = {100,100}, const Vector2& frameOffset = {-1,-1}, const Vector2& padding = {50,50});
 
     const NodeSet& getUndeformedNodes() const;
     const NodeSet& getDeformedNodes() const;

@@ -12,7 +12,7 @@ public:
     CellPrefab(const std::string& path);
 
     std::string label = NULLSTR;
-    uint8_t nDimensions = 0, nNodes = 0;
+    uint8_t pID = 0, nDimensions = 0, nNodes = 0;
 
     std::vector<Expression> shapeFunctions = {};
     std::vector<SymEngine::DenseMatrix> shapeFunctionDerivatives = {};

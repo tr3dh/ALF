@@ -32,6 +32,9 @@ public:
     const IsoMesh& getMesh() const;
     IsoMesh& getMesh();
 
+    void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
+        const Vector2& winSize = {100,100}, const Vector2& frameOffset = {-1,-1}, const Vector2& padding = {50,50});
+
     float m_deviation = 0, m_mean = 0;
 
 private:

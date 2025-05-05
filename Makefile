@@ -17,6 +17,9 @@ exec:
 demo:
 	@make launch TARGET=build/3dRenderingDemo
 
+execDemo:
+	@make exec TARGET=build/3dRenderingDemo
+
 flush:
 	rm build/*.ini
 

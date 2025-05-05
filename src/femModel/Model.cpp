@@ -72,12 +72,9 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
         m_isoMesh.solve();
         m_isoMesh.calculateStrainAndStress();
-
-        //m_isoMesh.display(MeshData::VANMISES_STRESS, 0, false, false, {100,100});
     }
 
     // roadmap unsicherheitsanalyse
-
     sampling();
 
     // fÜr Werte von xi plotten und berechnen
@@ -90,6 +87,12 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     Eigen::SparseMatrix<float> u_xi = m_isoMesh.getDisplacement() * (1-Xi);
 
     IsoMesh::displaceNodes(n0, u_xi, n0.begin()->first);
+}
+
+void FemModel::display(const MeshData& displayedData, const int& globKoord, bool displayOnDeformedMesh, bool displayOnQuadraturePoints,
+    const Vector2& winSize, const Vector2& frameOffset, const Vector2& padding){
+
+        m_isoMesh.display(displayedData, globKoord, {&m_isoMesh.getUndeformedNodes(), &m_isoMesh.getDeformedNodes()}, {WHITE, RED, GREEN, YELLOW}, 0, displayOnDeformedMesh, displayOnQuadraturePoints, winSize, frameOffset, padding);
 }
 
 void FemModel::sampling(){

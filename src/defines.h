@@ -75,6 +75,8 @@ namespace fs = std::filesystem;
 #include "Drivers/SFML/__sfPolygon.h"
 #include "Drivers/SFML/__sfLog.h"
 
+#include "Drivers/Raylib/__rlLogging.h"
+
 #include "Drivers/Visualisation/__Coloration.h"
 
 #include "Drivers/UI/__fileBrowser.h"

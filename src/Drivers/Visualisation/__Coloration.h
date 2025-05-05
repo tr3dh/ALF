@@ -1,5 +1,6 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
+#include <raylib.h>
+#include <math.h>
 
-sf::Color getColorByValue(float val, float min, float max);
+Color getColorByValue(float val, float min, float max);

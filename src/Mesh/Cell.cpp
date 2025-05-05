@@ -13,7 +13,7 @@ Cell::Cell(const prefabIndex& prefIndex, const std::vector<NodeIndex>& nodeIndic
 // nicht const Koordinaten abfrage -> Einträge können über zurückgegebene Referenz bearbeitet werden
 const NodeIndex& Cell::operator[](size_t index) const{
 
-    CRITICAL_ASSERT(index < m_nodeIndices.size(), "Abgefragter nodeIndex existiert in Element nicht");
+    CRITICAL_ASSERT(index < m_nodeIndices.size(), "Abgefragter nodeIndex " + std::to_string(index) + " existiert in Element nicht");
     return m_nodeIndices[index];
 }
 

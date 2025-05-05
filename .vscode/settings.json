@@ -98,7 +98,8 @@
         "strstream": "cpp",
         "cfenv": "cpp",
         "dense": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "*.m": "cpp"
     },
 
     // Makefile Configs

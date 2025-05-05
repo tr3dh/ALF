@@ -95,6 +95,6 @@ clearIconCache:
 	@cmd /C "Batch//clearIconCache.bat"
 
 clean:
-	rm -f $(PROCS_TARGETS)
+#rm -f $(PROCS_TARGETS)
 
 .DEFAULT_GOAL := all
