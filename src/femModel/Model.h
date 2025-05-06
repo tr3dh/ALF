@@ -33,7 +33,7 @@ public:
     IsoMesh& getMesh();
 
     void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
-        const Vector2& winSize = {100,100}, const Vector2& frameOffset = {-1,-1}, const Vector2& padding = {50,50});
+        const Vector2& winSize = {100,100}, const Vector2& frameOffset = {-1,-1}, const Vector2& padding = {50,50}, bool splitScreen = false, bool splitScreenVertical = true);
 
     float m_deviation = 0, m_mean = 0;
 
@@ -45,4 +45,8 @@ private:
     std::vector<float> m_samples = {};
 
     IsoMesh m_isoMesh;
+
+    NodeSet n_upperXi, n_lowerXi;
+    Eigen::MatrixXf u_upperXi, u_lowerXi;
+    DataSet data_upperXi, data_lowerXi;
 };

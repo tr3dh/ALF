@@ -25,14 +25,16 @@ void InputExpression(const std::string& label, Expression& source, const std::st
     expressionBuffer = source->__str__();
 
     // Platz machen für schreiboperationen bis 4 fache größe der ursprünglichen Expression
-    expressionBuffer.resize(expressionBuffer.size() * 4);
+    expressionBuffer.resize(20 + expressionBuffer.size() * 10);
 
     //
     ImGui::Text(label.c_str());
-    ImGui::SetNextItemWidth(ImGui::CalcTextSize(expressionBuffer.c_str()).x + ImGui::GetStyle().FramePadding.x * 4.0f);
+    ImGui::PushItemWidth(-FLT_MIN);
+    //ImGui::SetNextItemWidth(ImGui::CalcTextSize(expressionBuffer.c_str()).x + ImGui::GetStyle().FramePadding.x * 4.0f);
     if (ImGui::InputText(("##"+label+suffix).c_str(), expressionBuffer.data(), expressionBuffer.capacity() + 1, ImGuiInputTextFlags_EnterReturnsTrue)) {
         source = SymEngine::parse(expressionBuffer);
     }
+    ImGui::PopItemWidth();
 }
 
 void displayExpression(const std::string& label, Expression& source, const std::string& suffix = "_exprDisplay"){
@@ -307,7 +309,9 @@ int main(void)
         Vector2 displayFrameCenter = {leftFrameCorner.x + displayFrame.x/2, leftFrameCorner.y + displayFrame.y/2}; // Center des Frames
 
         //
-        model.display(MeshData::VANMISES_STRESS, 0, false, false, displayFrame, displayFrameCenter, {100,100});
+        static bool splitScreen = false;
+        static bool splitScreenVertical = true;
+        model.display(MeshData::VANMISES_STRESS, 0, false, false, displayFrame, displayFrameCenter, {100,100}, splitScreen, splitScreenVertical);
 
         if (ImGui::BeginMainMenuBar())
         {
@@ -442,7 +446,7 @@ int main(void)
                 {0, {"Import", "Export", "Settings"}},
                 {1, {}},
                 {2, {}},
-                {3, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}}
+                {3, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings", "rendering"}}
             };
 
             maxWidth = 0.0f;
@@ -559,31 +563,46 @@ int main(void)
                     
                         ImGui::Separator();
 
-                        ImGui::Text("Add Param");
+                        ImGui::Text("Handle Params");
 
-                        static bool openParamDialog = false;
-                        if(!openParamDialog && ImGui::Button("Add")){
-                            openParamDialog = true;
+                        static bool addParamDialog = false;
+                        static bool deleteParamDialog = false;
+
+                        if(!addParamDialog && !deleteParamDialog){
+
+                            if(ImGui::Button("Add")){
+                                addParamDialog = true;
+                            }
+    
+                            ImGui::SameLine();
+                            if(ImGui::Button("Delete")){
+                                deleteParamDialog = true;
+                            }
                         }
 
-                        if(openParamDialog){
+                        if(addParamDialog){
 
                             static char textBuffer[24];
                             static float valBuffer = 0.0f;
 
+                            ImGui::Text("Add Param");
+                            ImGui::Separator();
+
                             ImGui::Text("Param ");
                             ImGui::SameLine();
                             if(ImGui::InputText("##addParamLabel",textBuffer, ImGuiInputTextFlags_EnterReturnsTrue)){
-                                //openParamDialog = false;
+                                //addParamDialog = false;
                             }
 
                             ImGui::Text("Value ");
                             ImGui::SameLine();
                             if(ImGui::InputFloat("##addParamValue", &valBuffer, 0, ImGuiInputTextFlags_EnterReturnsTrue)){
-                                //openParamDialog = false;
+                                //addParamDialog = false;
                             }
 
-                            if(IsKeyPressed(KEY_ENTER)){
+                            ImGui::Separator();
+
+                            if(ImGui::Button("Apply") || IsKeyPressed(KEY_ENTER)){
                             
                                 Symbol sym = SymEngine::symbol(textBuffer);
                                 
@@ -593,8 +612,48 @@ int main(void)
 
                                 valBuffer = 0;
                                 memset(textBuffer, 0, sizeof(textBuffer));
+                            }
 
-                                openParamDialog = false;
+                            ImGui::Separator();
+
+                            if(ImGui::Button("close Dialog") || IsKeyPressed(KEY_Q)){
+                                addParamDialog = false;
+                            }
+                        }
+
+                        if(deleteParamDialog){
+
+                            static char textBuffer[24];
+
+                            ImGui::Text("Delete Param");
+                            ImGui::Separator();
+                            
+                            for(const auto& [symbol, val] : mat.subs){
+
+                                ImGui::Bullet();
+                                ImGui::SameLine();
+
+                                if(ImGui::Button((symbol->__str__()).c_str())){
+
+                                    // compare gibt null für gleichheit und 1,-1 für < || > zurück
+                                    // dementsprechend muss der return null sein damit pdf nicht von 
+                                    // dem zu entfernenden Symbol abhängig ist
+                                    if(mat.pdf->compare(*mat.pdf->subs({{symbol,val}})) != 0){
+
+                                        _ERROR << "   für pdf Expression relevantes Symbol kann nicht entfernt werden, bitte zuerst pdf als von " << symbol <<
+                                        " unabhängig deklarieren" << endl;
+                                    } else {
+
+                                        // wenn nicht abhängig rauslöschen
+                                        mat.subs.erase(symbol);
+                                    }
+                                }
+                            }
+
+                            ImGui::Separator();
+
+                            if(ImGui::Button("Close Dialog") || IsKeyPressed(KEY_Q)){
+                                deleteParamDialog = false;
                             }
                         }
 
@@ -618,13 +677,23 @@ int main(void)
 
                         break;
                     }
+                    case 5:{
+
+                        ImGui::Text("Appearance");
+                        ImGui::Separator();
+
+                        ImGui::Checkbox("SplitScreen", &splitScreen);
+                        ImGui::Checkbox("SplitVertical", &splitScreenVertical);
+
+                        break;
+                    }
                     default:{
 
                         break;
                     }   
                 }
 
-                if(IsKeyPressed(KEY_ENTER)){
+                if(IsKeyPressed(KEY_SPACE)){
                         
                     mat.substitutePdf();
                     model.sampling();

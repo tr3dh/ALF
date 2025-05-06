@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-void IsoMesh::display(const MeshData& displayedData, const int& globKoord, const std::vector<const NodeSet*>& nodeSets,
+void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, const int& globKoord, const std::vector<const NodeSet*>& nodeSets,
     const std::vector<Color> setColors, int displayOnNodeSet, bool displayOnDeformedMesh, bool displayOnQuadraturePoints,
     const Vector2& winSize, const Vector2& frameOffset, const Vector2& padding){
 
@@ -78,7 +78,7 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, const
 
     for(const auto& [cellIndex, cell] : m_Cells){
     
-        const CellData& data = m_cellData.at(cellIndex);
+        const CellData& data = dataSet.at(cellIndex);
         fData = data.getData(displayedData, globKoord);
 
         if(fData < fmin){
@@ -90,9 +90,9 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, const
             maxInd = cellIndex;
         }
     }
-    LOG << "   maximaler " << magic_enum::enum_name(displayedData) << " : " << fmax << " bei Elem " << maxInd << endl;
-    LOG << "   minimaler " << magic_enum::enum_name(displayedData) << " : " << fmin << " bei Elem " << minInd << endl;
-    LOG << endl;
+    // LOG << "   maximaler " << magic_enum::enum_name(displayedData) << " : " << fmax << " bei Elem " << maxInd << endl;
+    // LOG << "   minimaler " << magic_enum::enum_name(displayedData) << " : " << fmin << " bei Elem " << minInd << endl;
+    // LOG << endl;
 
     RETURNING_ASSERT(nodeSets.size() > displayOnNodeSet, "displayOnNodeSet Index ist ungültig",);
     const NodeSet* d_nodeSet = nodeSets[displayOnNodeSet];
@@ -121,7 +121,7 @@ void IsoMesh::display(const MeshData& displayedData, const int& globKoord, const
             vertices[prevNum] = (Vector2){(prevNode[0] * scaling) - offset.x, winSize.y - ((prevNode[1] * scaling) - offset.y)};
         }
         
-        DrawTriangleFan(vertices, r_prefab.nNodes, getColorByValue(m_cellData.at(index).getData(displayedData, globKoord), fmin, fmax));
+        DrawTriangleFan(vertices, r_prefab.nNodes, getColorByValue(dataSet.at(index).getData(displayedData, globKoord), fmin, fmax));
     }
 
     // zeichne Linien

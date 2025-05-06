@@ -23,6 +23,9 @@ struct CellData{
 
     CellData(const CellPrefab& prefab);
 
+    CellData(const CellData& other);
+    CellData& operator=(const CellData& other);
+
     void calculateCellStrainAndStress();
 
     void calculateVanMisesStress();

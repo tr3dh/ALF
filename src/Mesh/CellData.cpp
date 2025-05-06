@@ -15,6 +15,36 @@ CellData::CellData(const CellPrefab& prefab) : m_prefab(prefab){
     quadratureStress.reserve(m_prefab.nNodes);
 };
 
+// Copy-Konstruktor
+CellData::CellData(const CellData& other)
+    : m_prefab(other.m_prefab),
+    strain(other.strain),
+    stress(other.stress),
+    quadratureStrain(other.quadratureStrain),
+    quadratureStress(other.quadratureStress),
+    cellVolume(other.cellVolume),
+    cellDisplacement(other.cellDisplacement),
+    vanMisesStress(other.vanMisesStress),
+    quadratureMisesStress(other.quadratureMisesStress)
+{
+
+}
+
+CellData& CellData::operator=(const CellData& other) {
+
+    if (this != &other) {
+        strain = other.strain;
+        stress = other.stress;
+        quadratureStrain = other.quadratureStrain;
+        quadratureStress = other.quadratureStress;
+        cellVolume = other.cellVolume;
+        cellDisplacement = other.cellDisplacement;
+        vanMisesStress = other.vanMisesStress;
+        quadratureMisesStress = other.quadratureMisesStress;
+    }
+    return *this;
+}
+
 void CellData::calculateCellStrainAndStress(){
 
     // 1, 2, 3, 4, ...

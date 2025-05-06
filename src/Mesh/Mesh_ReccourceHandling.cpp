@@ -2,10 +2,10 @@
 
 void acvanceDataSet(const DataSet& source, DataSet& target, const Coeffs& coeffs){
 
-    // Kopiere alle Einträge in neue Map
+    // alle Einträge in neues Set kopieren
     target = source;
 
-    // Koeffizienten auf alle einträge in der neuen map beaufsclagen
+    //  Koeffizienten auf alle einträge in der neuen map beaufsclagen
     for(auto& [_, data] : target){
         data *= coeffs;
     }

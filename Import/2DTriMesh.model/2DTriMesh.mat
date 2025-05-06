@@ -1,12 +1,8 @@
 {
-    "E": 20000.0,
+    "E": 15000.0,
     "pdf": {
-        "function": "a*offset - xi**2",
-        "params": {
-            "a": 1.0,
-            "offset": 1.0,
-            "sigma": 4.0
-        },
+        "function": "xi",
+        "params": null,
         "pdfPreprocessing": {
             "segmentation": 0.009999999776482582,
             "tolerance": 0.009999999776482582
@@ -15,6 +11,6 @@
             "samples": 370079
         }
     },
-    "t": 0.10000000149011612,
-    "v": 0.578000009059906
+    "t": 0.5,
+    "v": 0.3160000145435333
 }

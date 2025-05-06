@@ -2,7 +2,17 @@
 
 void seedFloatGenerator(const float& seed){
 
-    std::srand(static_cast<unsigned int>((seed == 0 ? std::time(nullptr) : seed)));
+    static bool seeded = false;
+
+    if(!seeded){
+
+        LOG << "** Seeded rd Float Gen with " << (seed == 0 ? "default" : "custom") << " Seed " << std::time(nullptr) << endl; 
+        std::srand(static_cast<unsigned int>((seed == 0 ? std::time(nullptr) : seed)));
+        seeded = true;
+        return;
+    }
+
+    LOG << "** Continue using gen seed " << endl;
 }
 
 // Gibt Zufalls Float im Intervall [a, b] zurück
