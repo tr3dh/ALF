@@ -35,6 +35,7 @@ namespace fs = std::filesystem;
 #include <rlImGui/rlImGui.h>
 
 #include <imgui/imgui.h>
+#include <imgui/imgui_internal.h> 
 
 // aufgrund von Konflikten mit der WinAPI
 #define NOGDI
