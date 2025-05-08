@@ -1,8 +1,12 @@
 {
     "E": 15000.0,
     "pdf": {
-        "function": "xi",
-        "params": null,
+        "function": "1-xi**2",
+        "params": {
+            "mu": 0.0,
+            "pi": 3.1414999961853027,
+            "sigma": 0.5
+        },
         "pdfPreprocessing": {
             "segmentation": 0.009999999776482582,
             "tolerance": 0.009999999776482582

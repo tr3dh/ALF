@@ -137,9 +137,6 @@ void InputExpression(const std::string& label, Expression& source, const std::st
         lastSourceStr = currentSourceStr;
     }
 
-    // label anzeigen
-    ImGui::Text(label.c_str());
-
     // pointer für callback setzen
     g_bufferPtr = &expressionBuffer;
 
@@ -185,7 +182,7 @@ void displayExpression(const std::string& label, Expression& source, const std::
 
     ImGui::Text((label + " ").c_str());
     ImGui::SetNextItemWidth(ImGui::CalcTextSize(expressionBuffer.c_str()).x + ImGui::GetStyle().FramePadding.x * 4.0f);
-    ImGui::Text(expressionBuffer.data());
+    ImGui::TextWrapped(expressionBuffer.data());
 }
 
 bool InputSliderFloatExpression(const std::string& label, Expression& source, const float& lowerBorder = -2, const float& upperBorder = 10,
@@ -683,6 +680,62 @@ int main(void)
                         break;
                     }
                     case 2:{
+
+                            // label anzeigen
+                        ImGui::Text("pdf");
+                        ImGui::SameLine();
+                        ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x + ImGui::CalcTextSize("pdf").x - ImGui::CalcTextSize("Import").x);
+
+                        static int currentFile = 0;
+                        static std::vector<std::string> pdfFiles = {};
+                        static std::vector<const char*> items = {};
+
+                        // Custom Dropdown
+                        if (ImGui::Button("Import")) {
+
+                            ImGui::OpenPopup("DateiAuswahl");
+
+                            // zweiteilung hier nötig da const char* entsprechendes objekt braucht um pointer zu erzeugen
+                            pdfFiles.clear();
+                            for (const auto& file : fs::directory_iterator("../Recc/pdf")) {
+                                if (file.path().extension() == "._pdf")
+                                    pdfFiles.emplace_back(file.path().string());
+                            }
+
+                            //
+                            items.clear();
+                            for (const auto& file : pdfFiles)
+                                items.push_back(file.c_str());
+                            
+                        }
+
+                        if (ImGui::BeginPopup("DateiAuswahl")) {
+
+                            for (int i = 0; i < pdfFiles.size(); ++i) {
+                                if (ImGui::Selectable(fs::path(pdfFiles[i]).filename().string().c_str(), i == currentFile)) {
+
+                                    currentFile = i;
+
+                                    LOG << "** Import pdf Funktion " << pdfFiles[currentFile] << endl;
+
+                                    std::ifstream pdfFile(pdfFiles[currentFile]);
+                                    nlohmann::json pdf = nlohmann::json::parse(pdfFile, nullptr, true, true);
+                                    pdfFile.close();
+
+                                    std::ifstream matFile(model.getMesh().getMaterialPath());
+                                    nlohmann::json mat = nlohmann::json::parse(matFile, nullptr, true, true);
+
+                                    mat["pdf"] = pdf;
+
+                                    std::ofstream matOutFile(model.getMesh().getMaterialPath());
+                                    matOutFile << mat.dump(4);
+                                    matOutFile.close();
+
+                                    model.getMesh().loadIsoMeshMaterial();
+                                }
+                            }
+                            ImGui::EndPopup();
+                        }
 
                         InputExpression("pdf", mat.pdf);
                         ImGui::Separator();

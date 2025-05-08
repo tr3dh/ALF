@@ -37,7 +37,8 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& xi_m
         return {0,0,0,0};
     };
 
-    while(p_xi > tolerance && (xi_max != 0 ? currentXi < xi_max : 1)){
+    if(xi_min > 0){ currentXi = xi_min; }
+    while(p_xi > tolerance && (xi_max != 0 ? currentXi < xi_max : 1) && xi_max >= 0){
 
         // Punkt auf pdensity ermitteln                                                  // Stelle xi
         p_xi = SymEngine::eval_double(*pdensity->subs({{xi, toExpression(currentXi)}}));   // Funktionswert
@@ -51,12 +52,19 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& xi_m
         //
         currentXi += segmentation;
     }
-    // nach abbruch zuweisen
-    rightBorder = currentXi - segmentation;
+
+    if(xi_max == 0){
+        rightBorder = currentXi - segmentation;
+    } else {
+        // nach abbruch zuweisen
+        rightBorder = (currentXi < xi_max ? currentXi - segmentation : xi_max);
+    }
 
     currentXi = 0;
     p_xi = 2 * tolerance;
-    while(p_xi > tolerance && (xi_min != 0 ? currentXi > xi_min : 1)){
+
+    if(xi_max < 0){ currentXi = xi_max; }
+    while(p_xi > tolerance && (xi_min != 0 ? currentXi > xi_min : 1) && xi_min <= 0){
 
         // Punkt auf pdensity ermitteln -> p(currentXi) = p_xi                              // Stelle xi
         p_xi = SymEngine::eval_double(*pdensity->subs({{xi, toExpression(currentXi)}}));    // Funktionswert
@@ -71,7 +79,12 @@ std::array<float, 4> preprocessPDF(const Expression& pdensity, const float& xi_m
         currentXi -= segmentation;
     }
     // nach abbruch zuweisen
-    leftBorder = currentXi + segmentation;
+    if(xi_min == 0){
+        leftBorder = currentXi + segmentation;
+    }
+    else{
+        leftBorder = (currentXi > xi_min ? currentXi + segmentation : xi_min);
+    }
 
     return {max_Xi, maxP_Xi, leftBorder, rightBorder};
 }
@@ -92,6 +105,8 @@ void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, 
     LOG << endl;
 
     if(maxP_Xi <= 0 || leftBorder == rightBorder){
+
+        RETURNING_ASSERT(TRIGGER_ASSERT, "Invalide pdf Funktion übergeben",);
         return;
     }
 

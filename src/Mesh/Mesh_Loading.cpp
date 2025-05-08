@@ -202,3 +202,7 @@ bool IsoMesh::loadIsoMeshMaterial(const std::string& path){
 void IsoMesh::saveMaterial(){
     m_material.save(m_matPath);
 }
+
+const std::string& IsoMesh::getMaterialPath(){
+    return m_matPath;
+}

@@ -9,7 +9,7 @@ std::string FemModel::getPathFromCache(){
     if(fs::exists(cachePath)){
 
         std::ifstream file(cachePath);
-        nlohmann::json j = nlohmann::json::parse(file);
+        nlohmann::json j = nlohmann::json::parse(file, nullptr, true, true);
 
         return j.value("FemModel",NULLSTR);
     }
@@ -82,6 +82,12 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     sampling();
 }
 
+void FemModel::importPdf(const std::string& pdfPath){
+
+    
+
+}
+
 void FemModel::display(const MeshData& displayedData, const int& globKoord, bool displayOnDeformedMesh, bool displayOnQuadraturePoints,
     const Vector2& winSize, const Vector2& frameOffset, const Vector2& padding, bool splitScreen, bool splitScreenVertical){
 
@@ -125,6 +131,8 @@ void FemModel::sampling(){
 
     // Monte Carlo für pdf
     const IsoMeshMaterial& mat = m_isoMesh.getMaterial();
+
+    m_samples.clear();
     rejectionSampling(mat.pdf_xi, m_samples, mat.nSamples, mat.xi_min, mat.xi_max, mat.tolerance, mat.segmentation);
 
     //

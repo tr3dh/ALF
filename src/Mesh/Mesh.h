@@ -82,6 +82,7 @@ public:
     const Eigen::SparseMatrix<float>& getDisplacement() const;
 
     void saveMaterial();
+    const std::string& getMaterialPath();
     const IsoMeshMaterial& getMaterial() const;
     IsoMeshMaterial& getMaterial();
 };

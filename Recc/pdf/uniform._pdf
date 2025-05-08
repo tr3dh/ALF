@@ -1,0 +1,21 @@
+{
+    "function": "k",
+    "params": {
+        "k": 1
+    },
+    // Bei der Untersuchung wird die pdf in beide Richtungen +xi und -xi abgelaufen bis der wert pdf(xi) unter
+    // tolerance fällt, aus diesem Grund lässt sich der Gültigkeitsbereich über die folgenden Paramter eingrenzen
+    "borders": {
+        "xi_max": 0.5,
+        "xi_min": -0.5
+    },
+    // segmentation ist die Schrittweite mit der die pdf im Preprocessing abgelaufen wird
+    // tolerance der Wert für den die Grenzen der pdf abgesteckt
+    "pdfPreprocessing": {
+        "segmentation": 0.1,
+        "tolerance": 0.01
+    },
+    "pdfSampling": {
+        "samples": 100000
+    }
+}

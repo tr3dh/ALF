@@ -69,7 +69,9 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
 void IsoMeshMaterial::substitutePdf(){
 
-    pdf_xi = pdf->subs(subs);
+    sym::round_subs_map(subs,3);
+    pdf_xi = sym::round_all_numbers(pdf->subs(subs),3);
+
     LOG << LOG_GREEN << "   substituted pdf(xi) = " << pdf_xi << endl;
 
     try{

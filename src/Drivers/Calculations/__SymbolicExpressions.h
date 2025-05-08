@@ -9,6 +9,14 @@
 #include <symengine/functions.h>
 #include <symengine/sets.h>
 #include <symengine/solve.h>
+#include <symengine/visitor.h>
+#include <symengine/basic.h>
+#include <symengine/real_double.h>
+#include <symengine/constants.h>
+#include <symengine/symengine_rcp.h>
+#include <symengine/mul.h>
+#include <symengine/add.h>
+#include <symengine/pow.h>
 #include <set>
 #include <iostream>
 
