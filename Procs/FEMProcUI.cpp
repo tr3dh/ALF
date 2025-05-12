@@ -6,6 +6,8 @@
 #include "GUI/ImGuiStyleDecls.h"
 #include <implot.h>
 #include "Rendering/3DRendering.h"
+#include <stdio.h>
+#include <GL/gl.h>
 
 #define MODELCACHE "../bin/.CACHE"
 
@@ -284,6 +286,9 @@ bool InputSliderInt(const std::string& label, T& source, const int& lowerBorder 
     return false;
 }
 
+static bool g_ComputeShaderBackendEnabled = false;
+static float g_glVersion = 0;
+
 int main(void)
 {
     //
@@ -294,13 +299,23 @@ int main(void)
     LOG << "** Procs Code " << countLinesInDirectory("../Procs") << " lines" << endl;
     LOG << endl;
 
-    FemModel model;
-    model.loadFromCache();
-
     //
-    SetTraceLogCallback(RaylibLogCallback); 
+    SetTraceLogCallback(RaylibLogCallback);
 
     InitWindow(600, 600, "<><FEMProc><>");
+
+    //
+    const char* glVersion = (const char*)glGetString(GL_VERSION);
+    LOG << "** OpenGL Version: " << glVersion << endl;
+
+    // string splitten da im glVersion String noch Infos über die graphikkarte stehen
+    g_glVersion = string::convert<float>(std::string(glVersion).substr(0,3));
+
+    // ab der 4.3 enthält opengl eine shader pipeline für comp shaders
+    g_ComputeShaderBackendEnabled = g_glVersion >= 4.3f;
+
+    LOG << (g_ComputeShaderBackendEnabled ? "** Computeshader Backend freigeschaltet" :
+        "** Computeshader Backend gesperrt, opengl version " + std::to_string(g_glVersion).substr(0,3) + " ist nicht mit comp shadern kompatibel, erforderliche Version : OpenGL 4.3") << endl;
 
     // Raylib Fenster init
     float winSizeFaktor = 0.5f; // z.B. halbe Bildschirmgröße
@@ -341,6 +356,11 @@ int main(void)
     SetupImGuiStyle();
 
     float imguiScale = 1.0f;
+
+    // dynamisch wahrend fenster rendering laden
+    // so blockiert es das fenster rendering
+    FemModel model;
+    model.loadFromCache();
 
     // Haupt-Loop
     bool closeWindow = false;

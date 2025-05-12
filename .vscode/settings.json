@@ -99,7 +99,8 @@
         "cfenv": "cpp",
         "dense": "cpp",
         "core": "cpp",
-        "*.m": "cpp"
+        "*.m": "cpp",
+        "sparsecholesky": "cpp"
     },
 
     // Makefile Configs
