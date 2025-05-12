@@ -1,0 +1,18 @@
+{
+    "function": "(k/lam) * (xi/lam)**(k-1) * exp(-(xi/lam)**k)",
+    "params": {
+        "k": 1,
+        "lam": 1
+    },
+    "borders": {
+        "xi_min": 0.01,
+        "xi_max": 10
+    },
+    "pdfPreprocessing": {
+        "segmentation": 0.1,
+        "tolerance": 0.01
+    },
+    "pdfSampling": {
+        "samples": 100000
+    }
+}

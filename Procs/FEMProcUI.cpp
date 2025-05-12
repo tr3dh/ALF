@@ -718,6 +718,9 @@ int main(void)
 
                                     LOG << "** Import pdf Funktion " << pdfFiles[currentFile] << endl;
 
+                                    model.getMesh().getMaterial().subs.clear();
+                                    model.getMesh().saveMaterial();
+
                                     std::ifstream pdfFile(pdfFiles[currentFile]);
                                     nlohmann::json pdf = nlohmann::json::parse(pdfFile, nullptr, true, true);
                                     pdfFile.close();
@@ -725,8 +728,10 @@ int main(void)
                                     std::ifstream matFile(model.getMesh().getMaterialPath());
                                     nlohmann::json mat = nlohmann::json::parse(matFile, nullptr, true, true);
 
+                                    mat["pdf"]["params"].clear();
                                     mat["pdf"] = pdf;
 
+                                    std::remove(model.getMesh().getMaterialPath().c_str());
                                     std::ofstream matOutFile(model.getMesh().getMaterialPath());
                                     matOutFile << mat.dump(4);
                                     matOutFile.close();

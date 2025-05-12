@@ -1,18 +1,21 @@
 {
     "E": 15000.0,
     "pdf": {
-        "function": "1-xi**2",
+        "borders": {
+            "xi_max": 0,
+            "xi_min": 0.001
+        },
+        "function": "xi^(k-1) * exp(-xi/theta) / (gamma(k) * theta^k)",
         "params": {
-            "mu": 0.0,
-            "pi": 3.1414999961853027,
-            "sigma": 0.5
+            "k": 1,
+            "theta": 1
         },
         "pdfPreprocessing": {
-            "segmentation": 0.009999999776482582,
-            "tolerance": 0.009999999776482582
+            "segmentation": 0.1,
+            "tolerance": 0.01
         },
         "pdfSampling": {
-            "samples": 370079
+            "samples": 100000
         }
     },
     "t": 0.5,
