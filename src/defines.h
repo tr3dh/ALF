@@ -59,8 +59,8 @@ namespace fs = std::filesystem;
 
 #define endl LOG_RESET << "\n";
 
-#define mbug(message) LOG << LOG_YELLOW << "__Passed : " << #message << endl;
-#define ibug(objekt) LOG << LOG_YELLOW << "__Objekt : " << #objekt << " " << objekt << endl;
+#define mbug(message) LOG << LOG_YELLOW << "___Passed : " << #message << endl;
+#define ibug(objekt) LOG << LOG_YELLOW << "___Objekt : " << #objekt << " " << objekt << endl;
 
 // Drivers
 #include "Drivers/ReccHandling/__Asserts.h"

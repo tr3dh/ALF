@@ -87,19 +87,39 @@ void IsoMeshMaterial::substitutePdf(){
 
 void IsoMeshMaterial::createElasticityTensor(SymEngine::DenseMatrix& target, const size_t& dimension){
 
-    RETURNING_ASSERT(dimension == 2, "Erstellung des Elastizitätstensors bislang nur für 2D implementiert",);
-
     //    
     Expression _E = toExpression(E);
     Expression _t = toExpression(v);
     Expression _v = toExpression(v);
 
-    target = SymEngine::DenseMatrix(dimension + 1, dimension + 1,
+    if(dimension == 1){
+        target = SymEngine::DenseMatrix(1,1,{_E});
+    }
+    else if(dimension == 2){
+
+        target = SymEngine::DenseMatrix(3, 3,
                 {ONE_EXPR, _v, NULL_EXPR,
                  _v, ONE_EXPR, NULL_EXPR,
                  NULL_EXPR, NULL_EXPR, (1-_v)/2});
 
-    target.mul_scalar(_E/(1-_v*_v), target);
+        target.mul_scalar(_E/(1-_v*_v), target);
+    }
+    else if(dimension == 3){
+
+        target = SymEngine::DenseMatrix(6, 6,
+            {1-_v, _v, _v, NULL_EXPR, NULL_EXPR, NULL_EXPR,
+            _v, 1-_v, _v, NULL_EXPR, NULL_EXPR, NULL_EXPR,
+            _v, _v, 1-_v, NULL_EXPR, NULL_EXPR, NULL_EXPR,
+            NULL_EXPR, NULL_EXPR, NULL_EXPR, (1-2*_v)/2, NULL_EXPR, NULL_EXPR,
+            NULL_EXPR, NULL_EXPR, NULL_EXPR, NULL_EXPR, (1-2*_v)/2, NULL_EXPR,
+            NULL_EXPR, NULL_EXPR, NULL_EXPR, NULL_EXPR, NULL_EXPR, (1-2*_v)/2
+        });
+
+        target.mul_scalar(_E/((1+_v)*(1-2*_v)), target);
+    }
+    else {
+        RETURNING_ASSERT(TRIGGER_ASSERT, "Invalide übergebene Dimension " + std::to_string(dimension) + " für Steifigkeitsmatrix",);
+    }
 }
 
 void IsoMeshMaterial::save(const std::string& path){

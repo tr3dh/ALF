@@ -299,6 +299,13 @@ int main(void)
     LOG << "** Procs Code " << countLinesInDirectory("../Procs") << " lines" << endl;
     LOG << endl;
 
+    FemModel model("../Import/3DCubeMesh.model");
+
+    LOG << model.getMesh().getStiffnesMatrix().block(0,0,8,8) << endl;
+
+    // FemModel model;
+    // model.loadFromCache();
+
     //
     SetTraceLogCallback(RaylibLogCallback);
 
@@ -357,12 +364,112 @@ int main(void)
 
     float imguiScale = 1.0f;
 
-    // dynamisch wahrend fenster rendering laden
-    // so blockiert es das fenster rendering
-    FemModel model;
-    model.loadFromCache();
+    //const NodeSet& nodes = model.getMesh().getUndeformedNodes();
+    const NodeSet& nodes = model.getMesh().getDeformedNodes();
 
-    // Haupt-Loop
+    const CellSet& cells = model.getMesh().getCells();
+
+    // player Camera
+    Camera camera = {
+        .position = {0,2.5,0},
+        .target = {10, 2.5,0},
+        .up = {0,1,0},
+        .fovy = 45.0f,
+        .projection = CAMERA_PERSPECTIVE
+    };
+
+    float movementSensitivity = 15;
+    float pitchSensitivity = 1;
+    float scrollSensitivity = -1000;
+
+    // pre decl des Meshs bzw. Modells
+    // im weiteren werden nur noch die Vertices geupdatet
+    Mesh mesh = {0};
+    mesh.vertexCount = 8;
+    mesh.triangleCount = 12;
+    mesh.vertices = (float*)MemAlloc(mesh.vertexCount * 3 * sizeof(float));
+    mesh.indices = (unsigned short*)MemAlloc(mesh.triangleCount * 3 * sizeof(unsigned short));
+
+    // wichtig dass Indices der Vertices im richtigen Dresinn angegeben werden,
+    // ansonsten wird Normale falsch herum angenommen und face culling führt zu rendering der
+    // Fläche nur bei Blick von element Innerem aus gerendert
+    unsigned short cubeIndices[36] = {
+        0,1,2, 0,2,3,
+        1,6,2, 1,5,6,
+        3,6,7, 3,2,6,
+        0,7,4, 0,3,7,
+        0,5,1, 0,4,5,
+        4,6,5, 4,7,6
+    };
+    memcpy(mesh.indices, cubeIndices, sizeof(cubeIndices));
+
+    // Mesh einmalig hochladen
+    UploadMesh(&mesh, false);
+    Model cubeModel = LoadModelFromMesh(mesh);
+
+    while (!WindowShouldClose()){
+
+        float dt = GetFrameTime();
+
+        UpdateCameraPro(&camera,
+            (Vector3){
+                ((IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) * movementSensitivity -
+                (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) * movementSensitivity) * dt,
+
+                ((IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) * movementSensitivity -
+                (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) * movementSensitivity) * dt,
+
+                ((IsKeyDown(KEY_SPACE)) * movementSensitivity -
+                (IsKeyDown(KEY_LEFT_SHIFT)) * movementSensitivity) * dt,
+            },
+            (Vector3){
+                GetMouseDelta().x * pitchSensitivity,
+                GetMouseDelta().y * pitchSensitivity,
+                0.0f
+            },
+            GetMouseWheelMove() * scrollSensitivity * dt
+        );
+
+        ClearBackground(Color(30,30,30,255));
+
+        BeginDrawing();
+        
+        BeginMode3D(camera);
+
+        for (const auto& [cellIndex, cell] : cells) {
+
+            std::vector<Vector3> cubeVertices;
+            for (size_t node = 0; node < cell.getPrefab().nNodes; node++) {
+                const auto& Node = nodes.at(cell[node]);
+                cubeVertices.push_back((Vector3){Node[0], Node[1], Node[2]});
+                DrawSphere((Vector3){Node[0], Node[2], Node[1]},0.05,GREEN);
+            }
+
+            // Vertices kopieren
+            // tauschen von z und y damit die z Achse als Hochachse gerendert wird
+            for (int i = 0; i < 8; i++) {
+                mesh.vertices[i*3 + 0] = cubeVertices[i].x;
+                mesh.vertices[i*3 + 1] = cubeVertices[i].z;
+                mesh.vertices[i*3 + 2] = cubeVertices[i].y;
+            }
+
+            // Vertices auf die GPU laden
+            UpdateMeshBuffer(mesh, 0, mesh.vertices, sizeof(float)*mesh.vertexCount*3, 0);
+
+            // Rendern
+            DrawModel(cubeModel, (Vector3){0,0,0}, 1.0f, Color(255,0,0,255));
+            DrawModelWires(cubeModel, (Vector3){0,0,0}, 1.0f, BLACK);
+        }
+
+        EndMode3D();
+
+        EndDrawing();
+
+    }
+
+    return 0;
+
+    //
     bool closeWindow = false;
     while (!closeWindow)
     {
@@ -373,7 +480,7 @@ int main(void)
         Vector2 monitorSize = {GetMonitorWidth(monitor), GetMonitorHeight(monitor)};
         Vector2 winSize = {GetScreenWidth(), GetScreenHeight()};
 
-        // Nur bei gedrückter Strg-Taste reagieren
+        // Nur bei gedrückter Strg Taste reagieren
         if(currentCtrlState) {
 
             float wheelMove = GetMouseWheelMove();

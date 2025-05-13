@@ -169,6 +169,17 @@ r3d:
 	
 	@make dllCopy COPYTARGET=thirdParty/r3d/build/
 
+raylib:
+	@if [ -d "thirdParty/raylib" ]; then \
+		echo "Info: 'thirdParty/raylib' existiert bereits. Überspringe Build.";\
+	else \
+		cd thirdParty && git clone https://github.com/raysan5/raylib.git; \
+		cd raylib/src/; \
+		make PLATFORM=PLATFORM_DESKTOP GRAPHICS=GRAPHICS_API_OPENGL_43; \
+	fi
+	
+	@make dllCopy COPYTARGET=thirdParty/r3d/build/
+
 magic_enum:
 	@if [ -d "thirdParty/magic_enum" ]; then \
 			echo "Info: 'thirdParty/magic_enum' existiert bereits. Überspringe Build.";\

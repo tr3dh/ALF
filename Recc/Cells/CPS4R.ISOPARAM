@@ -1,7 +1,40 @@
 {
-    // ...
     /*
-        ...
+                    ██████╗██████╗ ███████╗██╗  ██╗██████╗ 
+                    ██╔════╝██╔══██╗██╔════╝██║  ██║██╔══██╗
+                    ██║     ██████╔╝███████╗███████║██████╔╝
+                    ██║     ██╔═══╝ ╚════██║╚════██║██╔══██╗
+                    ╚██████╗██║     ███████║     ██║██║  ██║
+                    ╚═════╝╚═╝     ╚══════╝     ╚═╝╚═╝  ╚═╝
+
+
+    ** isoparametrisches Element CPS4R
+
+    ** lokale Nodebennenung (Orientiert an erzeugten Abaqus file für Netz dieses Elements ohne
+       konkrete Koordinatensystem Anpassung)
+
+                       4                    3
+                        +------------------+
+                        |                  |
+                        |                  |             s, y
+                        |                  |            ↑
+                        |                  |            |
+                        |                  |            |
+                        |                  |            |
+                        +------------------+            +--------> r, x
+                       1                    2
+
+    ** lokale Knotenpunkte in isoparamterischen Koordinaten
+
+                +-------+-----+-----+
+                | Node  |  r  |  s  |
+                +-------+-----+-----+
+                |   1   | -1  | -1  |
+                |   2   |  1  | -1  |
+                |   3   |  1  |  1  |
+                |   4   | -1  |  1  |
+                +-------+-----+-----+
+
     */
     "NDIMENSIONS":          2,
     "NNODES":               4,

@@ -19,6 +19,14 @@ const NodeSet& IsoMesh::getDeformedNodes() const{
     return m_defNodes;
 }
 
+const CellSet& IsoMesh::getCells() const{
+    return m_Cells;
+}
+
+const Eigen::SparseMatrix<float>& IsoMesh::getStiffnesMatrix() const{
+    return m_kSystem;
+}
+
 const DataSet& IsoMesh::getCellData() const{
     return m_cellData;
 }

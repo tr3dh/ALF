@@ -2,6 +2,8 @@ CXX := g++
 
 #	-I./thirdParty/enet/include 
 CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
+	-Wno-deprecated-literal-operator \
+	-Wno-cpp \
 	-I./src \
 	-I./thirdParty \
 	-I/mingw64/include \

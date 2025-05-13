@@ -7,7 +7,7 @@ bool IsoMesh::createStiffnessMatrix(){
 
     //
     prefabIndex currentPrefabIndex = m_Cells.begin()->second.getPrefabIndex();
-    CellPrefab currentCellPrefab = getCachedCellPrefab(currentPrefabIndex);
+    const CellPrefab& currentCellPrefab = getCachedCellPrefab(currentPrefabIndex);
 
     // Jacobi Matrix bestimmen
     Expression sum = NULL_EXPR;
@@ -15,12 +15,11 @@ bool IsoMesh::createStiffnessMatrix(){
     //
     SymEngine::DenseMatrix Jacoby(nDimensions,nDimensions),
                            jInv(nDimensions,nDimensions);
+
     Expression jDet = NULL_EXPR;
 
-    SymEngine::DenseMatrix BMatrix(nDimensions + 1, currentCellPrefab.nNodes * nDimensions),
-                           BMatrixT(currentCellPrefab.nNodes * nDimensions, nDimensions + 1);
-
-    SymEngine::DenseMatrix kInt(currentCellPrefab.nNodes * nDimensions, currentCellPrefab.nNodes * nDimensions);
+    SymEngine::DenseMatrix BMatrix(nDimensions*(nDimensions + 1)/2, currentCellPrefab.nNodes * nDimensions);
+    Eigen::MatrixXd subsBMatrix(nDimensions*(nDimensions + 1)/2, currentCellPrefab.nNodes * nDimensions);
     Eigen::MatrixXd kCell(currentCellPrefab.nNodes * nDimensions, currentCellPrefab.nNodes * nDimensions);
 
     m_kSystem = Eigen::SparseMatrix<float>(m_nodes.size() * nDimensions, m_nodes.size() * nDimensions);
@@ -32,6 +31,10 @@ bool IsoMesh::createStiffnessMatrix(){
     
     // IsoMeshMaterial erstellt mit geladenen IsoMeshMaterialparametern E,v,t den Elastizitätstensor E
     m_material.createElasticityTensor(SymCMatrix, nDimensions);
+
+    //
+    CMatrix = Eigen::MatrixXd(SymCMatrix.nrows(), SymCMatrix.nrows());
+    subMatrix(SymCMatrix, CMatrix, {});
 
     // Hier werden die Multiplikationen der Ansatzfunktionsableitungen (liegen in Prefab vor als SymengineMatrix)
     // und der Jacoby Inversen zwischengespeichert für die einzelnen Elementnodes
@@ -113,8 +116,30 @@ bool IsoMesh::createStiffnessMatrix(){
                 BMatrix.set(globKoord, locNode * nDimensions + globKoord, shapeFDerivsForGlobKoords[locNode].get(0,globKoord));
 
                 // unterste Reihe (Quad4Cell::s_nDimensions + 1) für Scherung
-                BMatrix.set(nDimensions, locNode * nDimensions + (nDimensions - 1 - globKoord),
-                    shapeFDerivsForGlobKoords[locNode].get(0,globKoord));
+                if(nDimensions == 2){
+
+                    // in untere Spalte wird dNi/dy dNi/dx geschrieben
+                    BMatrix.set(nDimensions, locNode * nDimensions + (nDimensions - 1 - globKoord),
+                        shapeFDerivsForGlobKoords[locNode].get(0,globKoord));
+
+                } else if(nDimensions == 3) {
+                    
+                    // pro Reihe den eintrag auf der Diagonalen der unteren 3x3 Matrix freilassen und auf die anderen Einträge
+                    // den jeweils anderen schreiben
+                    // ->   0 dNi/dz dNi/dy
+                    //      dNi/dz 0 dNi/dx
+                    //      dNi/dy dNi/dx 0
+                    for(uint8_t shearRow = 0; shearRow < 3; shearRow++){
+                        
+                        //
+                        if(globKoord != shearRow){
+
+                            // swap der verbliebenen indices != globKoord über swapped = 3-globKoord-shearRow
+                            BMatrix.set(nDimensions + shearRow, locNode * nDimensions + globKoord,
+                                shapeFDerivsForGlobKoords[locNode].get(0,3-globKoord-shearRow));
+                        }
+                    }
+                }
             }
         }
 
@@ -123,35 +148,27 @@ bool IsoMesh::createStiffnessMatrix(){
         m_cachedBMats.emplace(cellIndex, BMatrix);
 
         // Kmatrix Ermitteln
-        clearMatrix(kInt);
-
-        BMatrix.transpose(BMatrixT);
+        kCell.setZero();
+        subsBMatrix.setZero();
 
         // nur vorrübergehende Lösung, später wird schon vorab in die shape Funktionen eingesetzt
         // und Jacoby und B Matrix direkt mit den entsprechenden eingesetzten Werte über Eigen berechnet
         // (-> schnellere und weniger umständliche Matrix multiplikation da eigen Kette ermöglicht -> A*B*C'*...)
-        // entspricht kInt = B'*C*B*jDet*t
-        BMatrixT.mul_matrix(SymCMatrix,BMatrixT);
-        BMatrixT.mul_matrix(BMatrix, kInt);
-        kInt.mul_scalar(jDet*m_material.t, kInt);
-
-        // aufsummieren der KMatritzen Einträge für die verschiedenen Integrationspunkte
-
-        //
-        kCell.setZero();
-
-        // 1, 2, 3, 4, ...
+        // entspricht kCell = B'*C*B*jDet*weight*t
         for(uint8_t nodeNum = 0; nodeNum < currentCellPrefab.nNodes; nodeNum++){
 
             //
-            if(!subMatrix(kInt, kCell, currentCellPrefab.quadraturePoints[nodeNum], currentCellPrefab.weights[nodeNum], true)){
+            if(!subMatrix(BMatrix, subsBMatrix, currentCellPrefab.quadraturePoints[nodeNum])){
 
-                _ERROR << "Substitution fehlgeschlagen bei Element " << +cellIndex << endl;
-                _ERROR << " Weigth " << currentCellPrefab.weights[nodeNum];
+                _ERROR << "Substitution fehlgeschlagen bei BMatrix von Element " << +cellIndex << endl;
+                _ERROR << "Weigth " << currentCellPrefab.weights[nodeNum];
 
-                _ERROR << "kInt " << kInt << endl;
                 return false;
             }
+
+            kCell += subsBMatrix.transpose() * CMatrix * subsBMatrix *
+                SymEngine::eval_double(*jDet->subs(currentCellPrefab.quadraturePoints[nodeNum])) * currentCellPrefab.weights[nodeNum] *
+                m_material.t;
         }
 
         // Elementsteifigkeits Matrix [kCell] ermittlelt
@@ -166,6 +183,7 @@ bool IsoMesh::createStiffnessMatrix(){
         triplets.reserve((std::pow(currentCellPrefab.nNodes*nDimensions, 2)/2                       // + hälfte aller Einträge aus der Elementsteifigkeitsmatrix  
                             + currentCellPrefab.nNodes*nDimensions/2)                               // + hälfte der Diagonalelemente -> alle Einträge aus der oberen Dreiecksmatrix
                             * m_nodes.size());                                                      // * anzahl elemente 
+        
         //
         for(nodeNum_Row = 0; nodeNum_Row < currentCellPrefab.nNodes; nodeNum_Row++){
 

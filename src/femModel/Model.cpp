@@ -67,19 +67,25 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     m_isoMesh.loadIsoMeshMaterial();
 
     if(m_isoMesh.createStiffnessMatrix()){
-
+        
         m_isoMesh.readBoundaryConditions();
-
         m_isoMesh.solve();
-        m_isoMesh.calculateStrainAndStress();
     }
 
-    //
-    n_upperXi = m_isoMesh.getUndeformedNodes();
-    n_lowerXi = n_upperXi;
+    // if(m_isoMesh.createStiffnessMatrix()){
 
-    // roadmap unsicherheitsanalyse
-    sampling();
+    //     m_isoMesh.readBoundaryConditions();
+
+    //     m_isoMesh.solve();
+    //     m_isoMesh.calculateStrainAndStress();
+    // }
+
+    // //
+    // n_upperXi = m_isoMesh.getUndeformedNodes();
+    // n_lowerXi = n_upperXi;
+
+    // // roadmap unsicherheitsanalyse
+    // sampling();
 }
 
 void FemModel::importPdf(const std::string& pdfPath){

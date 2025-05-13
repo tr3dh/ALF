@@ -21,8 +21,8 @@ bool IsoMesh::loadFromFile(const std::string& path){
     LOG << LOG_BLUE << "-- Lade Mesh aus file " << path << "" << endl;
 
     // Check ob file existiert und in erforderlichen Format vorhanden ist
-    CRITICAL_ASSERT(fs::exists(fs::path(path)), "Angegebener Pfad für Netz existiert nicht");
-    CRITICAL_ASSERT(string::endsWith(path, "inp"), "Ungültige File Endung, Programm erwartet ein *.inp file");
+    RETURNING_ASSERT(fs::exists(fs::path(path)), "Angegebener Pfad für Netz existiert nicht", false);
+    RETURNING_ASSERT(string::endsWith(path, "inp"), "Ungültige File Endung, Programm erwartet ein *.inp file", false);
 
     //
     meshPath = path;

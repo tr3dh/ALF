@@ -4,6 +4,7 @@
 #include "Material.h"
 
 typedef std::map<NodeIndex, dynNodeXd<float>> NodeSet;
+typedef std::map<CellIndex, Cell> CellSet;
 typedef std::unordered_map<CellIndex, CellData> DataSet;
 
 void acvanceDataSet(const DataSet& source, DataSet& target, const Coeffs& coeffs);
@@ -32,7 +33,7 @@ private:
     size_t nodeNumOffset = 0;
     NodeSet m_nodes = {}, m_defNodes = {};
     DataSet m_cellData;
-    std::map<CellIndex, Cell> m_Cells = {};
+    CellSet m_Cells = {};
 
     std::vector<uint8_t> isoKoords = {};
     std::vector<uint8_t> globKoords = {};
@@ -78,6 +79,8 @@ public:
 
     const NodeSet& getUndeformedNodes() const;
     const NodeSet& getDeformedNodes() const;
+    const CellSet& getCells() const;
+    const Eigen::SparseMatrix<float>& getStiffnesMatrix() const;
     const DataSet& getCellData() const;
     const Eigen::SparseMatrix<float>& getDisplacement() const;
 

@@ -56,7 +56,11 @@
 - Um diese Probleme der abweichenden Pfadangaben zu umgehen befindet sich das cwd auch für exec im Elternverzeichnis der executable (build/*)
 - Pfadangaben die relativ zum Projektverzeichnis sind (z.b src/main.cpp) müssen also angepasst werden (folglich ../src/main.cpp)
 
+# AsciGen
+- Schriftart ANSI shadow
+
 # .LINKS
 - [LUHCluster](https://login.cluster.uni-hannover.de/pun/sys/dashboard)
 - [PeridicTableOfElements](https://www-users.cse.umn.edu/~arnold/femtable)
 - [DataSets](https://people.sc.fsu.edu/~jburkardt/DataSets)
+- [AsciGen](https://www.asciiart.eu/text-to-ascii-art)
