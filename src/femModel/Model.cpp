@@ -70,6 +70,8 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         
         m_isoMesh.readBoundaryConditions();
         m_isoMesh.solve();
+
+        m_isoMesh.calculateStrainAndStress();
     }
 
     // if(m_isoMesh.createStiffnessMatrix()){

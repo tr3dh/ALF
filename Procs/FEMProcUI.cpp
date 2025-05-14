@@ -4,10 +4,7 @@
 #include "defines.h"
 #include "femModel/Model.h"
 #include "GUI/ImGuiStyleDecls.h"
-#include <implot.h>
 #include "Rendering/3DRendering.h"
-#include <stdio.h>
-#include <GL/gl.h>
 
 #define MODELCACHE "../bin/.CACHE"
 
@@ -301,8 +298,6 @@ int main(void)
 
     FemModel model("../Import/3DCubeMesh.model");
 
-    LOG << model.getMesh().getStiffnesMatrix().block(0,0,8,8) << endl;
-
     // FemModel model;
     // model.loadFromCache();
 
@@ -436,6 +431,23 @@ int main(void)
         
         BeginMode3D(camera);
 
+        std::map<CellIndex, float> values = {};
+        for (const auto& [cellIndex, cellData] : model.getMesh().getCellData()) {
+            values.try_emplace(cellIndex, cellData.getData(MeshData::VANMISES_STRESS, 0));
+        }
+
+        float minValue = 0, maxValue = 0;
+
+        if (!values.empty()) {
+            // Über die Werte iterieren, nicht die Map-Paare!
+            auto [minIt, maxIt] = std::minmax_element(
+                values.begin(), values.end(),
+                [](const auto& a, const auto& b) { return a.second < b.second; }
+            );
+            minValue = minIt->second;
+            maxValue = maxIt->second;
+        }
+
         for (const auto& [cellIndex, cell] : cells) {
 
             std::vector<Vector3> cubeVertices;
@@ -457,7 +469,7 @@ int main(void)
             UpdateMeshBuffer(mesh, 0, mesh.vertices, sizeof(float)*mesh.vertexCount*3, 0);
 
             // Rendern
-            DrawModel(cubeModel, (Vector3){0,0,0}, 1.0f, Color(255,0,0,255));
+            DrawModel(cubeModel, (Vector3){0,0,0}, 1.0f, getColorByValue(values[cellIndex], minValue, maxValue));
             DrawModelWires(cubeModel, (Vector3){0,0,0}, 1.0f, BLACK);
         }
 

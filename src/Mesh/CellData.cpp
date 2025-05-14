@@ -45,13 +45,69 @@ CellData& CellData::operator=(const CellData& other) {
     return *this;
 }
 
+float CellData::vanMisesXd(const Eigen::MatrixXd& stress){
+
+    switch (stress.size()){
+        case 1:{
+
+            return stress(0,0);
+            break;
+        }
+        case 3:{
+
+            return vanMises2D(stress);
+            break;
+        }
+        case 6:{
+
+            return vanMises3D(stress);
+            break;
+        }
+        default:{
+
+            RETURNING_ASSERT(TRIGGER_ASSERT, "übergebene Stress Matrix hat invalide Größe " + std::to_string(stress.size()),(double)0);
+            break;
+        }
+    }
+    return (double)0;
+
+}
+
+float CellData::vanMises2D(const Eigen::MatrixXd& stress){
+
+    return std::sqrt(
+        std::pow(SIG_XX_2D(stress), 2) +
+        std::pow(SIG_YY_2D(stress), 2) -
+        SIG_XX_2D(stress) * SIG_YY_2D(stress) +
+        3 * std::pow(T_XY_2D(stress), 2)
+    );
+}
+
+float CellData::vanMises3D(const Eigen::MatrixXd& stress){
+        
+    return std::sqrt(
+        0.5 * (
+            std::pow(SIG_XX_3D(stress) - SIG_YY_3D(stress), 2) +
+            std::pow(SIG_YY_3D(stress) - SIG_ZZ_3D(stress), 2) +
+            std::pow(SIG_ZZ_3D(stress) - SIG_XX_3D(stress), 2)
+        ) +
+        3.0 * (
+            std::pow(T_YX_3D(stress), 2) +
+            std::pow(T_ZY_3D(stress), 2) +
+            std::pow(T_ZX_3D(stress), 2)
+        )
+    );
+}
+
 void CellData::calculateCellStrainAndStress(){
 
     // 1, 2, 3, 4, ...
-    for(int nodeNum = 0; nodeNum < m_prefab.nNodes; nodeNum++){
+    if(quadratureStrain.size() > 0 && quadratureStress.size() > 0){
+        for(int nodeNum = 0; nodeNum < m_prefab.nNodes; nodeNum++){
 
-        strain += quadratureStrain[nodeNum];
-        stress += quadratureStress[nodeNum];
+            strain += quadratureStrain[nodeNum];
+            stress += quadratureStress[nodeNum];
+        }
     }
 
     strain*=(1/cellVolume);
@@ -66,15 +122,16 @@ void CellData::calculateVanMisesStress(){
     quadratureMisesStress.clear();
     quadratureMisesStress.reserve(m_prefab.nNodes);
 
-    for(size_t nodeNum = 0; nodeNum < m_prefab.nNodes; nodeNum++){
+    if(quadratureStress.size() > 0){
 
-        quadratureMisesStress.emplace_back(
-            std::sqrt(std::pow(quadratureStress[nodeNum](0,0),2) + std::pow(quadratureStress[nodeNum](1,0),2) -
-            quadratureStress[nodeNum](0,0) * quadratureStress[nodeNum](1,0) + 3 * std::pow(quadratureStress[nodeNum](2,0),2))
-        );
+        for(size_t nodeNum = 0; nodeNum < m_prefab.nNodes; nodeNum++){
+
+            quadratureMisesStress.emplace_back(
+                vanMisesXd(quadratureStress[nodeNum]));
+        }
     }
 
-    vanMisesStress = std::sqrt(std::pow(stress(0,0),2) + std::pow(stress(1,0),2) - stress(0,0) * stress(1,0) + 3 * std::pow(stress(2,0),2));
+    vanMisesStress = vanMisesXd(stress);
 }
 
 float CellData::getData(const MeshData& data, int globKoord, int forQuadraturePoint, bool returnAbs) const{

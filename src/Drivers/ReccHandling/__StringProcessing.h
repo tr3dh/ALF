@@ -6,6 +6,8 @@
 #include <charconv>
 #include <vector>
 
+constexpr const std::string NULLSTR = "__INVALID__";
+
 namespace string{
 
     //

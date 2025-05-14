@@ -34,14 +34,11 @@ void IsoMesh::solve(){
 }
 
 //
-void IsoMesh::calculateStrainAndStress(){
+void IsoMesh::calculateStrainAndStress(bool calculateOnQuadraturePoints){
 
     LOG << "-- Calculate Strain and Stress" << endl;
 
-    CMatrix = Eigen::MatrixXd(nDimensions + 1, nDimensions + 1);
-    subMatrix(SymCMatrix,CMatrix,{});
-
-    Eigen::MatrixXd BMatrix(nDimensions + 1, nDimensions * m_Cells.begin()->second.getPrefab().nNodes);
+    Eigen::MatrixXd BMatrix(nDimensions*(nDimensions + 1)/2, nDimensions * m_Cells.begin()->second.getPrefab().nNodes);
     float jDet = 0.0f;
 
     //
@@ -72,8 +69,24 @@ void IsoMesh::calculateStrainAndStress(){
             subMatrix(m_cachedBMats[cellIndex], BMatrix, r_prefab.quadraturePoints[nodeNum]);
             jDet = SymEngine::eval_double(*m_cachedJDets[cellIndex]->subs(r_prefab.quadraturePoints[nodeNum]));
 
-            r_cellData.quadratureStrain.emplace_back(BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum]);
-            r_cellData.quadratureStress.emplace_back(CMatrix * BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum]);
+            // hier gibt es zwei optionen :
+            // 1. die entsprechenden Größen für Quadraturpunkte errechnen
+            // . Vorteil : Größen an Quadraturpunkten abrufbar
+            // . Nachteil : langsamer aufgrund von vielen lese/schreibzugriffen in den Heap
+            // 2. direkt Größen für gesamte Zellen errechnen
+            // . Vorteil : schneller
+            // . Nachteil : größen an Quadraturpunkten nicht abrufbar
+            // -> Steuerung über bool param
+
+            if(calculateOnQuadraturePoints){
+                
+                r_cellData.quadratureStrain.emplace_back(BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum]);
+                r_cellData.quadratureStress.emplace_back(CMatrix * BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum]);
+            } else {
+
+                r_cellData.strain += BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum];
+                r_cellData.stress += CMatrix * BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum];
+            }
 
             r_cellData.cellVolume += jDet * r_prefab.weights[nodeNum];
         }

@@ -12,6 +12,7 @@
 #include <array>
 #include <tuple>
 #include <random>
+#include <stdio.h>
 
 namespace fs = std::filesystem;
 
@@ -41,6 +42,9 @@ namespace fs = std::filesystem;
 #define NOGDI
 #define NOUSER
 #include <imgui-filebrowser/imfilebrowser.h>
+#include <implot.h>
+
+#include <GL/gl.h>
 
 //
 #if defined(LOG) | defined(_ERROR)
@@ -96,5 +100,3 @@ const static std::vector<Symbol> g_isometricKoords = {r,s,t};
 
 typedef uint16_t NodeIndex;
 typedef NodeIndex CellIndex;
-
-constexpr const std::string NULLSTR = "__INVALID__";

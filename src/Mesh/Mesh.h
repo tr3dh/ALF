@@ -70,7 +70,7 @@ public:
     static void displaceNodes(NodeSet& nodes, const Eigen::SparseMatrix<float>& displacement, size_t nodeNumOffset);
     void solve();
 
-    void calculateStrainAndStress();
+    void calculateStrainAndStress(bool calculateOnQuadraturePoints = false);
 
     void display(const DataSet& dataSet, const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0,
         const std::vector<const NodeSet*>& nodeSets = {}, const std::vector<Color> setColors = {}, int displayOnNodeSet = 0,
