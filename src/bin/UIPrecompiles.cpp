@@ -1,0 +1,9 @@
+#include "../GUI/ImGuiCustomElements.h"
+
+extern template bool InputSliderInt<int>(const std::string&, int&, const int&, const int&, bool, const std::string&);
+extern template bool InputSliderInt<unsigned int>(const std::string&, unsigned int&, const int&, const int&, bool, const std::string&);
+extern template bool InputSliderInt<unsigned>(const std::string&, unsigned&, const int&, const int&, bool, const std::string&);
+extern template bool InputSliderInt<size_t>(const std::string&, size_t&, const int&, const int&, bool, const std::string&);
+extern template bool InputSliderInt<uint8_t>(const std::string&, uint8_t&, const int&, const int&, bool, const std::string&);
+extern template bool InputSliderInt<uint16_t>(const std::string&, uint16_t&, const int&, const int&, bool, const std::string&);
+extern template bool InputSliderInt<uint32_t>(const std::string&, uint32_t&, const int&, const int&, bool, const std::string&);

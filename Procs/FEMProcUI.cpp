@@ -4,287 +4,10 @@
 #include "defines.h"
 #include "femModel/Model.h"
 #include "GUI/ImGuiStyleDecls.h"
+#include "GUI/ImGuiCustomElements.h"
 #include "Rendering/3DRendering.h"
 
 #define MODELCACHE "../bin/.CACHE"
-
-// Eigene Ausgabe für Raylib Log
-void RaylibLogCallback(int logType, const char* text, va_list args) {
-
-    char formatted[512];
-    vsnprintf(formatted, sizeof(formatted), text, args);
-
-    // Logging aktiviert/deaktiviert
-    // LOG << "[redirected RaylibLog] " << formatted << endl;  // Weiterleitung LOG Makro
-}
-
-// fügt zeilenumbrüche in string ein wenn maxLen überschritten wird
-void InsertLineBreaks(std::string& text, size_t maxLen) {
-
-    size_t count = 0;
-    for (size_t i = 0; i < text.size(); ++i) {
-
-        // neue Zeile
-        if (text[i] == '\n') {
-            count = 0;
-
-        // innerhalb bestehender Zeile
-        } else {
-            count++;
-
-            // gewünschte Länge erreicht
-            if (count >= maxLen) {
-                
-                // Zeilenumbruch einfügen
-                if (i + 1 < text.size() && text[i + 1] != '\n') {
-                    text.insert(i + 1, 1, '\n');
-                    count = 0;
-                    ++i;
-                }
-            }
-        }
-    }
-}
-
-// formatiert text mit umbrüchen neu
-void NormalizeLineBreaks(std::string& text, size_t maxLen) {
-
-    text.erase(std::remove(text.begin(), text.end(), '\n'), text.end());
-    InsertLineBreaks(text, maxLen);
-}
-
-// maximale zeilenlänge global für callback verfügbar machen
-size_t g_maxLineLen = 15;
-
-// globaler pointer auf aktuellen buffer (wegen imgui limitation)
-std::vector<char>* g_bufferPtr = nullptr;
-
-// callback funktion zum einfügen von umbrüchen bei überschreiten der zeilenlänge
-int LinebreakCallback(ImGuiInputTextCallbackData* data) {
-
-    // blockiert Eingabe von '\n'
-    if (data->EventFlag == ImGuiInputTextFlags_CallbackCharFilter) {
-        if (data->EventChar == '\n') {
-            return 1;
-        }
-    }
-
-    // Cachen der Cursor Position
-    int oldCursor = data->CursorPos;
-
-    // Übertrag und update nur wenn tatsächlich Bearbeitung stattgefunden hat
-    if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit) {
-
-        std::string text(data->Buf, data->BufTextLen);
-        NormalizeLineBreaks(text, g_maxLineLen);
-
-        // wenn tatsächlich Änderung des Buffers stattgefunden hat
-        if (text != std::string(data->Buf, data->BufTextLen)) {
-
-            // Aktualisieren der BufferDaten mit geupdateten Umbrüchen
-            strncpy(data->Buf, text.c_str(), data->BufSize);
-
-            // für imgui format
-            data->Buf[data->BufSize - 1] = '\0'; // letzten Eintrag markieren
-            data->BufTextLen = strlen(data->Buf); // Länge aktualisieren
-            data->BufDirty = true;
-            data->CursorPos = oldCursor;
-
-            if (data->CursorPos > 0 && data->Buf[data->CursorPos - 1] == '\n') {
-                data->CursorPos += 1;
-            }
-
-            data->SelectionStart = data->SelectionEnd = data->CursorPos;
-        }
-    }
-    return 0;
-}
-
-// hauptfunktion für die eingabe von ausdrücken im inputfeld
-void InputExpression(const std::string& label, Expression& source, const std::string& suffix = "_exprInput") {
-    
-    // durchschnittliche zeichenbreite für abschätzung der max token pro zeile
-    static float avgCharWidth;
-    avgCharWidth = ImGui::CalcTextSize("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ").x / 52.0f;
-
-    // buffer für eingabeinhalt (wird direkt von imgui beschrieben)
-    static std::vector<char> expressionBuffer(1024);
-
-    // speichert zuletzt bekannten source-string um zu erkennen ob neuladen nötig
-    static std::string lastSourceStr;
-
-    // aktueller string aus dem expression objekt
-    static std::string currentSourceStr;
-    currentSourceStr = source->__str__();
-
-    // berechnung wie viele tokens (zeichen) in eine zeile passen
-    static float lineLen, lineTokens;
-    lineLen = ImGui::GetContentRegionAvail().x;
-    lineTokens = (lineLen - ImGui::GetStyle().FramePadding.y * 8) / avgCharWidth;
-    g_maxLineLen = lineTokens;
-
-    // buffer aktualisieren wenn source geändert wurde
-    if (lastSourceStr != currentSourceStr) {
-        std::string exprStr = currentSourceStr;
-
-        NormalizeLineBreaks(exprStr, lineTokens);
-
-        size_t copyLen = std::min(exprStr.size(), expressionBuffer.size() - 1);
-        std::copy(exprStr.begin(), exprStr.begin() + copyLen, expressionBuffer.begin());
-        expressionBuffer[copyLen] = '\0';
-
-        lastSourceStr = currentSourceStr;
-    }
-
-    // pointer für callback setzen
-    g_bufferPtr = &expressionBuffer;
-
-    // eigentliche eingabe: multiline input mit callback für umbrüche
-    if (ImGui::InputTextMultiline(("##" + label + suffix).c_str(), expressionBuffer.data(), expressionBuffer.size(),
-        ImVec2(lineLen, ImGui::GetTextLineHeightWithSpacing() * 4),
-        ImGuiInputTextFlags_CallbackEdit | ImGuiInputTextFlags_CallbackCharFilter, LinebreakCallback)) {
-
-    }
-
-    // aus mir unerfindlichen gründen funktioniert dieser shortcut nicht
-    // obwohl nach enter press der parse stattfindet wird der buffer nicht anständig aktualisiert
-    // !! später fixen
-    bool passButton = false;
-    if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Enter)) {
-        passButton = true;
-    }
-
-    // bei klick auf parse button: ausdruck analysieren
-    if (ImGui::Button("parse") || passButton) {
-
-        // vor dem Parsen Zeilenumbrüche entfernen
-        std::string toParse(expressionBuffer.data());
-        toParse.erase(std::remove(toParse.begin(), toParse.end(), '\n'), toParse.end());
-        source = SymEngine::parse(toParse);
-
-        // Buffer neu laden aus aktualisierter source die jetzt in der Theorie den gleichen Inhalt unter Umständen umgeformt enthalten sollte
-        std::string updated = source->__str__();
-        NormalizeLineBreaks(updated, lineTokens);
-        size_t copyLen = std::min(updated.size(), expressionBuffer.size() - 1);
-
-        std::copy(updated.begin(), updated.begin() + copyLen, expressionBuffer.begin());
-        expressionBuffer[copyLen] = '\0';
-
-        lastSourceStr = updated;
-    }
-}
-
-void displayExpression(const std::string& label, Expression& source, const std::string& suffix = "_exprDisplay"){
-
-    static std::string expressionBuffer;
-    expressionBuffer = source->__str__();
-
-    ImGui::Text((label + " ").c_str());
-    ImGui::SetNextItemWidth(ImGui::CalcTextSize(expressionBuffer.c_str()).x + ImGui::GetStyle().FramePadding.x * 4.0f);
-    ImGui::TextWrapped(expressionBuffer.data());
-}
-
-bool InputSliderFloatExpression(const std::string& label, Expression& source, const float& lowerBorder = -2, const float& upperBorder = 10,
-    bool oneLiner = false, const std::string& suffix = "_exprfloatInputSlider"){
-    
-    static float valBuffer, tempBuffer;
-    valBuffer = string::convert<float>(source->__str__());
-
-    ImGui::Text(label.c_str());
-    
-    if(oneLiner){
-        ImGui::SameLine();
-    }
-
-    if(ImGui::SliderFloat(("##"+label+suffix+"slider").c_str(), &valBuffer, lowerBorder,upperBorder)){
-        tempBuffer = valBuffer;
-    };
-
-    if (ImGui::IsItemDeactivatedAfterEdit()) {
-        // wenn Slider losgelassen wurde
-        source = toExpression(tempBuffer);
-        return true;
-    }
-
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImGui::CalcTextSize(std::to_string(valBuffer).c_str()).x + ImGui::GetStyle().FramePadding.x * 4);
-    if (ImGui::InputFloat(("##" + label + suffix + "entry").c_str(), &valBuffer,0, ImGuiInputTextFlags_EnterReturnsTrue)) {
-        source = toExpression(valBuffer);
-        return true;
-    }
-
-    return false;
-}
-
-bool InputSliderFloat(const std::string& label, float& source, const float& lowerBorder = -2, const float& upperBorder = 10,
-    bool oneLiner = false, const std::string& suffix = "_exprfloatInputSlider"){
-    
-    static float valBuffer, tempBuffer;
-    valBuffer = source;
-
-    ImGui::Text(label.c_str());
-    
-    if(oneLiner){
-        ImGui::SameLine();
-    }
-
-    if(ImGui::SliderFloat(("##"+label+suffix+"slider").c_str(), &valBuffer, lowerBorder,upperBorder)){
-        tempBuffer = valBuffer;
-    };
-
-    if (ImGui::IsItemDeactivatedAfterEdit()) {
-        // wenn Slider losgelassen wurde
-        source = tempBuffer;
-        return true;
-    }
-
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImGui::CalcTextSize(std::to_string(valBuffer).c_str()).x + ImGui::GetStyle().FramePadding.x * 4);
-    if (ImGui::InputFloat(("##" + label + suffix + "entry").c_str(), &valBuffer,0, ImGuiInputTextFlags_EnterReturnsTrue)) {
-        source = valBuffer;
-        return true;
-    }
-
-    return false;
-}
-
-// für alle int typen
-// . unsigned, signed, ...
-template<typename T>
-bool InputSliderInt(const std::string& label, T& source, const int& lowerBorder = -2, const int& upperBorder = 10,
-    bool oneLiner = false, const std::string& suffix = "_exprfloatInputSlider"){
-    
-    static int valBuffer, tempBuffer;
-    valBuffer = source;
-
-    ImGui::Text(label.c_str());
-    
-    if(oneLiner){
-        ImGui::SameLine();
-    }
-
-    if(ImGui::SliderInt(("##"+label+suffix+"slider").c_str(), &valBuffer, lowerBorder,upperBorder)){
-        tempBuffer = valBuffer;
-    };
-
-    if (ImGui::IsItemDeactivatedAfterEdit()) {
-        // wenn Slider losgelassen wurde
-        source = tempBuffer;
-        return true;
-    }
-
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImGui::CalcTextSize(std::to_string(valBuffer).c_str()).x + ImGui::GetStyle().FramePadding.x * 4);
-    if (ImGui::InputInt(("##" + label + suffix + "entry").c_str(), &valBuffer,0, ImGuiInputTextFlags_EnterReturnsTrue)) {
-        source = valBuffer;
-        return true;
-    }
-
-    return false;
-}
-
-static bool g_ComputeShaderBackendEnabled = false;
-static float g_glVersion = 0;
 
 int main(void)
 {
@@ -298,10 +21,11 @@ int main(void)
 
     FemModel model("../Import/3DCubeMesh.model");
 
-    // FemModel model;
-    // model.loadFromCache();
+    //FemModel model;
+    //model.loadFromCache();
 
     //
+    //enableRLLogging();
     SetTraceLogCallback(RaylibLogCallback);
 
     InitWindow(600, 600, "<><FEMProc><>");
@@ -361,7 +85,6 @@ int main(void)
 
     //const NodeSet& nodes = model.getMesh().getUndeformedNodes();
     const NodeSet& nodes = model.getMesh().getDeformedNodes();
-
     const CellSet& cells = model.getMesh().getCells();
 
     // player Camera
@@ -370,11 +93,41 @@ int main(void)
         .target = {10, 2.5,0},
         .up = {0,1,0},
         .fovy = 45.0f,
-        .projection = CAMERA_PERSPECTIVE
+        .projection = CAMERA_PERSPECTIVE    // oder CAMERA_ORTHOGRAPHIC
     };
 
+    // 1. Bounding Box berechnen
+    Vector3 min = {FLT_MAX, FLT_MAX, FLT_MAX};
+    Vector3 max = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
+
+    for (const auto& node : nodes) {
+        const auto& pos = node.second;
+        Vector3 v = {pos[0], pos[1], pos[2]};
+        if (v.x < min.x) min.x = v.x;
+        if (v.y < min.y) min.y = v.y;
+        if (v.z < min.z) min.z = v.z;
+        if (v.x > max.x) max.x = v.x;
+        if (v.y > max.y) max.y = v.y;
+        if (v.z > max.z) max.z = v.z;
+    }
+
+    Vector3 center = {
+        (min.x + max.x) * 0.5f,
+        (min.z + max.z) * 0.5f,
+        (min.y + max.y) * 0.5f
+    };
+    float extentX = max.x - min.x;
+    float extentY = max.z - min.z;
+    float extentZ = max.y - min.y;
+    float maxExtent = fmaxf(fmaxf(extentX, extentY), extentZ);
+
+    camera.target = center;
+
+    float distance = maxExtent / (2.0f * tanf(camera.fovy * 0.5f * (PI/180.0f)));
+    camera.position = (Vector3){center.x - distance, center.y + distance, center.z - distance};
+
     float movementSensitivity = 15;
-    float pitchSensitivity = 1;
+    float pitchSensitivity = 0.4;
     float scrollSensitivity = -1000;
 
     // pre decl des Meshs bzw. Modells
@@ -398,32 +151,136 @@ int main(void)
     };
     memcpy(mesh.indices, cubeIndices, sizeof(cubeIndices));
 
+    std::vector<Vector2> wireFrameIndices = {
+        {0,1},{1,2},{2,3},{3,0},    // Vordersete
+        {4,5},{5,6},{6,7},{7,4},    // Rückseite 
+        {0,4},{1,5},{2,6},{3,7}     // Verbindungen
+    };
+
     // Mesh einmalig hochladen
     UploadMesh(&mesh, false);
     Model cubeModel = LoadModelFromMesh(mesh);
+
+    bool mode3D = false;
 
     while (!WindowShouldClose()){
 
         float dt = GetFrameTime();
 
-        UpdateCameraPro(&camera,
-            (Vector3){
-                ((IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) * movementSensitivity -
-                (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) * movementSensitivity) * dt,
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            mode3D = true;
+        }
+        if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT)){
+            mode3D = false;
+        }
 
-                ((IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) * movementSensitivity -
-                (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) * movementSensitivity) * dt,
+        if(IsKeyPressed(KEY_LEFT_ALT)){
+            camera.target = center;
+            camera.position = (Vector3){center.x - distance, center.y + distance, center.z - distance};
+        }
 
-                ((IsKeyDown(KEY_SPACE)) * movementSensitivity -
-                (IsKeyDown(KEY_LEFT_SHIFT)) * movementSensitivity) * dt,
-            },
-            (Vector3){
-                GetMouseDelta().x * pitchSensitivity,
-                GetMouseDelta().y * pitchSensitivity,
-                0.0f
-            },
-            GetMouseWheelMove() * scrollSensitivity * dt
-        );
+        // nur wenn nicht ImGui::GetIO().WantCaptureMouse
+        if(mode3D || GetMouseWheelMove() != 0){
+
+            Vector3 forward = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
+            Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, camera.up));
+            Vector3 localUp = Vector3Normalize(Vector3CrossProduct(right, forward));
+
+            Vector2 mouseDelta = GetMouseDelta();
+            float panSpeed = 0.5f;
+
+            Vector3 pan = Vector3Scale(right, -mouseDelta.x * panSpeed);
+            pan = Vector3Add(pan, Vector3Scale(localUp, mouseDelta.y * panSpeed));
+
+            float scroll = GetMouseWheelMove();
+            float scrollSpeed = 2.0f;
+            Vector3 scrollMove = Vector3Scale(forward, scroll * scrollSpeed);
+
+            Vector3 move = Vector3Add(pan, scrollMove);
+
+            camera.position = Vector3Add(camera.position, move);
+            camera.target   = Vector3Add(camera.target, move);
+
+            UpdateCameraPro(&camera,
+                (Vector3){
+                    0,0,0
+                },
+                (Vector3){0.0f, 0.0f, 0.0f},
+                GetMouseWheelMove() * scrollSensitivity * dt
+            );
+        } else if(IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)){
+
+            //
+            Vector2 centerScreenBefore = GetWorldToScreen(center, camera);
+
+            float rotationSensitivity = 0.01;
+
+            //
+            Vector3 preoffset = Vector3Subtract(camera.position, camera.target);
+            float azimuth = atan2(preoffset.x, preoffset.z);
+
+            float radius = Vector3Length(Vector3Subtract(camera.position, camera.target));
+            float elevation = asin(preoffset.y / radius);
+
+            //
+            Vector2 mouseDelta = GetMouseDelta();
+            float yaw = -mouseDelta.x * rotationSensitivity;
+            float pitch = mouseDelta.y * rotationSensitivity;
+
+            azimuth += yaw;
+            elevation += pitch;
+
+            float minElevation = -PI/2 + 0.01f;
+            float maxElevation =  PI/2 - 0.01f;
+            if (elevation < minElevation) elevation = minElevation;
+            if (elevation > maxElevation) elevation = maxElevation;
+
+            //
+            Vector3 offset = {
+                radius * cosf(elevation) * sinf(azimuth),
+                radius * sinf(elevation),
+                radius * cosf(elevation) * cosf(azimuth)
+            };
+            camera.position = Vector3Add(camera.target, offset);
+            camera.target = camera.target;
+
+            //
+            Vector2 centerScreenAfter = GetWorldToScreen(center, camera);
+            
+        } else if(IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){
+
+            //
+            Vector3 preoffset = Vector3Subtract(camera.position, camera.target);
+            float azimuth = atan2(preoffset.x, preoffset.z);
+
+            float radius = Vector3Length(Vector3Subtract(camera.position, camera.target));
+            float elevation = asin(preoffset.y / radius);
+
+            //
+            float rotationSensitivity = 0.01;
+            Vector2 mouseDelta = GetMouseDelta();
+            float yaw = -mouseDelta.x * rotationSensitivity;
+            float pitch = mouseDelta.y * rotationSensitivity;
+
+            //
+            azimuth += yaw;
+            elevation += pitch;
+
+            //
+            float minElevation = -PI/2 + 0.01f;
+            float maxElevation =  PI/2 - 0.01f;
+            if (elevation < minElevation) elevation = minElevation;
+            if (elevation > maxElevation) elevation = maxElevation;
+
+            //
+            Vector3 offset = {
+                radius * cosf(elevation) * sinf(azimuth),
+                radius * sinf(elevation),
+                radius * cosf(elevation) * cosf(azimuth)
+            };
+            camera.position = Vector3Add(center, offset);
+            camera.target = center;
+        }
 
         ClearBackground(Color(30,30,30,255));
 
@@ -450,6 +307,8 @@ int main(void)
 
         for (const auto& [cellIndex, cell] : cells) {
 
+            const CellPrefab& r_pref = cell.getPrefab();
+
             std::vector<Vector3> cubeVertices;
             for (size_t node = 0; node < cell.getPrefab().nNodes; node++) {
                 const auto& Node = nodes.at(cell[node]);
@@ -470,7 +329,16 @@ int main(void)
 
             // Rendern
             DrawModel(cubeModel, (Vector3){0,0,0}, 1.0f, getColorByValue(values[cellIndex], minValue, maxValue));
-            DrawModelWires(cubeModel, (Vector3){0,0,0}, 1.0f, BLACK);
+            
+            //
+            for(const auto& dir : wireFrameIndices){
+
+                const auto& startNode = nodes.at(cell[dir.x]);
+                const auto& endNode = nodes.at(cell[dir.y]);
+
+                DrawCylinderEx((Vector3){startNode[0],startNode[2],startNode[1]},
+                                (Vector3){endNode[0],endNode[2],endNode[1]}, 0.2, 0.2, 8, BLACK);
+            }
         }
 
         EndMode3D();
@@ -478,8 +346,6 @@ int main(void)
         EndDrawing();
 
     }
-
-    return 0;
 
     //
     bool closeWindow = false;

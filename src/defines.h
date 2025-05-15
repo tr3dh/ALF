@@ -87,6 +87,11 @@ namespace fs = std::filesystem;
 
 #include "Drivers/UI/__fileBrowser.h"
 
+// typedefs
+typedef uint16_t NodeIndex;
+typedef NodeIndex CellIndex;
+
+// globals
 inline SYMBOL(x);
 inline SYMBOL(y);
 inline SYMBOL(z);
@@ -98,5 +103,5 @@ inline SYMBOL(t);
 const static std::vector<Symbol> g_globalKoords = {x,y,z};
 const static std::vector<Symbol> g_isometricKoords = {r,s,t};
 
-typedef uint16_t NodeIndex;
-typedef NodeIndex CellIndex;
+static bool g_ComputeShaderBackendEnabled = false;
+static float g_glVersion = 0;
