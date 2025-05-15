@@ -19,4 +19,9 @@ public:
 
     std::vector<SymEngine::map_basic_basic> quadraturePoints = {};
     std::vector<float> weights = {};
+
+    // nur für 3D
+    int numFaces = 0;
+    std::vector<uint8_t> faceIndices = {};
+    std::vector<Vector2> wireFrameIndices = {};
 };

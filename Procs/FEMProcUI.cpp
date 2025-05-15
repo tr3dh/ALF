@@ -161,125 +161,59 @@ int main(void)
     UploadMesh(&mesh, false);
     Model cubeModel = LoadModelFromMesh(mesh);
 
-    bool mode3D = false;
+    bool planarCam = false;
+    bool orbitCam = false;
+    bool fpsCam = false;
 
     while (!WindowShouldClose()){
 
         float dt = GetFrameTime();
 
+
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-            mode3D = true;
+            planarCam = true;
         }
         if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT)){
-            mode3D = false;
+            planarCam = false;
         }
+        if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
+            orbitCam = true;
+        }
+        if(IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)){
+            orbitCam = false;
+        }
+
+        // nur wenn nicht ImGui::GetIO().WantCaptureMouse
+        fpsCam = (orbitCam && planarCam) || IsKeyDown(KEY_SPACE);
 
         if(IsKeyPressed(KEY_LEFT_ALT)){
             camera.target = center;
             camera.position = (Vector3){center.x - distance, center.y + distance, center.z - distance};
         }
 
-        // nur wenn nicht ImGui::GetIO().WantCaptureMouse
-        if(mode3D || GetMouseWheelMove() != 0){
+        if(fpsCam){
 
-            Vector3 forward = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
-            Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, camera.up));
-            Vector3 localUp = Vector3Normalize(Vector3CrossProduct(right, forward));
-
-            Vector2 mouseDelta = GetMouseDelta();
-            float panSpeed = 0.5f;
-
-            Vector3 pan = Vector3Scale(right, -mouseDelta.x * panSpeed);
-            pan = Vector3Add(pan, Vector3Scale(localUp, mouseDelta.y * panSpeed));
-
-            float scroll = GetMouseWheelMove();
-            float scrollSpeed = 2.0f;
-            Vector3 scrollMove = Vector3Scale(forward, scroll * scrollSpeed);
-
-            Vector3 move = Vector3Add(pan, scrollMove);
-
-            camera.position = Vector3Add(camera.position, move);
-            camera.target   = Vector3Add(camera.target, move);
-
-            UpdateCameraPro(&camera,
+            calcFirstPersonCamera( camera,
                 (Vector3){
-                    0,0,0
+                    (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) - (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)),
+                    (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)),
+                    IsKeyDown(KEY_SPACE) - IsKeyDown(KEY_LEFT_SHIFT)
                 },
-                (Vector3){0.0f, 0.0f, 0.0f},
-                GetMouseWheelMove() * scrollSensitivity * dt
+                (Vector3){
+                    GetMouseDelta().x, GetMouseDelta().y, GetMouseWheelMove()
+                },
+                (Vector3){150,150,150},
+                (Vector3){1,1,-1000},
+                GetFrameTime()
             );
-        } else if(IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)){
+        }
+        else if(planarCam || GetMouseWheelMove() != 0){
 
-            //
-            Vector2 centerScreenBefore = GetWorldToScreen(center, camera);
+            calcNormalPlanarCamera(camera,(Vector3){GetMouseDelta().x, GetMouseDelta().y, GetMouseWheelMove()},{0.5,0.5,5});
+        }
+        else if(orbitCam){
 
-            float rotationSensitivity = 0.01;
-
-            //
-            Vector3 preoffset = Vector3Subtract(camera.position, camera.target);
-            float azimuth = atan2(preoffset.x, preoffset.z);
-
-            float radius = Vector3Length(Vector3Subtract(camera.position, camera.target));
-            float elevation = asin(preoffset.y / radius);
-
-            //
-            Vector2 mouseDelta = GetMouseDelta();
-            float yaw = -mouseDelta.x * rotationSensitivity;
-            float pitch = mouseDelta.y * rotationSensitivity;
-
-            azimuth += yaw;
-            elevation += pitch;
-
-            float minElevation = -PI/2 + 0.01f;
-            float maxElevation =  PI/2 - 0.01f;
-            if (elevation < minElevation) elevation = minElevation;
-            if (elevation > maxElevation) elevation = maxElevation;
-
-            //
-            Vector3 offset = {
-                radius * cosf(elevation) * sinf(azimuth),
-                radius * sinf(elevation),
-                radius * cosf(elevation) * cosf(azimuth)
-            };
-            camera.position = Vector3Add(camera.target, offset);
-            camera.target = camera.target;
-
-            //
-            Vector2 centerScreenAfter = GetWorldToScreen(center, camera);
-            
-        } else if(IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){
-
-            //
-            Vector3 preoffset = Vector3Subtract(camera.position, camera.target);
-            float azimuth = atan2(preoffset.x, preoffset.z);
-
-            float radius = Vector3Length(Vector3Subtract(camera.position, camera.target));
-            float elevation = asin(preoffset.y / radius);
-
-            //
-            float rotationSensitivity = 0.01;
-            Vector2 mouseDelta = GetMouseDelta();
-            float yaw = -mouseDelta.x * rotationSensitivity;
-            float pitch = mouseDelta.y * rotationSensitivity;
-
-            //
-            azimuth += yaw;
-            elevation += pitch;
-
-            //
-            float minElevation = -PI/2 + 0.01f;
-            float maxElevation =  PI/2 - 0.01f;
-            if (elevation < minElevation) elevation = minElevation;
-            if (elevation > maxElevation) elevation = maxElevation;
-
-            //
-            Vector3 offset = {
-                radius * cosf(elevation) * sinf(azimuth),
-                radius * sinf(elevation),
-                radius * cosf(elevation) * cosf(azimuth)
-            };
-            camera.position = Vector3Add(center, offset);
-            camera.target = center;
+            calcOrbitCamera(camera, GetMouseDelta(), center, true, {0.01,0.005});
         }
 
         ClearBackground(Color(30,30,30,255));

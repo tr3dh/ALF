@@ -1,5 +1,10 @@
 #include "CellPrefab.h"
 
+void from_json(const nlohmann::json& j, Vector2& v) {
+    v.x = j.at(0).get<float>();
+    v.y = j.at(1).get<float>();
+}
+
 CellPrefab CellPrefab::nullRef = CellPrefab();
 
 CellPrefab::CellPrefab() = default;
@@ -78,6 +83,27 @@ CellPrefab::CellPrefab(const std::string& path) : CellPrefab(){
 
     //
     label = *string::split(string::split(path,'/').back(), '.').begin();
+
+    // Einlesen der Daten wie wireFrame und faceIndices fürs 3d Rendering
+    if(nDimensions != 3){
+        return;
+    }
+
+    //
+    RETURNING_ASSERT(isoParamData.contains("FACEINDICES"), "Rendering Information FACEINDICES für 3D Element " + label + " fehlt, Rendering des Elements nicht möglich",);
+
+    faceIndices = isoParamData["FACEINDICES"].get<decltype(faceIndices)>();
+    numFaces = faceIndices.size()/3;
+    RETURNING_ASSERT(faceIndices.size()%3 == 0, "Ungültige Anzahl an FACEINDICES für 3D Element " + label + " übergeben, für eindeutige Zuordnung muss jede fläche durch 3 VertexIndices definiert sein",);
+
+    LOG << LOG_GREEN << "** " << "Element " << label << " mit " << numFaces << " faces geladen" << endl;
+
+    ASSERT(isoParamData.contains("WIREFRAMEINDIDES"),
+        "Rendering Information WIREFRAMEINDIDES für 3D Element " + label + " fehlt, Rendering des Elements wird mit default Wireframe, basierend auf angegebenen Faces gerendert");
+
+    if(isoParamData.contains("WIREFRAMEINDIDES")){
+        wireFrameIndices = isoParamData["WIREFRAMEINDIDES"].get<decltype(wireFrameIndices)>();
+    }
 
     LOG << LOG_GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen" << endl;
 }
