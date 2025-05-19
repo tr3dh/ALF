@@ -39,6 +39,11 @@ public:
 
     float m_deviation = 0, m_mean = 0;
 
+    Vector3 modelCenter {0,0,0}, modelExtend = {0,0,0};
+    float maxModelExtent = 0.0f, modelDistance = 0.0f;
+
+    Color undeformedFrame = WHITE, deformedFrame = RED, deformedFramePlusXi = YELLOW, deformedFrameMinusXi = GREEN;
+
 private:
 
     std::string m_modelPath = NULLSTR;

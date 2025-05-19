@@ -184,6 +184,13 @@ bool IsoMesh::loadFromFile(const std::string& path){
     }
 
     //
+    const CellPrefab& r_pref = getCells().begin()->second.getPrefab();
+
+    if(r_pref.nDimensions != 3){
+        return false;
+    }
+
+    //
     LOG << endl;
     LOG << LOG_BLUE << "-- Ladevorgang abgeschlossen, geladen : " << m_nodes.size() << " Nodes | " << m_Cells.size() << " Elemente" << endl;
     LOG << endl;

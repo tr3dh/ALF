@@ -62,3 +62,5 @@ bool InputSliderInt(const std::string& label, T& source, const int& lowerBorder 
 
     return false;
 }
+
+void RaylibColorEdit(Color& rayColor, const std::string& label = NULLSTR);

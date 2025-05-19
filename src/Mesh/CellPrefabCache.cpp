@@ -26,6 +26,7 @@ NodeIndex cacheCellPrefab(const std::string& prefabLabel){
 
     //
     LOG << LOG_GREEN << "** Element " << g_cellPrefabCache[cellPrefabCounter].label << " erfolgreich unter ID " << +cellPrefabCounter << " in CellPrefab Cache geladen" << endl;
+    LOG << endl;
 
     //
     return cellPrefabCounter++;

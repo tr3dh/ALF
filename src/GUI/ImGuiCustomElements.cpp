@@ -223,3 +223,24 @@ bool InputSliderFloat(const std::string& label, float& source, const float& lowe
 
     return false;
 }
+
+void RaylibColorEdit(Color& rayColor, const std::string& label){
+
+    //
+    float colorEdit[4] = {
+        rayColor.r / 255.0f,
+        rayColor.g / 255.0f,
+        rayColor.b / 255.0f,
+        rayColor.a / 255.0f
+    };
+
+    // Color edit widget
+    if (ImGui::ColorEdit4(label.c_str(), colorEdit, ImGuiColorEditFlags_NoInputs)) {
+    
+        // Umwandlung in raycolor nach bearbeitung
+        rayColor.r = (unsigned char)(colorEdit[0] * 255.0f);
+        rayColor.g = (unsigned char)(colorEdit[1] * 255.0f);
+        rayColor.b = (unsigned char)(colorEdit[2] * 255.0f);
+        rayColor.a = (unsigned char)(colorEdit[3] * 255.0f);
+    }
+}

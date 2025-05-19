@@ -92,7 +92,7 @@ CellPrefab::CellPrefab(const std::string& path) : CellPrefab(){
     //
     RETURNING_ASSERT(isoParamData.contains("FACEINDICES"), "Rendering Information FACEINDICES für 3D Element " + label + " fehlt, Rendering des Elements nicht möglich",);
 
-    faceIndices = isoParamData["FACEINDICES"].get<decltype(faceIndices)>();
+    faceIndices = isoParamData["FACEINDICES"].get<std::vector<unsigned short>>();
     numFaces = faceIndices.size()/3;
     RETURNING_ASSERT(faceIndices.size()%3 == 0, "Ungültige Anzahl an FACEINDICES für 3D Element " + label + " übergeben, für eindeutige Zuordnung muss jede fläche durch 3 VertexIndices definiert sein",);
 

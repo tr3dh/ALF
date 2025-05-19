@@ -26,3 +26,5 @@ private:
     const CellPrefab& m_cellPrefab;
     const std::vector<NodeIndex> m_nodeIndices = {};
 };
+
+typedef std::map<CellIndex, Cell> CellSet;

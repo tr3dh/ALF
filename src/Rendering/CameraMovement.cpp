@@ -1,4 +1,4 @@
-#include "3DRendering.h"
+#include "CameraMovement.h"
 
 void calcOrbitCamera(Camera& camera, const Vector2& movDelta, const Vector3& rotationCenter, bool fixRotationCenterOnScreen, const Vector2& rotationSensitivity){
 
@@ -52,7 +52,7 @@ void calcOrbitCamera(Camera& camera, const Vector2& movDelta, const Vector3& rot
 
     Vector3 rotatedTargetOffset = {
         targetRadius * cosf(targetElevation) * sinf(targetAzimuth),
-        0, //targetRadius * sinf(targetElevation),
+        0,              // targetRadius * sinf(targetElevation),
         targetRadius * cosf(targetElevation) * cosf(targetAzimuth)
     };
 

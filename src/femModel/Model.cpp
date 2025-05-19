@@ -63,6 +63,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     LOG << "   Lade Mesh aus " << m_meshPath << endl;
     LOG << endl;
 
+    m_isoMesh.setSelfPointer(&this->m_isoMesh);
     m_isoMesh.loadFromFile(m_meshPath);
     m_isoMesh.loadIsoMeshMaterial();
 
@@ -87,10 +88,48 @@ void FemModel::importPdf(const std::string& pdfPath){
 void FemModel::display(const MeshData& displayedData, const int& globKoord, bool displayOnDeformedMesh, bool displayOnQuadraturePoints,
     const Vector2& winSize, const Vector2& frameOffset, const Vector2& padding, bool splitScreen, bool splitScreenVertical){
 
+    static std::vector<Color*> colors = {&undeformedFrame, &deformedFrame, &deformedFramePlusXi, &deformedFrameMinusXi}; 
+        
     Vector2 leftCorner = frameOffset - winSize/2, rightCorner = leftCorner + frameOffset; 
 
     Vector2 frameSize;
     Vector2 frameOffsets[3];
+
+    if(m_isoMesh.getCells().begin()->second.getPrefab().nDimensions == 3){
+
+        // 3D autofit
+        Vector3 min = {FLT_MAX, FLT_MAX, FLT_MAX};
+        Vector3 max = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
+
+        NodeSet undefNodes = m_isoMesh.getUndeformedNodes(), defNodes = m_isoMesh.getDeformedNodes();
+        std::vector<NodeSet*> sets = {&undefNodes, &defNodes, &n_upperXi, &n_lowerXi};
+        
+        for(const auto& set : sets)
+            for (const auto& node : *set) {
+                const auto& pos = node.second;
+                Vector3 v = {pos[0], pos[1], pos[2]};
+                if (v.x < min.x) min.x = v.x;
+                if (v.y < min.y) min.y = v.y;
+                if (v.z < min.z) min.z = v.z;
+                if (v.x > max.x) max.x = v.x;
+                if (v.y > max.y) max.y = v.y;
+                if (v.z > max.z) max.z = v.z;
+        }
+
+        modelCenter = {
+            (min.x + max.x) * 0.5f,
+            (min.z + max.z) * 0.5f,
+            (min.y + max.y) * 0.5f
+        };
+
+        modelExtend = {
+            max.x - min.x,
+            max.z - min.z,
+            max.y - min.y,
+        };
+
+        maxModelExtent = fmaxf(fmaxf(modelExtend.x, modelExtend.y), modelExtend.z);
+    }
 
     if(splitScreenVertical){
 
@@ -111,15 +150,15 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, bool
         frameOffsets[2] = {leftCorner.x + 5*frameSize.x/2, frameOffset.y};
     }
 
-    if(splitScreen){
+    if(splitScreen && m_isoMesh.getUndeformedNodes().begin()->second.getDimension() == 2){
 
-        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, {&m_isoMesh.getUndeformedNodes(), &m_isoMesh.getDeformedNodes(), &n_upperXi, &n_lowerXi}, {WHITE, RED, GREEN, YELLOW}, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[0], padding/3);
-        m_isoMesh.display(data_upperXi, displayedData, globKoord, {&n_upperXi}, {WHITE, RED, GREEN, YELLOW}, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[1], padding/3);
-        m_isoMesh.display(data_lowerXi, displayedData, globKoord, {&n_lowerXi}, {WHITE, RED, GREEN, YELLOW}, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[2], padding/3);
+        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, {&m_isoMesh.getUndeformedNodes(), &m_isoMesh.getDeformedNodes(), &n_upperXi, &n_lowerXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[0], padding/3);
+        m_isoMesh.display(data_upperXi, displayedData, globKoord, {&n_upperXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[1], padding/3);
+        m_isoMesh.display(data_lowerXi, displayedData, globKoord, {&n_lowerXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[2], padding/3);
 
     } else {
 
-        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, {&m_isoMesh.getUndeformedNodes(), &m_isoMesh.getDeformedNodes(), &n_upperXi, &n_lowerXi}, {WHITE, RED, GREEN, YELLOW}, 0, displayOnDeformedMesh, displayOnQuadraturePoints, winSize, frameOffset, padding);
+        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, {&m_isoMesh.getUndeformedNodes(), &m_isoMesh.getDeformedNodes(), &n_upperXi, &n_lowerXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, winSize, frameOffset, padding);
     }
 }
 

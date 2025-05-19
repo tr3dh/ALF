@@ -22,6 +22,6 @@ public:
 
     // nur für 3D
     int numFaces = 0;
-    std::vector<uint8_t> faceIndices = {};
+    std::vector<unsigned short> faceIndices = {};
     std::vector<Vector2> wireFrameIndices = {};
 };

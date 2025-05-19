@@ -5,7 +5,8 @@
 #include "femModel/Model.h"
 #include "GUI/ImGuiStyleDecls.h"
 #include "GUI/ImGuiCustomElements.h"
-#include "Rendering/3DRendering.h"
+#include "Rendering/CameraMovement.h"
+#include "Rendering/CellRenderer.h"
 
 #define MODELCACHE "../bin/.CACHE"
 
@@ -21,11 +22,11 @@ int main(void)
 
     FemModel model("../Import/3DCubeMesh.model");
 
-    //FemModel model;
-    //model.loadFromCache();
+    // FemModel model;
+    // model.loadFromCache();
 
     //
-    //enableRLLogging();
+    enableRLLogging();
     SetTraceLogCallback(RaylibLogCallback);
 
     InitWindow(600, 600, "<><FEMProc><>");
@@ -83,216 +84,35 @@ int main(void)
 
     float imguiScale = 1.0f;
 
-    //const NodeSet& nodes = model.getMesh().getUndeformedNodes();
-    const NodeSet& nodes = model.getMesh().getDeformedNodes();
-    const CellSet& cells = model.getMesh().getCells();
-
-    // player Camera
+    // Camera init
     Camera camera = {
-        .position = {0,2.5,0},
+        .position = {0,0,0},
         .target = {10, 2.5,0},
         .up = {0,1,0},
         .fovy = 45.0f,
-        .projection = CAMERA_PERSPECTIVE    // oder CAMERA_ORTHOGRAPHIC
+        .projection = CAMERA_PERSPECTIVE    // oder CAMERA_ORTHOGRAPHIC für isometrische Ansicht -> Zoom funktioniert nicht mehr
     };
 
-    // 1. Bounding Box berechnen
-    Vector3 min = {FLT_MAX, FLT_MAX, FLT_MAX};
-    Vector3 max = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
-
-    for (const auto& node : nodes) {
-        const auto& pos = node.second;
-        Vector3 v = {pos[0], pos[1], pos[2]};
-        if (v.x < min.x) min.x = v.x;
-        if (v.y < min.y) min.y = v.y;
-        if (v.z < min.z) min.z = v.z;
-        if (v.x > max.x) max.x = v.x;
-        if (v.y > max.y) max.y = v.y;
-        if (v.z > max.z) max.z = v.z;
-    }
-
-    Vector3 center = {
-        (min.x + max.x) * 0.5f,
-        (min.z + max.z) * 0.5f,
-        (min.y + max.y) * 0.5f
-    };
-    float extentX = max.x - min.x;
-    float extentY = max.z - min.z;
-    float extentZ = max.y - min.y;
-    float maxExtent = fmaxf(fmaxf(extentX, extentY), extentZ);
-
-    camera.target = center;
-
-    float distance = maxExtent / (2.0f * tanf(camera.fovy * 0.5f * (PI/180.0f)));
-    camera.position = (Vector3){center.x - distance, center.y + distance, center.z - distance};
-
-    float movementSensitivity = 15;
-    float pitchSensitivity = 0.4;
-    float scrollSensitivity = -1000;
-
-    // pre decl des Meshs bzw. Modells
-    // im weiteren werden nur noch die Vertices geupdatet
-    Mesh mesh = {0};
-    mesh.vertexCount = 8;
-    mesh.triangleCount = 12;
-    mesh.vertices = (float*)MemAlloc(mesh.vertexCount * 3 * sizeof(float));
-    mesh.indices = (unsigned short*)MemAlloc(mesh.triangleCount * 3 * sizeof(unsigned short));
-
-    // wichtig dass Indices der Vertices im richtigen Dresinn angegeben werden,
-    // ansonsten wird Normale falsch herum angenommen und face culling führt zu rendering der
-    // Fläche nur bei Blick von element Innerem aus gerendert
-    unsigned short cubeIndices[36] = {
-        0,1,2, 0,2,3,
-        1,6,2, 1,5,6,
-        3,6,7, 3,2,6,
-        0,7,4, 0,3,7,
-        0,5,1, 0,4,5,
-        4,6,5, 4,7,6
-    };
-    memcpy(mesh.indices, cubeIndices, sizeof(cubeIndices));
-
-    std::vector<Vector2> wireFrameIndices = {
-        {0,1},{1,2},{2,3},{3,0},    // Vordersete
-        {4,5},{5,6},{6,7},{7,4},    // Rückseite 
-        {0,4},{1,5},{2,6},{3,7}     // Verbindungen
-    };
-
-    // Mesh einmalig hochladen
-    UploadMesh(&mesh, false);
-    Model cubeModel = LoadModelFromMesh(mesh);
-
+    // Kameraführungsmodi
     bool planarCam = false;
     bool orbitCam = false;
     bool fpsCam = false;
-
-    while (!WindowShouldClose()){
-
-        float dt = GetFrameTime();
-
-
-        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-            planarCam = true;
-        }
-        if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT)){
-            planarCam = false;
-        }
-        if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
-            orbitCam = true;
-        }
-        if(IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)){
-            orbitCam = false;
-        }
-
-        // nur wenn nicht ImGui::GetIO().WantCaptureMouse
-        fpsCam = (orbitCam && planarCam) || IsKeyDown(KEY_SPACE);
-
-        if(IsKeyPressed(KEY_LEFT_ALT)){
-            camera.target = center;
-            camera.position = (Vector3){center.x - distance, center.y + distance, center.z - distance};
-        }
-
-        if(fpsCam){
-
-            calcFirstPersonCamera( camera,
-                (Vector3){
-                    (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) - (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)),
-                    (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)),
-                    IsKeyDown(KEY_SPACE) - IsKeyDown(KEY_LEFT_SHIFT)
-                },
-                (Vector3){
-                    GetMouseDelta().x, GetMouseDelta().y, GetMouseWheelMove()
-                },
-                (Vector3){150,150,150},
-                (Vector3){1,1,-1000},
-                GetFrameTime()
-            );
-        }
-        else if(planarCam || GetMouseWheelMove() != 0){
-
-            calcNormalPlanarCamera(camera,(Vector3){GetMouseDelta().x, GetMouseDelta().y, GetMouseWheelMove()},{0.5,0.5,5});
-        }
-        else if(orbitCam){
-
-            calcOrbitCamera(camera, GetMouseDelta(), center, true, {0.01,0.005});
-        }
-
-        ClearBackground(Color(30,30,30,255));
-
-        BeginDrawing();
-        
-        BeginMode3D(camera);
-
-        std::map<CellIndex, float> values = {};
-        for (const auto& [cellIndex, cellData] : model.getMesh().getCellData()) {
-            values.try_emplace(cellIndex, cellData.getData(MeshData::VANMISES_STRESS, 0));
-        }
-
-        float minValue = 0, maxValue = 0;
-
-        if (!values.empty()) {
-            // Über die Werte iterieren, nicht die Map-Paare!
-            auto [minIt, maxIt] = std::minmax_element(
-                values.begin(), values.end(),
-                [](const auto& a, const auto& b) { return a.second < b.second; }
-            );
-            minValue = minIt->second;
-            maxValue = maxIt->second;
-        }
-
-        for (const auto& [cellIndex, cell] : cells) {
-
-            const CellPrefab& r_pref = cell.getPrefab();
-
-            std::vector<Vector3> cubeVertices;
-            for (size_t node = 0; node < cell.getPrefab().nNodes; node++) {
-                const auto& Node = nodes.at(cell[node]);
-                cubeVertices.push_back((Vector3){Node[0], Node[1], Node[2]});
-                DrawSphere((Vector3){Node[0], Node[2], Node[1]},0.05,GREEN);
-            }
-
-            // Vertices kopieren
-            // tauschen von z und y damit die z Achse als Hochachse gerendert wird
-            for (int i = 0; i < 8; i++) {
-                mesh.vertices[i*3 + 0] = cubeVertices[i].x;
-                mesh.vertices[i*3 + 1] = cubeVertices[i].z;
-                mesh.vertices[i*3 + 2] = cubeVertices[i].y;
-            }
-
-            // Vertices auf die GPU laden
-            UpdateMeshBuffer(mesh, 0, mesh.vertices, sizeof(float)*mesh.vertexCount*3, 0);
-
-            // Rendern
-            DrawModel(cubeModel, (Vector3){0,0,0}, 1.0f, getColorByValue(values[cellIndex], minValue, maxValue));
-            
-            //
-            for(const auto& dir : wireFrameIndices){
-
-                const auto& startNode = nodes.at(cell[dir.x]);
-                const auto& endNode = nodes.at(cell[dir.y]);
-
-                DrawCylinderEx((Vector3){startNode[0],startNode[2],startNode[1]},
-                                (Vector3){endNode[0],endNode[2],endNode[1]}, 0.2, 0.2, 8, BLACK);
-            }
-        }
-
-        EndMode3D();
-
-        EndDrawing();
-
-    }
 
     //
     bool closeWindow = false;
     while (!closeWindow)
     {
-        bool currentCtrlState = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
-        static std::string modelSource = fs::path(model.getSource()).filename().string();
-        
+        // deltaTime
+        static float dt;
+        dt = GetFrameTime();
+
+        // Screen stats
         int monitor = GetCurrentMonitor();
         Vector2 monitorSize = {GetMonitorWidth(monitor), GetMonitorHeight(monitor)};
         Vector2 winSize = {GetScreenWidth(), GetScreenHeight()};
 
         // Nur bei gedrückter Strg Taste reagieren
+        bool currentCtrlState = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
         if(currentCtrlState) {
 
             float wheelMove = GetMouseWheelMove();
@@ -355,6 +175,67 @@ int main(void)
             
         }
 
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            planarCam = true;
+        }
+        if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT)){
+            planarCam = false;
+        }
+        if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
+            orbitCam = true;
+        }
+        if(IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)){
+            orbitCam = false;
+        }
+
+        // nur wenn nicht ImGui::GetIO().WantCaptureMouse
+        fpsCam = (orbitCam && planarCam) || IsKeyDown(KEY_SPACE);
+
+        if(IsKeyPressed(KEY_LEFT_ALT) || camera.position == (Vector3){0,0,0}){
+
+            // Center camera
+            camera.target = model.modelCenter;
+            float distance = model.maxModelExtent / (2.0f * tanf(camera.fovy * 0.5f * (PI/180.0f)));
+            camera.position = (Vector3){model.modelCenter.x - distance, model.modelCenter.y + distance, model.modelCenter.z - distance};
+        }
+
+        size_t modelDimension = model.getMesh().getCells().begin()->second.getPrefab().nDimensions;
+
+        // Camera handling überspringen wenn Netz nicht 3D
+        if(model.getMesh().getCells().begin()->second.getPrefab().nDimensions != 3){
+
+        }
+        // wenn die Maus in der UI steht soll keine Camerafahrt stattfinden
+        // wenn der Cursor versteckt ist soll die Camerafahrt troztdem durchgeführt werden
+        else if(ImGui::GetIO().WantCaptureMouse && !hideCursor){
+
+        }
+        else if(fpsCam){
+
+            calcFirstPersonCamera( camera,
+                (Vector3){
+                    (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) - (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)),
+                    (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)),
+                    IsKeyDown(KEY_SPACE) - IsKeyDown(KEY_LEFT_SHIFT)
+                },
+                (Vector3){
+                    GetMouseDelta().x, GetMouseDelta().y, GetMouseWheelMove()
+                },
+                (Vector3){150,150,150},
+                (Vector3){1,1,-1000},
+                GetFrameTime()
+            );
+        }
+        else if(planarCam || GetMouseWheelMove() != 0){
+
+            calcNormalPlanarCamera(camera,(Vector3){GetMouseDelta().x, GetMouseDelta().y, GetMouseWheelMove()},{0.5,0.5,5});
+        }
+        else if(orbitCam){
+
+            // um model Center drehen
+            calcOrbitCamera(camera, GetMouseDelta(), model.modelCenter, true, {0.01,0.005});
+        }
+
         BeginDrawing();
         ClearBackground(Color(30,30,30,255));
 
@@ -388,7 +269,15 @@ int main(void)
         //
         static bool splitScreen = false;
         static bool splitScreenVertical = true;
+
+        const CellPrefab& r_pref = model.getMesh().getCells().begin()->second.getPrefab();
+
+        r_pref.nDimensions == 3 ? BeginMode3D(camera) : (void)0;
         model.display(MeshData::VANMISES_STRESS, 0, false, false, displayFrame, displayFrameCenter, {100,100}, splitScreen, splitScreenVertical);
+        r_pref.nDimensions == 3 ? EndMode3D() : (void)0;
+
+        static std::string modelSource;
+        modelSource = fs::path(model.getSource()).filename().string();
 
         if (ImGui::BeginMainMenuBar())
         {
@@ -566,7 +455,7 @@ int main(void)
 
             ImGui::SameLine();
 
-            // Create a child window for the tab content
+            //
             ImGui::BeginChild("TabContent", ImVec2(0, 0), true);
 
             if (subTabNames[selectedTab].size() > 0)
@@ -846,8 +735,38 @@ int main(void)
             ImGui::EndChild();
 
             ImGui::End();
-
         }
+
+    Vector2 legendWinSizeFract = {0.25, 0.25};
+    ImGuiWindowFlags lwinFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
+                                    ImGuiWindowFlags_NoNav;
+
+    ImVec2 legendWinSize = ImVec2(winSize.x * legendWinSizeFract.x, winSize.y * legendWinSizeFract.y);
+    ImVec2 legendWinPos = ImVec2(0, winSize.y - legendWinSize.y);
+
+    ImGui::SetNextWindowPos(legendWinPos, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(legendWinSize, ImGuiCond_Always);
+
+        //
+        ImGui::Begin("##Legend", nullptr, lwinFlags);
+
+        //
+        std::string camPerspective = "Camera : ";
+
+        if(fpsCam){camPerspective += "FPS";}
+        else if(orbitCam){camPerspective += "ORBITAL";}
+        else if(planarCam){camPerspective += "NORMAL PLANAR";}
+        else{camPerspective += "NONE";}
+
+        ImGui::Text(camPerspective.c_str());
+
+        RaylibColorEdit(model.undeformedFrame, "\tundeformed Mesh");
+        RaylibColorEdit(model.deformedFrame, "\tdeformed Mesh");
+        RaylibColorEdit(model.deformedFramePlusXi, "\tdeformed Mesh plus xi");
+        RaylibColorEdit(model.deformedFrameMinusXi, "\tdeformed Mesh minus xi");
+
+        ImGui::End();
 
         RenderFileDialog();
 

@@ -5,13 +5,11 @@
 . auslagern globals in defines oder treiber -> static decl benötigt
 . aufteilung in incl/src
 
-## 3d Fem
-. 3d Matritzen
-. 3d rendering
-
 ## alg. Rendering
 . legende für linienfarben/einfärbungen
 . angabe maximal/minimalwerte
+. autofit (camera/scale + offset) aus frame auslagern --> nur bei jedem update
+. werte mittlung aus frame auslagern --> nur bei jedem update
 
 # Ideen
 . Unsicherheitsberechnung mit mehr Taylor Reihengliedern für Ansätze

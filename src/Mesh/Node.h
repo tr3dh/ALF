@@ -52,6 +52,8 @@ private:
 template<typename T>
 struct dynNodeXd {
 
+    static dynNodeXd<T> nullRef;
+
     // Konstruktoren
     dynNodeXd() = default;
     dynNodeXd(const size_t& dimension, const std::vector<T>& Coordinates)
@@ -96,3 +98,8 @@ private:
     size_t m_dimension = 0;
     std::vector<T> m_Coordinates = {};
 };
+
+template<typename T>
+dynNodeXd<T> dynNodeXd<T>::nullRef = dynNodeXd<T>();
+
+typedef std::map<NodeIndex, dynNodeXd<float>> NodeSet;

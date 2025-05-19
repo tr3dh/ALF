@@ -2,10 +2,7 @@
 
 #include "Cell.h"
 #include "Material.h"
-
-typedef std::map<NodeIndex, dynNodeXd<float>> NodeSet;
-typedef std::map<CellIndex, Cell> CellSet;
-typedef std::unordered_map<CellIndex, CellData> DataSet;
+#include "Rendering/CellRenderer.h"
 
 void acvanceDataSet(const DataSet& source, DataSet& target, const Coeffs& coeffs);
 
@@ -73,7 +70,7 @@ public:
     void calculateStrainAndStress(bool calculateOnQuadraturePoints = false);
 
     void display(const DataSet& dataSet, const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0,
-        const std::vector<const NodeSet*>& nodeSets = {}, const std::vector<Color> setColors = {}, int displayOnNodeSet = 0,
+        const std::vector<const NodeSet*>& nodeSets = {}, const std::vector<Color*> setColors = {}, int displayOnNodeSet = 0,
         bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
         const Vector2& winSize = {100,100}, const Vector2& frameOffset = {-1,-1}, const Vector2& padding = {50,50});
 
@@ -88,4 +85,9 @@ public:
     const std::string& getMaterialPath();
     const IsoMeshMaterial& getMaterial() const;
     IsoMeshMaterial& getMaterial();
+
+    //
+    void setSelfPointer(IsoMesh* ptr);
+    IsoMesh* getSelfPointer();
+    IsoMesh* g_self = nullptr;
 };

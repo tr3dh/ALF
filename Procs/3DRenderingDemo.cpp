@@ -1,5 +1,4 @@
 #include "defines.h"
-#include "Rendering/3DRendering.h"
 #include <chrono>
 #include <thread>
 #include "femModel/Model.h"

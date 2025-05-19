@@ -66,3 +66,5 @@ struct CellData{
 
     void operator*=(const Coeffs& coeffs);
 };
+
+typedef std::unordered_map<CellIndex, CellData> DataSet;
