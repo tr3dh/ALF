@@ -8,7 +8,18 @@
 - Compiler : gcc/g++
 - Sprachstandard : C++23
 
-# Setup
+# Features
+| Feature                                                                           | Ab Version |
+|-----------------------------------------------------------------------------------|:----------:|
+| Lösen und Visualisieren von linearen 2D und 3D FEM Problemen                      |  v0.0.1    |
+| Linearisierung der Lösungen für zufallsverteilte Materialien um Arbeitspunkt      |  v0.0.1    |
+| Bearbeiten der Materialien innerhalb der UI                                       |  v0.0.1    |
+| Rejection Sampling für Material pdfs                                              |  v0.0.1    |
+| Dynamisches Laden von isoparametrischen Elementen, pdfs, Prefabs, Meshtypen       |  v0.0.1    |
+| Erweiterung durch eigene Prefabs (Pipelines)                                      |  v0.0.1    |
+
+
+# Setup für Kompilierung
 - Installation von msys64
 - clonen vom github repo
 - batch skript ausführen, das vscode workspace öffnet
@@ -58,6 +69,17 @@
 
 # AsciGen
 - Schriftart ANSI shadow
+
+# shortCuts
+| Shortcut              | Funktion                          |
+|-----------------------|-----------------------------------|
+| l hold                | Normal Planar Kamera              |
+| r hold                | Orbital Kamera                    |
+| l+r hold              | FPS Kamera                        |
+| w/a/s/d/shift/space   | Bewegung in fps Kamera            |
+| F11                   | toggle Fullscreen                 |
+| C                     | toggle Cursor                     |
+| Space                 | Resampling der pdf                |
 
 # .LINKS
 - [LUHCluster](https://login.cluster.uni-hannover.de/pun/sys/dashboard)

@@ -26,6 +26,8 @@
 # Proj Dirs
 build/
 thirdparty/
+temp/
+tmp/
 
 # Os Dateien
 .DS_Store
