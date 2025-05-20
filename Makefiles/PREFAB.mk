@@ -279,6 +279,9 @@ prefab:
 	make --version && cmake --version && ninja --version
 	git --version
 
+	@echo "Installiere zip..."
+	$(PACMAN) zip
+
 	@echo "Installiere SFML..."
 	$(PACMAN) mingw-w64-x86_64-sfml
 

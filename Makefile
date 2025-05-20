@@ -1,6 +1,7 @@
 include Makefiles/Gitconfig.mk
 include Makefiles/PREFAB.mk
 include Makefiles/PROC.mk
+include Makefiles/Export.mk
 
 build: clean header proc
 
