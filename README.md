@@ -81,6 +81,12 @@
 | C                     | toggle Cursor                     |
 | Space                 | Resampling der pdf                |
 
+# für Markdowns
+für korrektes Rendering im github
+- kein sternchen zwischen einzelnen inline Math blocks anstelle dessen \cdot
+- zwischen outline matblocks und einer Zeile einen Absatz
+- besser als block: math codeblock
+
 # .LINKS
 - [LUHCluster](https://login.cluster.uni-hannover.de/pun/sys/dashboard)
 - [PeridicTableOfElements](https://www-users.cse.umn.edu/~arnold/femtable)

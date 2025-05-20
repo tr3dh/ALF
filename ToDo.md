@@ -18,6 +18,7 @@
 . compute shader mit raylib
 
 # Markdowns
+. vec x_n+1 fixen (pfeil mittig über gesamte Benennung gerendert)
 . lin Fem
 . nicht lin fem -> entsprechende Verfahren
 . Übersicht Treiberstruktur/Projektstruktur
