@@ -63,6 +63,10 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     LOG << "   Lade Mesh aus " << m_meshPath << endl;
     LOG << endl;
 
+    const std::string linMatPath = string::split(fs::path(path).filename().string(),'.')[0] + IsoMeshMaterial::fileSuffix;
+    
+    m_materialIsLinear = (fs::exists(linMatPath));
+
     m_isoMesh.setSelfPointer(&this->m_isoMesh);
     m_isoMesh.loadFromFile(m_meshPath);
     m_isoMesh.loadIsoMeshMaterial();

@@ -4,7 +4,7 @@ Für die Unsicherheitsberechnung wird weiterhin lineares Materialverhalten (Hook
 
 $$
 \underline{K} \cdot \vec{u} = \vec{f} \mid 
-\underline{K} = \int_{\Omega} \underline{\mathbb{B}}^T  \underline{\mathbb{E}}   \underline{\mathbb{B}}^T d\Omega
+\underline{K} = \int_{\Omega} \underline{\mathbb{B}}^T  \underline{\mathbb{E}}   \underline{\mathbb{B}} d\Omega
 $$
 
 $\underline{\mathbb{E}}$ ist dabei eine Funktion mehrerer Materialparameter.

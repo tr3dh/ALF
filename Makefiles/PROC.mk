@@ -20,7 +20,8 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 # -lr3d vor lraylib einfügen falls nötig
 # -lbase nach -L...vulkan/build/base einfügen
 # -L./thirdParty/enet/build -lenet vor winsocks
-LDFLAGS := -L/mingw64/lib \
+LDFLAGS := -L./src \
+	-L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
 	-L./thirdParty/rlImGui/bin -lrlimgui \
 	-L./thirdParty/implot/bin -limplot \
@@ -99,5 +100,8 @@ clearIconCache:
 
 clean:
 #rm -f $(PROCS_TARGETS)
+
+lib: $(OBJ) $(PCH)
+	ar rcs build/libfemPROC.a $^
 
 .DEFAULT_GOAL := all

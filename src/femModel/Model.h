@@ -44,6 +44,8 @@ public:
 
     Color undeformedFrame = WHITE, deformedFrame = RED, deformedFramePlusXi = YELLOW, deformedFrameMinusXi = GREEN;
 
+    bool m_materialIsLinear = true;
+
 private:
 
     std::string m_modelPath = NULLSTR;

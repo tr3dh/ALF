@@ -20,10 +20,8 @@ int main(void)
     LOG << "** Procs Code " << countLinesInDirectory("../Procs") << " lines" << endl;
     LOG << endl;
 
-    FemModel model("../Import/3DCubeMesh.model");
-
-    // FemModel model;
-    // model.loadFromCache();
+    FemModel model;
+    model.loadFromCache();
 
     //
     enableRLLogging();

@@ -1,9 +1,13 @@
 # ToDo
 
 ## CleanUp
-. ui helperfunctions ist nicht (inputExpression, etc)
-. auslagern globals in defines oder treiber -> static decl benötigt
-. aufteilung in incl/src
+. aufteilung in incl/src ?? -> angenehmer für Nutzungs als lib
+
+## Releases
+. Release (native)
+. Debug (console)
+. libary
+. headlesss api
 
 ## alg. Rendering
 . legende für linienfarben/einfärbungen

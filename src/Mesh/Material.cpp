@@ -16,12 +16,12 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
     // Check ob nlohmann json den file geparst bekommt
     nlohmann::json matData = nlohmann::json::parse(matFile, nullptr, true, true);
     
-    RETURNING_ASSERT(matData.contains("E") && matData.contains("v") && matData.contains("t"),
+    RETURNING_ASSERT(matData.contains("stdParams"),
         "Materialparameter E,v,t des Materialfiles " + path + " unvollständig", false);
 
-    E = matData["E"].get<float>();
-    v = matData["v"].get<float>();
-    t = matData["t"].get<float>();
+    E = matData["stdParams"]["E"].get<float>();
+    v = matData["stdParams"]["v"].get<float>();
+    t = matData["stdParams"]["t"].get<float>();
 
     LOG << LOG_GREEN << "** Material aus " << path << " geladen" << endl;
     LOG << LOG_GREEN << "   Parameter : [E|" << E << "]; [v|" << v << "]; [t|" << t << "]" << endl; 
@@ -58,6 +58,21 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
             LOG << LOG_GREEN << "   substitution [" << param << "|" << value << "]" << endl; 
         }
         LOG << endl; 
+    }
+
+    if(matData.contains("isLinear") && !matData["isLinear"].get<bool>()){
+
+        linear = false;
+        LOG << "** geladenes Material ist nicht linear" << endl;
+
+        // Lademechanik für nichtlineare Materialien
+        // nichtlineare Materialien müssen definiert sein über
+        // . klare Angabe innere Variable z.b           -> epsilon^v für viskoelastische Dehnung
+        // . Spannungsansatz                            -> sigma = E * (epsilon - epsilon^v) für viskoelastische Materialien (siehe Markdown)
+        // . Evolutionsgleichung für innere Variable    -> epsilon^v _i+1 = f(B,E,epsilon, epsilon^v)  
+        // . Übersicht über eingeführte Symbole, Zusammenhänge etc.
+        // . genaue beschreibung des Verfahrens (implizit,explizit, ... ??)
+
     }
 
     substitutePdf();
@@ -134,9 +149,9 @@ void IsoMeshMaterial::save(const std::string& path){
     nlohmann::json matData;
 
     // Basisparameter speichern
-    matData["E"] = E;
-    matData["v"] = v;
-    matData["t"] = t;
+    matData["stdParams"]["E"] = E;
+    matData["stdParams"]["v"] = v;
+    matData["stdParams"]["t"] = t;
 
     // PDF-Informationen speichern, falls vorhanden
     if (pdf != NULL_EXPR) {
