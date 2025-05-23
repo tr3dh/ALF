@@ -44,7 +44,7 @@ bool FemModel::loadFromCache(){
 void FemModel::reload(){
 
     if(initialzed()){
-        *this = FemModel(m_modelPath);
+        loadFromFile(m_modelPath);
     } else {
         _ERROR << "kein valider Pfad im Modell hinterlegt\n" << endl;
     }
@@ -63,24 +63,29 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     LOG << "   Lade Mesh aus " << m_meshPath << endl;
     LOG << endl;
 
-    const std::string linMatPath = string::split(fs::path(path).filename().string(),'.')[0] + IsoMeshMaterial::fileSuffix;
-    
-    m_materialIsLinear = (fs::exists(linMatPath));
-
     m_isoMesh.setSelfPointer(&this->m_isoMesh);
     m_isoMesh.loadFromFile(m_meshPath);
     m_isoMesh.loadIsoMeshMaterial();
 
-    if(m_isoMesh.createStiffnessMatrix()){
+    if(m_isoMesh.getMaterial().isLinear){
+
+        RETURNING_ASSERT(m_isoMesh.createStiffnessMatrix(), "KMatrix Erstellung fehlgeschlagen",);
         
         m_isoMesh.readBoundaryConditions();
         m_isoMesh.solve();
 
         m_isoMesh.calculateStrainAndStress();
-    }
 
-    // roadmap unsicherheitsanalyse
-    sampling();
+        // if mat has pdf einfügen
+        if(m_isoMesh.getMaterial().hasPdf){
+            sampling();
+        }
+
+    } else {
+
+        //
+
+    }
 }
 
 void FemModel::importPdf(const std::string& pdfPath){
@@ -99,16 +104,25 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, bool
     Vector2 frameSize;
     Vector2 frameOffsets[3];
 
+    static std::vector<NodeSet*> nodeSetsForDisplay;
+
+    // Check ob Material überhaupt als zufallsverteilt angenommen werden soll
+    // und ob das sampling schon stattgefunden hat
+    if(m_isoMesh.getMaterial().hasPdf && !n_upperXi.empty() && !n_lowerXi.empty()){
+
+        nodeSetsForDisplay = {&m_isoMesh.getUndeformedNodes(), &m_isoMesh.getDeformedNodes(), &n_upperXi, &n_lowerXi};
+    } else {
+
+        nodeSetsForDisplay = {&m_isoMesh.getUndeformedNodes(), &m_isoMesh.getDeformedNodes()};
+    }
+
     if(m_isoMesh.getCells().begin()->second.getPrefab().nDimensions == 3){
 
         // 3D autofit
         Vector3 min = {FLT_MAX, FLT_MAX, FLT_MAX};
         Vector3 max = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
 
-        NodeSet undefNodes = m_isoMesh.getUndeformedNodes(), defNodes = m_isoMesh.getDeformedNodes();
-        std::vector<NodeSet*> sets = {&undefNodes, &defNodes, &n_upperXi, &n_lowerXi};
-        
-        for(const auto& set : sets)
+        for(const auto& set : nodeSetsForDisplay)
             for (const auto& node : *set) {
                 const auto& pos = node.second;
                 Vector3 v = {pos[0], pos[1], pos[2]};
@@ -154,15 +168,19 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, bool
         frameOffsets[2] = {leftCorner.x + 5*frameSize.x/2, frameOffset.y};
     }
 
-    if(splitScreen && m_isoMesh.getUndeformedNodes().begin()->second.getDimension() == 2){
+    for(const auto& [idx, set] : std::views::enumerate(nodeSetsForDisplay)){
+        RETURNING_ASSERT(set->size() > 0, "Angegebenes NodeSet für Rendering an Postion " + std::to_string(idx) + " ist leer",);
+    }
 
-        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, {&m_isoMesh.getUndeformedNodes(), &m_isoMesh.getDeformedNodes(), &n_upperXi, &n_lowerXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[0], padding/3);
+    if(splitScreen && m_isoMesh.getUndeformedNodes().begin()->second.getDimension() == 2 && m_isoMesh.getMaterial().hasPdf){
+
+        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, nodeSetsForDisplay, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[0], padding/3);
         m_isoMesh.display(data_upperXi, displayedData, globKoord, {&n_upperXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[1], padding/3);
         m_isoMesh.display(data_lowerXi, displayedData, globKoord, {&n_lowerXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[2], padding/3);
 
     } else {
 
-        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, {&m_isoMesh.getUndeformedNodes(), &m_isoMesh.getDeformedNodes(), &n_upperXi, &n_lowerXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, winSize, frameOffset, padding);
+        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, nodeSetsForDisplay, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, winSize, frameOffset, padding);
     }
 }
 
@@ -170,6 +188,15 @@ void FemModel::sampling(){
 
     // Monte Carlo für pdf
     const IsoMeshMaterial& mat = m_isoMesh.getMaterial();
+
+    //
+    if(!mat.hasPdf){
+
+        n_upperXi.clear();
+        n_lowerXi.clear();
+
+        return;
+    }
 
     m_samples.clear();
     rejectionSampling(mat.pdf_xi, m_samples, mat.nSamples, mat.xi_min, mat.xi_max, mat.tolerance, mat.segmentation);

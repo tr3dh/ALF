@@ -1,15 +1,19 @@
 # ToDo
 
-## CleanUp
+# CleanUp
 . aufteilung in incl/src ?? -> angenehmer für Nutzungs als lib
+. if mat has pdf einfügen
+. size == 0 checks ins rendering
+. redirect rayliblog
 
-## Releases
+# Releases
 . Release (native)
 . Debug (console)
 . libary
 . headlesss api
 
-## alg. Rendering
+# alg. Rendering
+!! Farbbug beim Clear der pdf , beim Reload werden die Farben wieder richtig angezeigt 
 . legende für linienfarben/einfärbungen
 . angabe maximal/minimalwerte
 . autofit (camera/scale + offset) aus frame auslagern --> nur bei jedem update

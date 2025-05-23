@@ -26,5 +26,6 @@ struct IsoMeshMaterial{
     SymEngine::map_basic_basic subs = {};
     float segmentation = 0, tolerance = 0;
     unsigned int nSamples = 0;
-    bool linear = true;
+    bool isLinear = true;
+    bool hasPdf = false;
 };

@@ -11,6 +11,14 @@ void acvanceDataSet(const DataSet& source, DataSet& target, const Coeffs& coeffs
     }
 }
 
+NodeSet& IsoMesh::getUndeformedNodes(){
+    return m_nodes;
+}
+
+NodeSet& IsoMesh::getDeformedNodes(){
+    return m_defNodes;
+}
+
 const NodeSet& IsoMesh::getUndeformedNodes() const{
     return m_nodes;
 }

@@ -22,7 +22,7 @@ int main(void)
 
     FemModel model;
     model.loadFromCache();
-
+ 
     //
     enableRLLogging();
     SetTraceLogCallback(RaylibLogCallback);
@@ -43,7 +43,7 @@ int main(void)
         "** Computeshader Backend gesperrt, opengl version " + std::to_string(g_glVersion).substr(0,3) + " ist nicht mit comp shadern kompatibel, erforderliche Version : OpenGL 4.3") << endl;
 
     // Raylib Fenster init
-    float winSizeFaktor = 0.5f; // z.B. halbe Bildschirmgröße
+    float winSizeFaktor = 0.5f;
 
     int monitor = GetCurrentMonitor();
     int screenWidth = GetMonitorWidth(monitor);
@@ -95,7 +95,7 @@ int main(void)
     bool planarCam = false;
     bool orbitCam = false;
     bool fpsCam = false;
-
+    
     //
     bool closeWindow = false;
     while (!closeWindow)
@@ -507,7 +507,7 @@ int main(void)
                     }
                     case 2:{
 
-                            // label anzeigen
+                        // label anzeigen
                         ImGui::Text("pdf");
                         ImGui::SameLine();
                         ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x + ImGui::CalcTextSize("pdf").x - ImGui::CalcTextSize("Import").x);
@@ -563,8 +563,20 @@ int main(void)
                                     matOutFile.close();
 
                                     model.getMesh().loadIsoMeshMaterial();
+                                    model.sampling();
                                 }
                             }
+
+                            if(ImGui::Selectable("ClearPdf")){
+                                
+                                model.getMesh().getMaterial().pdf = NULL_EXPR;
+                                model.getMesh().getMaterial().subs.clear();
+                                model.getMesh().saveMaterial();
+
+                                model.getMesh().loadIsoMeshMaterial();
+                                model.sampling();
+                            }
+
                             ImGui::EndPopup();
                         }
 

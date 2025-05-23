@@ -23,11 +23,16 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
     v = matData["stdParams"]["v"].get<float>();
     t = matData["stdParams"]["t"].get<float>();
 
+    RETURNING_ASSERT(E != 0 && v != 0 && t != 0, "Relevante Materiaparamter E,t,v sind Null, kein valides Material Modell",false);
+
     LOG << LOG_GREEN << "** Material aus " << path << " geladen" << endl;
     LOG << LOG_GREEN << "   Parameter : [E|" << E << "]; [v|" << v << "]; [t|" << t << "]" << endl; 
 
     if(matData.contains("pdf")){
        
+        //
+        hasPdf = true;
+
         // wenn key nicht in jsondata, bleibt pdf auf NULL_EXPR
         ASSERT(matData["pdf"].contains("function"), "pdf Funktion wurde nicht deklariert");
 
@@ -58,11 +63,18 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
             LOG << LOG_GREEN << "   substitution [" << param << "|" << value << "]" << endl; 
         }
         LOG << endl; 
+    } else {
+        hasPdf = false;
+    }
+
+    // Ausgelagert aus Laden für bessere Übersichtlichkeit
+    if(hasPdf){
+        substitutePdf();
     }
 
     if(matData.contains("isLinear") && !matData["isLinear"].get<bool>()){
 
-        linear = false;
+        isLinear = false;
         LOG << "** geladenes Material ist nicht linear" << endl;
 
         // Lademechanik für nichtlineare Materialien
@@ -72,10 +84,7 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
         // . Evolutionsgleichung für innere Variable    -> epsilon^v _i+1 = f(B,E,epsilon, epsilon^v)  
         // . Übersicht über eingeführte Symbole, Zusammenhänge etc.
         // . genaue beschreibung des Verfahrens (implizit,explizit, ... ??)
-
     }
-
-    substitutePdf();
 
     LOG << endl;
 
@@ -154,7 +163,8 @@ void IsoMeshMaterial::save(const std::string& path){
     matData["stdParams"]["t"] = t;
 
     // PDF-Informationen speichern, falls vorhanden
-    if (pdf != NULL_EXPR) {
+    if (pdf->__str__() != NULL_EXPR->__str__()) {
+
         matData["pdf"]["function"] = pdf->__str__();
 
         if (xi_min != 0.0f || xi_max != 0.0f) {
@@ -175,6 +185,10 @@ void IsoMeshMaterial::save(const std::string& path){
             params[paramName] = value;
         }
         matData["pdf"]["params"] = params;
+    }
+
+    if(!isLinear){
+        
     }
 
     // JSON in Datei schreiben

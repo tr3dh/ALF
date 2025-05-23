@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, const int& globKoord, const std::vector<const NodeSet*>& nodeSets,
+void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, const int& globKoord, const std::vector<NodeSet*>& nodeSets,
     const std::vector<Color*> setColors, int displayOnNodeSet, bool displayOnDeformedMesh, bool displayOnQuadraturePoints,
     const Vector2& winSize, const Vector2& frameOffset, const Vector2& padding){
 

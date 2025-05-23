@@ -60,20 +60,34 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
 
+SRCLIB := build/libfemPROC.a
+$(SRCLIB): $(OBJ) $(PCH)
+	ar rcs $(SRCLIB) $^
+
+lib: $(SRCLIB)
+
 PROC_DIR = Procs
 PROCS_CPP = $(shell find $(PROC_DIR) -name '*.cpp')
 PROCS_OBJ = $(patsubst $(PROC_DIR)/%.cpp, build/%.o, $(PROCS_CPP))
 PROCS_TARGETS = $(patsubst $(PROC_DIR)/%.cpp, build/%, $(PROCS_CPP))
 
+PROCSRC ?= $(OBJ)
+
 build/%.o: $(PROC_DIR)/%.cpp $(PCH)
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
 
-build/% : build/%.o $(OBJ)
+build/% : build/%.o $(PROCSRC)
 	@mkdir -p $(@D)
 	$(CXX) -o $@ $^ Recc/Compilation/proc.res $(LDFLAGS)
 
 targets: $(PROCS_OBJ) $(PROCS_TARGETS)
+
+targetsFromObj:
+	@make targets PROC_SRC=$(OBJ)
+
+targetsFromLib:
+	@make targets PROC_SRC=$(SRCLIB)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)
 	@mkdir -p $(@D)
@@ -99,9 +113,12 @@ clearIconCache:
 	@cmd /C "Batch//clearIconCache.bat"
 
 clean:
-#rm -f $(PROCS_TARGETS)
+	rm -f $(PROCS_TARGETS) $(PROCS_OBJ)
 
-lib: $(OBJ) $(PCH)
-	ar rcs build/libfemPROC.a $^
+clear:
+	rm -r build
+
+remComp:
+	@find build -type f \( -name '*.o' -o -name '*.d' \) -delete
 
 .DEFAULT_GOAL := all
