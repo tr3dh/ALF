@@ -83,8 +83,46 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
     } else {
 
-        //
+        // KMatrix wird hier erstellt um BMatrix und Jacoby Matrix caches zu füllen, da diese Matritzen in jedem weiteren
+        // Schritt der Zeitintegration benötigt werden und um die KMatrix und das Ergebnis der linearen Fem zum vergleich
+        // heranzuziehen
+        RETURNING_ASSERT(m_isoMesh.createStiffnessMatrix(), "KMatrix Erstellung fehlgeschlagen",);
+        
+        // Zeitschrittintegration
+        const float simulationTime = 5.0f;
+        const float deltaTime = 1.0f;
+        const size_t simulationSteps = (size_t)(simulationTime/deltaTime);
 
+        // Startwerte festlegen
+        const IsoMeshMaterial& mat = m_isoMesh.getMaterial();
+
+        //
+        LOG << "** " << mat.evolutionEq->subs({
+            {SymEngine::symbol("S"), toExpression(2)},
+            {SymEngine::symbol("ElastTensor"), toExpression(2)}
+        }) << endl;
+
+        // durch Integrationsschritte loopen
+        for(size_t stepIdx = 0; stepIdx < simulationSteps; stepIdx++){
+
+            // Elementsteifigkeitsmatrix aufstellen und assemblieren
+            // . durch Elemente loopen
+            // . durch quadraturpunkte loopen und für Matritzen (B und J) einsetzen
+            // . innere Variable fortpflanzen
+            // . Einsetzen
+            // . Assemblierung
+
+            // Zu Residuum umformulieren
+            // . R = K*u-f
+
+            // per Newton Rapshon solver lösen
+            // . delta U finden für Lösung
+
+            // startwerte anpassen
+        }
+
+        //
+        LOG << "** verarbeite nicht lineares Material" << endl;
     }
 }
 
@@ -96,6 +134,10 @@ void FemModel::importPdf(const std::string& pdfPath){
 
 void FemModel::display(const MeshData& displayedData, const int& globKoord, bool displayOnDeformedMesh, bool displayOnQuadraturePoints,
     const Vector2& winSize, const Vector2& frameOffset, const Vector2& padding, bool splitScreen, bool splitScreenVertical){
+
+    if(!m_isoMesh.getMaterial().isLinear){
+        return;
+    }
 
     static std::vector<Color*> colors = {&undeformedFrame, &deformedFrame, &deformedFramePlusXi, &deformedFrameMinusXi}; 
         
@@ -169,7 +211,11 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, bool
     }
 
     for(const auto& [idx, set] : std::views::enumerate(nodeSetsForDisplay)){
-        RETURNING_ASSERT(set->size() > 0, "Angegebenes NodeSet für Rendering an Postion " + std::to_string(idx) + " ist leer",);
+
+        if(set->size() <= 0){
+            return;
+        }
+        //RETURNING_ASSERT(set->size() > 0, "Angegebenes NodeSet für Rendering an Postion " + std::to_string(idx) + " ist leer",);
     }
 
     if(splitScreen && m_isoMesh.getUndeformedNodes().begin()->second.getDimension() == 2 && m_isoMesh.getMaterial().hasPdf){

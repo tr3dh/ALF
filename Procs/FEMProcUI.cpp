@@ -10,8 +10,233 @@
 
 #define MODELCACHE "../bin/.CACHE"
 
+#include <symengine/expression.h>
+#include <symengine/pow.h>
+#include <symengine/functions.h>
+#include <symengine/add.h>
+#include <symengine/mul.h>
+#include <symengine/symbol.h>
+#include <symengine/real_double.h>
+#include <symengine/rational.h>
+#include <symengine/integer.h>
+#include <symengine/basic.h>
+#include <symengine/number.h>
+#include <unordered_map>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include <symengine/matrix.h>
+#include <symengine/expression.h>
+
+void operator *= (SymEngine::DenseMatrix& source, const SymEngine::DenseMatrix& multiplier){
+
+    static bool sourceScalar, multiplierScalar;
+
+    // source ist scalar
+    sourceScalar = (source.ncols() == 1 && source.nrows() == 1) ? true : false;
+    multiplierScalar = (multiplier.ncols() == 1 && multiplier.nrows() == 1) ? true : false;
+
+    // entweder zwei Matritzen oder zwei Skalare
+    if(sourceScalar == multiplierScalar){
+
+        //
+        source.mul_matrix(multiplier, source);
+
+    } else {
+
+        //
+        if(multiplierScalar){
+            LOG << "mulScalar" << endl;
+            source.mul_scalar(multiplier.get(0,0), source);
+        }
+        else{
+            LOG << "mulMat" << endl;
+            SymEngine::DenseMatrix tmp(multiplier);
+            tmp *= source;
+            source = tmp;
+        }
+    }
+}
+
+void evalExpression(const Expression& expr, const std::unordered_map<std::string, SymEngine::DenseMatrix>& symbolTable) {
+
+    SymEngine::vec_basic args = expr->get_args();
+
+    LOG << expr << "\t";
+
+    if (SymEngine::is_a<SymEngine::Add>(*expr)) {
+
+        LOG << "Operation: Add [";
+
+    } else if (SymEngine::is_a<SymEngine::Mul>(*expr)) {
+        
+        //
+        LOG << "Operation: Mul [";
+
+    } else if (SymEngine::is_a<SymEngine::Pow>(*expr)) {
+        LOG << "Operation: Pow [";
+    } else if (SymEngine::is_a<SymEngine::Symbol>(*expr)) {
+        LOG << "Symbol: [" << expr->__str__() << "]";
+        return;
+    } else if (SymEngine::is_a<SymEngine::Integer>(*expr)) {
+        LOG << "Const: [" << expr->__str__() << "] ";
+        return;
+    } else if (SymEngine::is_a<SymEngine::FunctionSymbol>(*expr)) {
+        const SymEngine::FunctionSymbol& func = static_cast<const SymEngine::FunctionSymbol&>(*expr);
+        std::string name = func.get_name();
+        LOG << name << ": [";
+    } else {
+        LOG << "Other: " << expr->__str__() << " ";
+        return;
+    }
+
+    for(const auto& arg : args){
+
+        LOG << arg << " | ";
+        //evalExpression(arg, symbolTable);
+    }
+
+    LOG << "]" << endl;
+
+    for(const auto& arg : args){
+
+        evalExpression(arg, symbolTable);
+        LOG << endl;
+    }
+
+    // if (SymEngine::is_a<SymEngine::Symbol>(*expr)) {
+    //     const std::string name = static_cast<const SymEngine::Symbol&>(*expr).get_name();
+    //     auto it = symbolTable.find(name);
+    //     if (it == symbolTable.end()) {
+    //         throw std::runtime_error("Symbol not found: " + name);
+    //     }
+    //     return it->second;
+
+    // } else if (SymEngine::is_a<SymEngine::Integer>(*expr) ||
+    //            SymEngine::is_a<SymEngine::Rational>(*expr) ||
+    //            SymEngine::is_a<SymEngine::RealDouble>(*expr)) {
+    //     double val = SymEngine::eval_double(*expr);
+    //     return SymEngine::DenseMatrix(1, 1, {SymEngine::real_double(val)});
+
+    // } else if (SymEngine::is_a<SymEngine::Add>(*expr)) {
+    //     SymEngine::vec_basic args = expr->get_args();
+    //     SymEngine::DenseMatrix result = evalExpression(args[0], symbolTable);
+    //     for (size_t i = 1; i < args.size(); ++i) {
+    //         SymEngine::DenseMatrix next = evalExpression(args[i], symbolTable);
+    //         SymEngine::DenseMatrix sum;
+    //         result.add_matrix(next,sum);
+    //         result = sum;
+    //     }
+    //     return result;
+
+    // } else if (SymEngine::is_a<SymEngine::Mul>(*expr)) {
+    //     SymEngine::vec_basic args = expr->get_args();
+    //     SymEngine::DenseMatrix result = evalExpression(args[0], symbolTable);
+    //     for (size_t i = 1; i < args.size(); ++i) {
+    //         SymEngine::DenseMatrix next = evalExpression(args[i], symbolTable);
+
+    //         bool res_is_scalar = result.nrows() == 1 && result.ncols() == 1;
+    //         bool next_is_scalar = next.nrows() == 1 && next.ncols() == 1;
+
+    //         if (res_is_scalar && next_is_scalar) {
+    //             double a = SymEngine::eval_double(*result.get(0, 0));
+    //             double b = SymEngine::eval_double(*next.get(0, 0));
+    //             result = SymEngine::DenseMatrix(1, 1, {SymEngine::real_double(a * b)});
+    //         } else if (res_is_scalar) {
+    //             SymEngine::DenseMatrix scaled;
+    //             next.mul_scalar(result.get(0, 0), scaled);
+    //             result = scaled;
+    //         } else if (next_is_scalar) {
+    //             SymEngine::DenseMatrix scaled;
+    //             result.mul_scalar(next.get(0, 0), scaled);
+    //             result = scaled;
+    //         } else {
+    //             SymEngine::DenseMatrix product;
+    //             result.mul_matrix(next, product);
+    //             result = product;
+    //         }
+    //     }
+    //     return result;
+
+    // } else if (SymEngine::is_a<SymEngine::Pow>(*expr)) {
+    //     SymEngine::vec_basic args = expr->get_args();
+    //     SymEngine::DenseMatrix baseMat = evalExpression(args[0], symbolTable);
+    //     SymEngine::DenseMatrix result;
+
+    //     if (baseMat.nrows() == 1 && baseMat.ncols() == 1 && SymEngine::is_a<SymEngine::Integer>(*args[1])) {
+    //         int exponent = static_cast<const SymEngine::Integer&>(*args[1]).as_int();
+    //         Expression powered = SymEngine::pow(baseMat.get(0, 0), SymEngine::integer(exponent));
+    //         result = SymEngine::DenseMatrix(1, 1, {powered});
+    //     } else if (SymEngine::is_a<SymEngine::Integer>(*args[1])) {
+    //         int exponent = static_cast<const SymEngine::Integer&>(*args[1]).as_int();
+    //         if (exponent == -1) {
+    //             // Platzhalter für Matrixinversion
+    //             throw std::runtime_error("Matrix inversion not implemented.");
+    //         } else {
+    //             throw std::runtime_error("Only scalar ^ integer supported currently");
+    //         }
+    //     } else {
+    //         throw std::runtime_error("Unsupported exponent type in Pow");
+    //     }
+    //     return result;
+
+    // } else if (SymEngine::is_a<SymEngine::FunctionSymbol>(*expr)) {
+    //     const SymEngine::FunctionSymbol& func = static_cast<const SymEngine::FunctionSymbol&>(*expr);
+    //     std::string name = func.get_name();
+
+    //     SymEngine::vec_basic args = expr->get_args();
+    //     SymEngine::DenseMatrix argMat = evalExpression(args[0], symbolTable);
+
+    //     if (argMat.nrows() != 1 || argMat.ncols() != 1) {
+    //         throw std::runtime_error("Only scalar functions supported for now: " + name);
+    //     }
+
+    //     Expression arg = argMat.get(0, 0);
+    //     Expression result;
+
+    //     if (name == "sqrt") {
+    //         result = SymEngine::sqrt(arg);
+    //     } else if (name == "sin") {
+    //         result = SymEngine::sin(arg);
+    //     } else if (name == "cos") {
+    //         result = SymEngine::cos(arg);
+    //     } else if (name == "exp") {
+    //         result = SymEngine::exp(arg);
+    //     } else {
+    //         throw std::runtime_error("Unsupported function: " + name);
+    //     }
+
+    //     return SymEngine::DenseMatrix(1, 1, {result});
+
+    // } else {
+    //     throw std::runtime_error("Unsupported expression: " + expr->__str__());
+    // }
+}
+
 int main(void)
 {
+    SYMBOL(A);
+    SYMBOL(B);
+    SYMBOL(C);
+
+    Expression expr = SymEngine::parse("11-(B**C-C)*A-C*B*11*A");
+
+    std::unordered_map<std::string, SymEngine::DenseMatrix> symbol_table;
+    symbol_table["A"] = SymEngine::DenseMatrix(1,1,{toExpression(10)});
+    symbol_table["B"] = SymEngine::DenseMatrix(1,1,{toExpression(4)});
+    symbol_table["C"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(2), toExpression(3), toExpression(4)});
+
+    // Ausdruck auswerten
+    evalExpression(expr, symbol_table);
+
+    symbol_table["A"] *= symbol_table["C"];
+    LOG << symbol_table["A"] << endl;
+
+    RECT workArea;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
+    int usableHeight = workArea.bottom - workArea.top; // Höhe ohne Taskleiste
+    int usableWidth  = workArea.right - workArea.left; // Breite ohne Taskleiste
+
     //
     LOG << std::fixed << std::setprecision(4);
     LOG << endl;
@@ -26,7 +251,9 @@ int main(void)
     //
     enableRLLogging();
     SetTraceLogCallback(RaylibLogCallback);
+    disableRLLogging();
 
+    // SetConfigFlags(FLAG_WINDOW_UNDECORATED);
     InitWindow(600, 600, "<><FEMProc><>");
 
     //
@@ -95,7 +322,7 @@ int main(void)
     bool planarCam = false;
     bool orbitCam = false;
     bool fpsCam = false;
-    
+
     //
     bool closeWindow = false;
     while (!closeWindow)
@@ -136,12 +363,28 @@ int main(void)
             closeWindow = true;
         }
 
-        if(IsKeyPressed(KEY_F11)){
+        if(IsKeyPressed(KEY_F10)){
 
             LOG << "++ toggleScreen" << endl;
 
             if(!fullScreen){
                 SetWindowSize(screenWidth, screenHeight);
+                SetWindowPosition(0,0);
+            } else {
+                // resize auf originalGröße
+                SetWindowSize(windowWidth, windowHeight);
+                SetWindowPosition((screenWidth - windowWidth)/2, (screenHeight - windowHeight)/2);
+            }
+
+            fullScreen = !fullScreen;
+        }
+
+        if(IsKeyPressed(KEY_F11)){
+
+            LOG << "++ toggleScreen" << endl;
+
+            if(!fullScreen){
+                SetWindowSize(usableWidth, usableHeight);
                 SetWindowPosition(0,0);
             } else {
                 // resize auf originalGröße
@@ -747,23 +990,17 @@ int main(void)
             ImGui::End();
         }
 
-    Vector2 legendWinSizeFract = {0.25, 0.25};
-    ImGuiWindowFlags lwinFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
-                                    ImGuiWindowFlags_NoNav;
+        Vector2 legendWinSizeFract = {0.25, 0.25};
 
-    ImVec2 legendWinSize = ImVec2(winSize.x * legendWinSizeFract.x, winSize.y * legendWinSizeFract.y);
-    ImVec2 legendWinPos = ImVec2(0, winSize.y - legendWinSize.y);
+        ImGuiWindowFlags lwinFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize;
 
-    ImGui::SetNextWindowPos(legendWinPos, ImGuiCond_Always);
-    ImGui::SetNextWindowSize(legendWinSize, ImGuiCond_Always);
+        ImVec2 legendWinPos = ImVec2(0, winSize.y);
+        ImVec2 pivot = ImVec2(0.0f, 1.0f);
+        ImGui::SetNextWindowPos(legendWinPos, ImGuiCond_Always, pivot);
 
-        //
         ImGui::Begin("##Legend", nullptr, lwinFlags);
 
-        //
         std::string camPerspective = "Camera : ";
-
         if(fpsCam){camPerspective += "FPS";}
         else if(orbitCam){camPerspective += "ORBITAL";}
         else if(planarCam){camPerspective += "NORMAL PLANAR";}

@@ -13,11 +13,16 @@
 . headlesss api
 
 # alg. Rendering
-!! Farbbug beim Clear der pdf , beim Reload werden die Farben wieder richtig angezeigt 
 . legende für linienfarben/einfärbungen
 . angabe maximal/minimalwerte
 . autofit (camera/scale + offset) aus frame auslagern --> nur bei jedem update
 . werte mittlung aus frame auslagern --> nur bei jedem update
+. orbit Camera führung um camera.target einfügen
+
+# Ergebnis ausgabe
+. in Ui
+. größe und koord über UI steuern
+. Ergebnis file als bin body und json
 
 # Ideen
 . Unsicherheitsberechnung mit mehr Taylor Reihengliedern für Ansätze

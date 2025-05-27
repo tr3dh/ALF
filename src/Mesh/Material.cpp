@@ -14,7 +14,7 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
     RETURNING_ASSERT(matFile, "Fehler beim Laden von '" + path + "'", false);
 
     // Check ob nlohmann json den file geparst bekommt
-    nlohmann::json matData = nlohmann::json::parse(matFile, nullptr, true, true);
+    nlohmann::json matData; matData = nlohmann::json::parse(matFile, nullptr, true, true);
     
     RETURNING_ASSERT(matData.contains("stdParams"),
         "Materialparameter E,v,t des Materialfiles " + path + " unvollständig", false);
@@ -79,16 +79,116 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
         // Lademechanik für nichtlineare Materialien
         // nichtlineare Materialien müssen definiert sein über
-        // . klare Angabe innere Variable z.b           -> epsilon^v für viskoelastische Dehnung
+        // . klare Angabe innere Variable z.b           -> epsilon^v, Vektor, größen Angabe nötig ?? für viskoelastische Dehnung
         // . Spannungsansatz                            -> sigma = E * (epsilon - epsilon^v) für viskoelastische Materialien (siehe Markdown)
         // . Evolutionsgleichung für innere Variable    -> epsilon^v _i+1 = f(B,E,epsilon, epsilon^v)  
         // . Übersicht über eingeführte Symbole, Zusammenhänge etc.
         // . genaue beschreibung des Verfahrens (implizit,explizit, ... ??)
+
+        // Kategorie
+        ASSERT(matData.contains("nonLinearApproach"), "Ansatz für nicht lineares Material fehlt");
+
+        // Array für Innere Variable z.b "innerVariable": ["epsilon_v",1],
+        ASSERT(matData["nonLinearApproach"].contains("innerVariable"), "Angabe innere Variable für nicht lineares Material fehlt");
+        innerVariable = SymEngine::parse(matData["nonLinearApproach"]["innerVariable"][0]);
+        innerVariableDimension = matData["nonLinearApproach"]["innerVariable"][1];
+
+        ASSERT(matData["nonLinearApproach"].contains("innerVariableSize"), "Angabe innere Variable für nicht lineares Material fehlt");
+
+        innerVariableSize.clear();
+        innerVariableSize.reserve(innerVariableDimension);
+
+        for(size_t dim = 0; dim < innerVariableDimension; dim++){
+            innerVariableSize.emplace_back(matData["nonLinearApproach"]["innerVariableSize"][dim]);
+        }
+
+        LOG << "** innere Variable " << innerVariable << " der Dimension " << innerVariableDimension << " geladen" << endl;
+
+        // Spannungsansatz
+        ASSERT(matData["nonLinearApproach"].contains("sigma"), "Spannungs Ansatz für nicht lineares Material fehlt");
+        stressApproach = SymEngine::parse(matData["nonLinearApproach"]["sigma"]);
+
+        ASSERT(contains(stressApproach, innerVariable), "Ansatz für Spannung ist nicht von angegebener innererVariable abhängig");
+
+        LOG << "** sigma = " << stressApproach << " = f(";
+
+        auto syms = dependencies(stressApproach);
+        for(const auto& sym : syms){
+            LOG << sym << ",";
+        }
+        LOG << ")" << endl;
+
+        // Evolution
+        ASSERT(matData["nonLinearApproach"].contains("evolutionEquation"), "EvolutionsGleichung für innere Variable fehlt");
+        evolutionEq = SymEngine::parse(matData["nonLinearApproach"]["evolutionEquation"]);
+
+        LOG << "** " << innerVariable << "_n_plus_1 = " << evolutionEq << endl;
+
+        LOG << "** evo " << " = f(";
+        syms = dependencies(evolutionEq);
+        for(const auto& sym : syms){
+            LOG << sym << ",";
+        }
+
+        LOG << ")" << endl;
     }
 
     LOG << endl;
 
     return true;
+}
+
+void IsoMeshMaterial::save(const std::string& path){
+
+    RETURNING_ASSERT(string::endsWith(path, fileSuffix), "Invalide Dateiendung beim Speichern eines Materials nach " + path,);
+
+    LOG << LOG_BLUE << "-- Writing Material to file : " << path << endl;
+
+    // Check ob nlohmann json den file geparst bekommt
+    nlohmann::json matData = nlohmann::json::parse(std::ifstream(path), nullptr, true, true);
+
+    std::ofstream matFile(path);
+    RETURNING_ASSERT(matFile, "Fehler beim Öffnen von '" + path + "' zum Schreiben",);
+
+    // Basisparameter speichern
+    matData["stdParams"]["E"] = E;
+    matData["stdParams"]["v"] = v;
+    matData["stdParams"]["t"] = t;
+
+    // PDF-Informationen speichern, falls vorhanden
+    if (pdf->__str__() != NULL_EXPR->__str__()) {
+
+        matData["pdf"]["function"] = pdf->__str__();
+
+        if (xi_min != 0.0f || xi_max != 0.0f) {
+            matData["pdf"]["borders"]["xi_min"] = xi_min;
+            matData["pdf"]["borders"]["xi_max"] = xi_max;
+        }
+
+        matData["pdf"]["pdfPreprocessing"]["segmentation"] = segmentation;
+        matData["pdf"]["pdfPreprocessing"]["tolerance"] = tolerance;
+
+        matData["pdf"]["pdfSampling"]["samples"] = nSamples;
+
+        // Parameter für PDF (subs)
+        nlohmann::json params;
+        for (auto& [sym, expr] : subs) {
+            std::string paramName = sym->__str__();
+            double value = SymEngine::eval_double(*expr);
+            params[paramName] = value;
+        }
+        matData["pdf"]["params"] = params;
+    } else {
+        matData.erase("pdf");
+    }
+
+    matData["isLinear"] = isLinear;
+
+    // JSON in Datei schreiben
+    matFile << matData.dump(4);
+    matFile.close();
+
+    LOG << LOG_GREEN << "** Material nach " << path << " gespeichert" << endl;
 }
 
 void IsoMeshMaterial::substitutePdf(){
@@ -144,56 +244,4 @@ void IsoMeshMaterial::createElasticityTensor(SymEngine::DenseMatrix& target, con
     else {
         RETURNING_ASSERT(TRIGGER_ASSERT, "Invalide übergebene Dimension " + std::to_string(dimension) + " für Steifigkeitsmatrix",);
     }
-}
-
-void IsoMeshMaterial::save(const std::string& path){
-
-    RETURNING_ASSERT(string::endsWith(path, fileSuffix), "Invalide Dateiendung beim Speichern eines Materials nach " + path,);
-
-    LOG << LOG_BLUE << "-- Writing Material to file : " << path << endl;
-
-    std::ofstream matFile(path);
-    RETURNING_ASSERT(matFile, "Fehler beim Öffnen von '" + path + "' zum Schreiben",);
-
-    nlohmann::json matData;
-
-    // Basisparameter speichern
-    matData["stdParams"]["E"] = E;
-    matData["stdParams"]["v"] = v;
-    matData["stdParams"]["t"] = t;
-
-    // PDF-Informationen speichern, falls vorhanden
-    if (pdf->__str__() != NULL_EXPR->__str__()) {
-
-        matData["pdf"]["function"] = pdf->__str__();
-
-        if (xi_min != 0.0f || xi_max != 0.0f) {
-            matData["pdf"]["borders"]["xi_min"] = xi_min;
-            matData["pdf"]["borders"]["xi_max"] = xi_max;
-        }
-
-        matData["pdf"]["pdfPreprocessing"]["segmentation"] = segmentation;
-        matData["pdf"]["pdfPreprocessing"]["tolerance"] = tolerance;
-
-        matData["pdf"]["pdfSampling"]["samples"] = nSamples;
-
-        // Parameter für PDF (subs)
-        nlohmann::json params;
-        for (auto& [sym, expr] : subs) {
-            std::string paramName = sym->__str__();
-            double value = SymEngine::eval_double(*expr);
-            params[paramName] = value;
-        }
-        matData["pdf"]["params"] = params;
-    }
-
-    if(!isLinear){
-        
-    }
-
-    // JSON in Datei schreiben
-    matFile << matData.dump(4);
-    matFile.close();
-
-    LOG << LOG_GREEN << "** Material nach " << path << " gespeichert" << endl;
 }

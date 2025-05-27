@@ -20,6 +20,7 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
             Vector2 max = min;
 
             for(const auto& nodeSet : nodeSets){
+
                 for(const auto& [index, node] : *nodeSet){
 
                     if(node[0] < min.x){min.x = node[0]; }

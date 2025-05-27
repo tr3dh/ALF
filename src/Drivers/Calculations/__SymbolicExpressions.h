@@ -24,6 +24,10 @@ typedef SymEngine::RCP<const SymEngine::Symbol> Symbol;
 typedef SymEngine::RCP<const SymEngine::Basic> Expression;
 
 //
+bool contains(const Expression& expr, const Expression& sym);
+const std::vector<Expression> dependencies(const Expression& expr);
+
+//
 inline std::ostream& operator<<(std::ostream& os, const Symbol& symbol) {
     os << symbol->get_name();
     return os;

@@ -1,11 +1,14 @@
 {
+    "isLinear": false,
+    "nonLinearApproach": {
+        "innerVariable": ["epsilon_v",1],
+        "innerVariableSize":[6],
+        "evolutionEquation": "(1+(1/tetha)*S*ElastTensor*deltaT)**-1*(epsilon_v_n + (1/tetha)*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+        "sigma": "ElastTensor*(epsilon-epsilon_v)"
+    },
     "stdParams": {
         "E": 20000.0,
         "t": 0.10000000149011612,
         "v": 0.30000001192092896
-    },
-    "isLinear" : true,
-    "nonLinearModel" : {
-
     }
 }
