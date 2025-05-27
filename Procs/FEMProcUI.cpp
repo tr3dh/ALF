@@ -51,166 +51,125 @@ void operator *= (SymEngine::DenseMatrix& source, const SymEngine::DenseMatrix& 
         }
         else{
             LOG << "mulMat" << endl;
-            SymEngine::DenseMatrix tmp(multiplier);
-            tmp *= source;
-            source = tmp;
+            Expression scalar = source.get(0,0);
+            source = multiplier;
+            return source *= SymEngine::DenseMatrix(1,1,{scalar});
         }
     }
 }
 
-void evalExpression(const Expression& expr, const std::unordered_map<std::string, SymEngine::DenseMatrix>& symbolTable) {
+void operator += (SymEngine::DenseMatrix& source, const SymEngine::DenseMatrix& multiplier){
 
+    static bool sourceScalar, multiplierScalar;
+
+    // source ist scalar
+    sourceScalar = (source.ncols() == 1 && source.nrows() == 1) ? true : false;
+    multiplierScalar = (multiplier.ncols() == 1 && multiplier.nrows() == 1) ? true : false;
+
+    // entweder zwei Matritzen oder zwei Skalare
+    if(sourceScalar == multiplierScalar){
+
+        //
+        source.add_matrix(multiplier, source);
+
+    } else {
+        ASSERT(TRIGGER_ASSERT, "Matrix Add für Skalar und Matrix wird versucht");
+    }
+}
+
+SymEngine::DenseMatrix evalExpression(const Expression& expr, const std::unordered_map<std::string, SymEngine::DenseMatrix>& symbolTable) {
+
+    // args kriegen
+    // operation ist durch operations art und argumente definiert
+    // z.b add [A*4,B-C,B]
+    // dementsprechend wird result = args[0] + args[1] + args[2] aufgerufen wobei args[i] noch rekursiv evaluiert werden
+    // müssen
     SymEngine::vec_basic args = expr->get_args();
 
-    LOG << expr << "\t";
-
+    // Operation abfragen
     if (SymEngine::is_a<SymEngine::Add>(*expr)) {
 
-        LOG << "Operation: Add [";
+        // init
+        SymEngine::DenseMatrix result = evalExpression(args[0], symbolTable);
+
+        //
+        for(size_t argIdx = 0; argIdx < args.size(); argIdx++){
+
+            // wurde zu init für result benutzt
+            if(argIdx == 0){
+                continue;
+            }
+
+            result += evalExpression(args[argIdx],symbolTable);
+        }
+
+        return result;
 
     } else if (SymEngine::is_a<SymEngine::Mul>(*expr)) {
         
+        // init
+        SymEngine::DenseMatrix result = evalExpression(args[0], symbolTable);
+
         //
-        LOG << "Operation: Mul [";
+        for(size_t argIdx = 0; argIdx < args.size(); argIdx++){
+
+            // wurde zu init für result benutzt
+            if(argIdx == 0){
+                continue;
+            }
+
+            result *= evalExpression(args[argIdx],symbolTable);
+        }
+
+        return result;
 
     } else if (SymEngine::is_a<SymEngine::Pow>(*expr)) {
-        LOG << "Operation: Pow [";
+
+        SymEngine::DenseMatrix exponent = evalExpression(args[1], symbolTable);
+        ASSERT(exponent.ncols() && exponent.nrows(), "Exponent muss skalar sein");
+
+        int exp = string::convert<int>(exponent.get(0,0)->__str__());
+
+        SymEngine::DenseMatrix result, base = evalExpression(args[0], symbolTable);
+        result = base;
+
+        if(exp == 0){
+
+            SymEngine::eye(result);
+            return result;
+
+        } else if(exp < 0){
+            base.inv(result);
+        }
+        
+        for(size_t numMults = 1; numMults < std::abs(exp); numMults++){
+            result *= base;
+        }
+
+        return result;
+
     } else if (SymEngine::is_a<SymEngine::Symbol>(*expr)) {
-        LOG << "Symbol: [" << expr->__str__() << "]";
-        return;
-    } else if (SymEngine::is_a<SymEngine::Integer>(*expr)) {
-        LOG << "Const: [" << expr->__str__() << "] ";
-        return;
+
+        ASSERT(symbolTable.contains(expr->__str__()), "Symbol nicht gefunden");
+        return symbolTable.at(expr->__str__());
+
+    } else if (SymEngine::is_a_Number(*expr)) {
+
+        return SymEngine::DenseMatrix(1,1,{expr});
+
     } else if (SymEngine::is_a<SymEngine::FunctionSymbol>(*expr)) {
+
         const SymEngine::FunctionSymbol& func = static_cast<const SymEngine::FunctionSymbol&>(*expr);
         std::string name = func.get_name();
-        LOG << name << ": [";
+        
+        ASSERT(TRIGGER_ASSERT, "Matrix eval für Expressions mit Funktionsnamen noch nicht implementiert");
+
     } else {
-        LOG << "Other: " << expr->__str__() << " ";
-        return;
+
+        ASSERT(TRIGGER_ASSERT, "Matrix eval für gegebene Operation in " + expr->__str__() + " mit Funktionsnamen noch nicht implementiert");
     }
 
-    for(const auto& arg : args){
-
-        LOG << arg << " | ";
-        //evalExpression(arg, symbolTable);
-    }
-
-    LOG << "]" << endl;
-
-    for(const auto& arg : args){
-
-        evalExpression(arg, symbolTable);
-        LOG << endl;
-    }
-
-    // if (SymEngine::is_a<SymEngine::Symbol>(*expr)) {
-    //     const std::string name = static_cast<const SymEngine::Symbol&>(*expr).get_name();
-    //     auto it = symbolTable.find(name);
-    //     if (it == symbolTable.end()) {
-    //         throw std::runtime_error("Symbol not found: " + name);
-    //     }
-    //     return it->second;
-
-    // } else if (SymEngine::is_a<SymEngine::Integer>(*expr) ||
-    //            SymEngine::is_a<SymEngine::Rational>(*expr) ||
-    //            SymEngine::is_a<SymEngine::RealDouble>(*expr)) {
-    //     double val = SymEngine::eval_double(*expr);
-    //     return SymEngine::DenseMatrix(1, 1, {SymEngine::real_double(val)});
-
-    // } else if (SymEngine::is_a<SymEngine::Add>(*expr)) {
-    //     SymEngine::vec_basic args = expr->get_args();
-    //     SymEngine::DenseMatrix result = evalExpression(args[0], symbolTable);
-    //     for (size_t i = 1; i < args.size(); ++i) {
-    //         SymEngine::DenseMatrix next = evalExpression(args[i], symbolTable);
-    //         SymEngine::DenseMatrix sum;
-    //         result.add_matrix(next,sum);
-    //         result = sum;
-    //     }
-    //     return result;
-
-    // } else if (SymEngine::is_a<SymEngine::Mul>(*expr)) {
-    //     SymEngine::vec_basic args = expr->get_args();
-    //     SymEngine::DenseMatrix result = evalExpression(args[0], symbolTable);
-    //     for (size_t i = 1; i < args.size(); ++i) {
-    //         SymEngine::DenseMatrix next = evalExpression(args[i], symbolTable);
-
-    //         bool res_is_scalar = result.nrows() == 1 && result.ncols() == 1;
-    //         bool next_is_scalar = next.nrows() == 1 && next.ncols() == 1;
-
-    //         if (res_is_scalar && next_is_scalar) {
-    //             double a = SymEngine::eval_double(*result.get(0, 0));
-    //             double b = SymEngine::eval_double(*next.get(0, 0));
-    //             result = SymEngine::DenseMatrix(1, 1, {SymEngine::real_double(a * b)});
-    //         } else if (res_is_scalar) {
-    //             SymEngine::DenseMatrix scaled;
-    //             next.mul_scalar(result.get(0, 0), scaled);
-    //             result = scaled;
-    //         } else if (next_is_scalar) {
-    //             SymEngine::DenseMatrix scaled;
-    //             result.mul_scalar(next.get(0, 0), scaled);
-    //             result = scaled;
-    //         } else {
-    //             SymEngine::DenseMatrix product;
-    //             result.mul_matrix(next, product);
-    //             result = product;
-    //         }
-    //     }
-    //     return result;
-
-    // } else if (SymEngine::is_a<SymEngine::Pow>(*expr)) {
-    //     SymEngine::vec_basic args = expr->get_args();
-    //     SymEngine::DenseMatrix baseMat = evalExpression(args[0], symbolTable);
-    //     SymEngine::DenseMatrix result;
-
-    //     if (baseMat.nrows() == 1 && baseMat.ncols() == 1 && SymEngine::is_a<SymEngine::Integer>(*args[1])) {
-    //         int exponent = static_cast<const SymEngine::Integer&>(*args[1]).as_int();
-    //         Expression powered = SymEngine::pow(baseMat.get(0, 0), SymEngine::integer(exponent));
-    //         result = SymEngine::DenseMatrix(1, 1, {powered});
-    //     } else if (SymEngine::is_a<SymEngine::Integer>(*args[1])) {
-    //         int exponent = static_cast<const SymEngine::Integer&>(*args[1]).as_int();
-    //         if (exponent == -1) {
-    //             // Platzhalter für Matrixinversion
-    //             throw std::runtime_error("Matrix inversion not implemented.");
-    //         } else {
-    //             throw std::runtime_error("Only scalar ^ integer supported currently");
-    //         }
-    //     } else {
-    //         throw std::runtime_error("Unsupported exponent type in Pow");
-    //     }
-    //     return result;
-
-    // } else if (SymEngine::is_a<SymEngine::FunctionSymbol>(*expr)) {
-    //     const SymEngine::FunctionSymbol& func = static_cast<const SymEngine::FunctionSymbol&>(*expr);
-    //     std::string name = func.get_name();
-
-    //     SymEngine::vec_basic args = expr->get_args();
-    //     SymEngine::DenseMatrix argMat = evalExpression(args[0], symbolTable);
-
-    //     if (argMat.nrows() != 1 || argMat.ncols() != 1) {
-    //         throw std::runtime_error("Only scalar functions supported for now: " + name);
-    //     }
-
-    //     Expression arg = argMat.get(0, 0);
-    //     Expression result;
-
-    //     if (name == "sqrt") {
-    //         result = SymEngine::sqrt(arg);
-    //     } else if (name == "sin") {
-    //         result = SymEngine::sin(arg);
-    //     } else if (name == "cos") {
-    //         result = SymEngine::cos(arg);
-    //     } else if (name == "exp") {
-    //         result = SymEngine::exp(arg);
-    //     } else {
-    //         throw std::runtime_error("Unsupported function: " + name);
-    //     }
-
-    //     return SymEngine::DenseMatrix(1, 1, {result});
-
-    // } else {
-    //     throw std::runtime_error("Unsupported expression: " + expr->__str__());
-    // }
+    return SymEngine::DenseMatrix();
 }
 
 int main(void)
@@ -219,18 +178,19 @@ int main(void)
     SYMBOL(B);
     SYMBOL(C);
 
-    Expression expr = SymEngine::parse("11-(B**C-C)*A-C*B*11*A");
-
     std::unordered_map<std::string, SymEngine::DenseMatrix> symbol_table;
-    symbol_table["A"] = SymEngine::DenseMatrix(1,1,{toExpression(10)});
-    symbol_table["B"] = SymEngine::DenseMatrix(1,1,{toExpression(4)});
-    symbol_table["C"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(2), toExpression(3), toExpression(4)});
+    symbol_table["A"] = SymEngine::DenseMatrix(2,2,{toExpression(10), toExpression(20), toExpression(30), toExpression(40)});
+    symbol_table["B"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(2), toExpression(3), toExpression(4)});
+    symbol_table["C"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(0), toExpression(0), toExpression(1)});
+
+    Expression expr = SymEngine::parse("(A+B)**-1");
+    Expression expr1 = SymEngine::parse("(A+B)");
 
     // Ausdruck auswerten
-    evalExpression(expr, symbol_table);
+    LOG << evalExpression(expr, symbol_table) << endl;
+    LOG << evalExpression(expr1, symbol_table) << endl;
 
-    symbol_table["A"] *= symbol_table["C"];
-    LOG << symbol_table["A"] << endl;
+    return 0;
 
     RECT workArea;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
