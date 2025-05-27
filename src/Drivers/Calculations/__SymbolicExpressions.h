@@ -58,9 +58,20 @@ inline Expression toExpression(const T& value) {
             // Ganzzahl
             return SymEngine::integer(static_cast<int>(value));
         }
-        return SymEngine::real_double(value); // Approximierte Darstellung
+        return SymEngine::real_double(value);
     }
+    else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
 
+        return SymEngine::parse(value);
+    }
+    else if constexpr (std::is_same_v<std::decay_t<T>, const char*>) {
+
+        return SymEngine::parse(std::string(value));
+    }
+    // für const char[n]
+    else if constexpr (std::is_array_v<T> && std::is_same_v<std::remove_extent_t<T>, char>) {
+        return SymEngine::parse(std::string(value));
+    }
     //
     return SymEngine::real_double(0);
 }

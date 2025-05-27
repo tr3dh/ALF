@@ -1,5 +1,10 @@
 # ToDo
 
+# String to Expression parser
+.> Symbole in richtiger Reihenfolge parsen
+.> tokenizer schreiben
+.> nomenklatur lexer
+
 # CleanUp
 . aufteilung in incl/src ?? -> angenehmer für Nutzungs als lib
 . if mat has pdf einfügen
