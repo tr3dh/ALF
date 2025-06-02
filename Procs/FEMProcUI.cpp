@@ -7,6 +7,8 @@
 #include "GUI/ImGuiCustomElements.h"
 #include "Rendering/CameraMovement.h"
 #include "Rendering/CellRenderer.h"
+#include "decorators/timeFunction.h"
+#include "symbolic/symbolicExpressionParser.h"
 
 #define MODELCACHE "../bin/.CACHE"
 
@@ -31,351 +33,13 @@
 #include <cctype>
 #include <stdexcept>
 
-void operator *= (SymEngine::DenseMatrix& source, const SymEngine::DenseMatrix& multiplier){
-
-    static bool sourceScalar, multiplierScalar;
-
-    // source ist scalar
-    sourceScalar = (source.ncols() == 1 && source.nrows() == 1) ? true : false;
-    multiplierScalar = (multiplier.ncols() == 1 && multiplier.nrows() == 1) ? true : false;
-
-    // entweder zwei Matritzen oder zwei Skalare
-    if(sourceScalar == multiplierScalar){
-
-        //
-        source.mul_matrix(multiplier, source);
-
-    } else {
-
-        //
-        if(multiplierScalar){
-            LOG << "mulScalar" << endl;
-            source.mul_scalar(multiplier.get(0,0), source);
-        }
-        else{
-            LOG << "mulMat" << endl;
-            Expression scalar = source.get(0,0);
-            source = multiplier;
-            return source *= SymEngine::DenseMatrix(1,1,{scalar});
-        }
-    }
-}
-
-void operator += (SymEngine::DenseMatrix& source, const SymEngine::DenseMatrix& sumup){
-
-    static bool sourceScalar, sumupScalar;
-
-    ASSERT(source.ncols() == sumup.ncols() && source.nrows() == sumup.nrows(),
-        "Spalten und Zeilenanzahlen der zu addierenden Matritzen stimmen nicht überein");
-
-    // source ist scalar
-    sourceScalar = (source.ncols() == 1 && source.nrows() == 1) ? true : false;
-    sumupScalar = (sumup.ncols() == 1 && sumup.nrows() == 1) ? true : false;
-
-    // entweder zwei Matritzen oder zwei Skalare
-    if(sourceScalar == sumupScalar){
-
-        //
-        source.add_matrix(sumup, source);
-
-    } else {
-        ASSERT(TRIGGER_ASSERT, "Matrix Add für Skalar und Matrix wird versucht");
-    }
-}
-
-SymEngine::DenseMatrix evalExpression(const Expression& expr, const std::unordered_map<std::string, SymEngine::DenseMatrix>& symbolTable) {
-
-    // args kriegen
-    // operation ist durch operations art und argumente definiert
-    // z.b add [A*4,B-C,B]
-    // dementsprechend wird result = args[0] + args[1] + args[2] aufgerufen wobei args[i] noch rekursiv evaluiert werden
-    // müssen
-    SymEngine::vec_basic args = expr->get_args();
-
-    // Operation abfragen
-    if (SymEngine::is_a<SymEngine::Add>(*expr)) {
-
-        // init
-        SymEngine::DenseMatrix result = evalExpression(args[0], symbolTable);
-
-        //
-        for(size_t argIdx = 0; argIdx < args.size(); argIdx++){
-
-            // wurde zu init für result benutzt
-            if(argIdx == 0){
-                continue;
-            }
-
-            result += evalExpression(args[argIdx],symbolTable);
-        }
-
-        return result;
-
-    } else if (SymEngine::is_a<SymEngine::Mul>(*expr)) {
-        
-        // init
-        SymEngine::DenseMatrix result = evalExpression(args[0], symbolTable);
-
-        //
-        for(size_t argIdx = 0; argIdx < args.size(); argIdx++){
-
-            // wurde zu init für result benutzt
-            if(argIdx == 0){
-                continue;
-            }
-
-            result *= evalExpression(args[argIdx],symbolTable);
-        }
-
-        return result;
-
-    } else if (SymEngine::is_a<SymEngine::Pow>(*expr)) {
-
-        SymEngine::DenseMatrix exponent = evalExpression(args[1], symbolTable);
-        ASSERT(exponent.ncols() && exponent.nrows(), "Exponent muss skalar sein");
-
-        std::string exponentStr = exponent.get(0,0)->__str__();
-
-        SymEngine::DenseMatrix base = evalExpression(args[0], symbolTable);
-        
-        if(exponentStr == "T" || exponentStr == "t"){
-
-            SymEngine::DenseMatrix result(base.ncols(), base.nrows());
-            base.transpose(result);
-            return result;
-
-        } else if(exponentStr == "-T" || exponentStr == "-t"){
-
-            SymEngine::DenseMatrix result(base.ncols(), base.nrows());
-            base.inv(result);
-            result.transpose(result);
-            return result;
-        }
-
-        SymEngine::DenseMatrix result = base;
-        int exp = string::convert<int>(exponentStr);
-
-        if(exp == 0){
-
-            SymEngine::eye(result);
-            return result;
-
-        } else if(exp == -1){
-            base.inv(result);
-            return result;
-        } 
-        else if(exp < 0){
-            base.inv(result);
-            result*=base;
-        }
-        
-        for(size_t numMults = 1; numMults < std::abs(exp); numMults++){
-            result *= base;
-        }
-
-        return result;
-
-    } else if (SymEngine::is_a<SymEngine::Symbol>(*expr)) {
-
-        if(symbolTable.contains(expr->__str__())){
-            return symbolTable.at(expr->__str__());
-        } else {
-            return SymEngine::DenseMatrix(1,1,{expr});
-        }
-
-    } else if (SymEngine::is_a_Number(*expr)) {
-
-        return SymEngine::DenseMatrix(1,1,{expr});
-
-    } else if (SymEngine::is_a<SymEngine::FunctionSymbol>(*expr)) {
-
-        const SymEngine::FunctionSymbol& func = static_cast<const SymEngine::FunctionSymbol&>(*expr);
-        std::string name = func.get_name();
-        
-        ASSERT(TRIGGER_ASSERT, "Matrix eval für Expressions mit Funktionsnamen noch nicht implementiert");
-
-    } else {
-
-        ASSERT(TRIGGER_ASSERT, "Matrix eval für gegebene Operation in " + expr->__str__() + " mit Funktionsnamen noch nicht implementiert");
-    }
-
-    return SymEngine::DenseMatrix();
-}
-
-const std::string operators = "+*^";
-
-std::string getDominantOperator(const std::string& expr){
-
-    //
-    std::string functionName = "";
-    size_t hierarchie = 0;
-    size_t dominantOperator = operators.size();
-
-    for(size_t i = 0; i < expr.size(); i++) {
-
-        static size_t parenOpen, parenClose;
-
-        if(expr[i] == '('){
-
-            hierarchie++;
-            if(hierarchie == 1){
-                parenOpen = i;
-            }
-            continue;
-
-        } else if(expr[i] == ')'){
-
-            if(hierarchie == 1){
-
-                parenClose = i;
-                functionName = expr.substr(0, parenOpen);
-            }
-
-            hierarchie--;
-            continue;
-        }
-
-        if (hierarchie != 0) {
-            continue;
-        }
-
-        //
-        size_t pos = operators.find(expr[i]);
-        if (pos != std::string::npos && pos < dominantOperator){
-            dominantOperator = pos;
-        }
-
-        if(dominantOperator == 0){
-            break;
-        }
-    }
-
-    if(dominantOperator < operators.size()){
-        return std::string(1,operators[dominantOperator]);
-    } else {
-        return functionName;
-    }
-}
-
-std::vector<std::string> tokenize(const std::string& expr, const std::string& primOperator) {
-
-    std::vector<std::string> tokens;
-    size_t hierarchie = 0;
-    size_t lastSplit = 0;
-
-    bool operatorIsFunctionSymbol = operators.find(primOperator) == std::string::npos;
-
-    for (size_t i = 0; i < expr.size(); ++i) {
-
-        static size_t parenOpen, parenClose;
-
-        if(expr[i] == '('){
-
-            hierarchie++;
-            if(hierarchie == 1 && operatorIsFunctionSymbol){
-
-                parenOpen = i;
-            }
-            continue;
-
-        } else if(expr[i] == ')'){
-
-            if(hierarchie == 1 && operatorIsFunctionSymbol){
-
-                parenClose = i;
-                for(const auto& split : string::split(expr.substr(parenOpen + 1, parenClose - parenOpen - 1), ',')){
-                    tokens.push_back(split);
-                }
-            }
-
-            hierarchie--;
-            continue;
-        }
-
-        // Nur auf Hierarchie 0 splitten!
-        if (hierarchie == 0 && expr[i] == primOperator[0] && !operatorIsFunctionSymbol) {
-
-            // Token vor dem Operator (falls nicht leer)
-            if (i > lastSplit)
-                tokens.push_back(expr.substr(lastSplit, i - lastSplit));
-            lastSplit = i + 1;
-        }
-    }
-    // Rest nach dem letzten Operator
-    if (lastSplit < expr.size() && !operatorIsFunctionSymbol){
-        tokens.push_back(expr.substr(lastSplit));
-    }
-
-    return tokens;
-}
-
-void printLexer(const std::string& expr, int level = 0) {
-
-    //
-    LOG << std::string(level, '|') << expr;
-    LOG << "\t\t\t\toperator " << getDominantOperator(expr) << endl;
-
-    auto tokens = tokenize(expr, getDominantOperator(expr));
-
-    if(tokens.size() <= 1 && getDominantOperator(expr) == ""){
-
-        // hier würde eingesetzt werden
-
-        return;
-    }
-
-    // rekursiver Lexer Aufruf
-    for (auto& token : tokens) {
-
-        if (token.front() == '(' && token.back() == ')'){
-            token = token.substr(1, token.size() - 2);
-        }
-
-        LOG << std::string(level, '|') << token << endl;
-
-        printLexer(token, level + 1);  
-    }
-}
-
 int main(void)
 {
-    std::string expra = "(theta^-1*B*transpose(B)*F)^-1*(b*C*transpose(B)^4)";
-
-    expra.erase(std::remove(expra.begin(), expra.end(), ' '), expra.end());
-    printLexer(expra);
-
-    return 0;
-
-    SYMBOL(A);
-    SYMBOL(B);
-    SYMBOL(C);
-
-    std::unordered_map<std::string, SymEngine::DenseMatrix> symbol_table;
-    symbol_table["A"] = SymEngine::DenseMatrix(2,2,{toExpression(10), toExpression(20), toExpression(30), toExpression(40)});
-    symbol_table["B"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(2), toExpression(3), toExpression(4)});
-    symbol_table["C"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(0), toExpression(0), toExpression(1)});
-    symbol_table["u"] = SymEngine::DenseMatrix(2,1,{toExpression(std::string("u1")), toExpression(std::string("u2"))});
-    symbol_table["ut"] = SymEngine::DenseMatrix(1,2,{toExpression(std::string("u1")), toExpression(std::string("u2"))});
-
-    Expression expr = SymEngine::parse("ut*u",false);
-    // Expression expr1 = SymEngine::parse("u**T");
-    LOG << expr->__str__() << endl;
-
-    // Ausdruck auswerten
-    LOG << "a\n" << evalExpression(expr, symbol_table) << endl;
-    // LOG << evalExpression(expr1, symbol_table) << endl;
-
-    SymEngine::DenseMatrix a(2,1,{toExpression(std::string("u1")), toExpression(std::string("u2"))});
-    SymEngine::DenseMatrix b(1,2,{toExpression(std::string("u1")), toExpression(std::string("u2"))});
-    b*=a;
-    LOG << b << endl; 
-
-    return 0;
-
+    //
     RECT workArea;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
-    int usableHeight = workArea.bottom - workArea.top; // Höhe ohne Taskleiste
-    int usableWidth  = workArea.right - workArea.left; // Breite ohne Taskleiste
+    int usableHeight = workArea.bottom - workArea.top; // verfügbare Höhe (ohne Taskleiste)
+    int usableWidth  = workArea.right - workArea.left; // verfügbare Breite
 
     //
     LOG << std::fixed << std::setprecision(4);
@@ -384,6 +48,23 @@ int main(void)
     LOG << "** Source Code " << countLinesInDirectory("../src") << " lines" << endl;
     LOG << "** Procs Code " << countLinesInDirectory("../Procs") << " lines" << endl;
     LOG << endl;
+
+    //
+    std::unordered_map<std::string, SymEngine::DenseMatrix> symbolTable;
+    symbolTable["A"] = SymEngine::DenseMatrix(2,2,{toExpression(10), toExpression(20), toExpression(30), toExpression(40)});
+    symbolTable["B"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(2), toExpression(3), toExpression(4)});
+    symbolTable["C"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(0), toExpression(0), toExpression(1)});
+    symbolTable["u"] = SymEngine::DenseMatrix(2,1,{toExpression(std::string("u1")), toExpression(std::string("u2"))});
+    symbolTable["ut"] = SymEngine::DenseMatrix(1,2,{toExpression(std::string("u3")), toExpression(std::string("u4"))});
+    symbolTable["U"] = SymEngine::DenseMatrix(2,2,{toExpression(std::string("a")), toExpression(std::string("b")),
+                                                   toExpression(std::string("c")), toExpression(std::string("d"))});
+
+    std::string expr = "A+B^2+4*C^2+U^-2";
+
+    expr.erase(std::remove(expr.begin(), expr.end(), ' '), expr.end());
+    
+    // timeFunction(evalSymbolicMatrixExpr, 100000, expr, symbolTable);
+    LOG << evalSymbolicMatrixExpr(expr, symbolTable) << endl;
 
     FemModel model;
     model.loadFromCache();

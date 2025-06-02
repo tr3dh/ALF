@@ -1,9 +1,9 @@
 # ToDo
 
 # String to Expression parser
-.> Symbole in richtiger Reihenfolge parsen
-.> tokenizer schreiben
-.> nomenklatur lexer
+. lexer und parser auslagern
+. round in toExpression
+. round decls auslagern
 
 # CleanUp
 . aufteilung in incl/src ?? -> angenehmer für Nutzungs als lib
