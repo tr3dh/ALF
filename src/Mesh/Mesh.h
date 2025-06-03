@@ -26,11 +26,14 @@ private:
 
     std::string meshPath = NULLSTR;
 
+public:
     size_t nDimensions = 0;
     size_t nodeNumOffset = 0;
     NodeSet m_nodes = {}, m_defNodes = {};
     DataSet m_cellData;
     CellSet m_Cells = {};
+
+public:
 
     std::vector<uint8_t> isoKoords = {};
     std::vector<uint8_t> globKoords = {};

@@ -42,6 +42,9 @@
 . shader
 . comp shader
 
+# FormelRendering
+. MicroTeX
+
 # .LINKS
 https://catlikecoding.com/unity/tutorials/pseudorandom-noise/simplex-noise/
 https://cgvr.cs.uni-bremen.de/teaching/cg_literatur/simplexnoise.pdf

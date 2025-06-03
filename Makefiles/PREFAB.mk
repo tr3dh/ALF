@@ -210,6 +210,19 @@ enet:
 			cmake --build build;\
 		fi
 
+# funktioniert noch nicht einwandfrei !!
+microTex:
+	@if [ -d "thirdParty/MicroTeX" ]; then \
+			echo "Info: 'thirdParty/MicroTeX' existiert bereits. Überspringe Build.";\
+		else \
+			echo "Info: builde MicroTeX."; \
+			cd thirdParty && git clone https://github.com/NanoMichael/MicroTeX; \
+			cd MicroTeX;\
+			mkdir build && cd build;\
+			cmake ..;\
+			cmake --build .;\
+		fi
+
 COPYTARGET ?= build/
 dllCopy:
 	mkdir -p $(COPYTARGET);
@@ -289,6 +302,7 @@ prefab:
 	$(PACMAN) mingw-w64-x86_64-nlohmann-json
 
 	$(PACMAN) mingw-w64-x86_64-imagemagick
+	$(PACMAN) mingw-w64-x86_64-tinyxml2
 	$(PACMAN) mingw-w64-x86_64-raylib
 	@make r3d
 	@make raylibCpp

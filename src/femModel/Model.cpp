@@ -100,16 +100,25 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         //
         std::unordered_map<std::string, SymEngine::DenseMatrix> symbolTable = {};
         symbolTable["ElastTensor"] = m_isoMesh.SymCMatrix;
-        symbolTable["epsilon_v"] = SymEngine::DenseMatrix(6,1,
-            {toExpression("ev1"),toExpression("ev2"),toExpression("ev3"),toExpression("ev4"),toExpression("ev5"),toExpression("ev6")});
+
+        // epsilon_v mit starwert zeros (mit Nullen gefüllt) initialisieren
+        symbolTable["epsilon_v"] = SymEngine::DenseMatrix(m_isoMesh.m_cachedBMats.begin()->second.nrows(),1);
+        SymEngine::zeros(symbolTable["epsilon_v"]);
+
         symbolTable["epsilon"] = SymEngine::DenseMatrix(6,1,
             {toExpression("e1"),toExpression("e2"),toExpression("e3"),toExpression("e4"),toExpression("e5"),toExpression("e6")});
+        symbolTable["uCell"] = SymEngine::DenseMatrix(r_pref.nNodes * r_pref.nDimensions,1);
 
+        SymEngine::zeros(symbolTable["uCell"]);
+        symbolTable["B"] = m_isoMesh.m_cachedBMats.begin()->second;
+        
+        symbolTable["jDet"] = SymEngine::DenseMatrix(1,1,{NULL_EXPR});
+        symbolTable["w"] = SymEngine::DenseMatrix(1,1,{NULL_EXPR});
 
-        //
-        SymEngine::DenseMatrix kCell(r_pref.nDimensions * r_pref.nNodes, r_pref.nDimensions * r_pref.nNodes);
-        SymEngine::DenseMatrix subsBMat(m_isoMesh.m_cachedBMats.begin()->second);
-        SymEngine::zeros(subsBMat);
+        // Residuum entspricht K*u und ist dementsprechend ein Vektor
+        SymEngine::DenseMatrix resCell(r_pref.nDimensions * r_pref.nNodes,1);
+        SymEngine::DenseMatrix resGlobal(r_pref.nDimensions * m_isoMesh.getUndeformedNodes().size(),1);
+        SymEngine::zeros(resGlobal);
 
         // Startwerte festlegen
         // ...
@@ -138,43 +147,103 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
                 // KMatrix aufstellen nach spannungsansatz
 
-                // K Matrix formulierung mit Spannungsansatz sigma
+                // K Matrix bzw. Residuumsformulierung mit Spannungsansatz sigma
                 // K_cell * u = sum(B^T*sigma*jdet*weight)
 
                 // ...
 
+                // Verschiebungsvektor aufstellen
+                for(size_t localNodeNum = 0; localNodeNum < r_pref.nNodes; localNodeNum++){
+
+                    //
+                    for(const auto& koord : m_isoMesh.globKoords){
+
+                        //
+                        symbolTable["uCell"].set(localNodeNum * r_pref.nDimensions + koord, 0,
+                            toExpression("u" + std::to_string((cell[localNodeNum]-m_isoMesh.nodeNumOffset)*r_pref.nDimensions+koord)));
+                    }
+                }
+
                 // Matrix nullen
-                SymEngine::zeros(kCell);
+                SymEngine::zeros(resCell);
 
                 // Loop durch quadrature Points
                 for(size_t quadPoint = 0; quadPoint < r_pref.nNodes; quadPoint++){
 
-                    subMatrix(m_isoMesh.m_cachedBMats[cellIdx], subsBMat, r_pref.quadraturePoints[quadPoint]);
-                    symbolTable["B"] = subsBMat;
-                    symbolTable["jDet"] = SymEngine::DenseMatrix(1,1,{m_isoMesh.m_cachedJDets[cellIdx]->subs(r_pref.quadraturePoints[quadPoint])});
-                    symbolTable["w"] = SymEngine::DenseMatrix(1,1, {toExpression(r_pref.weights[quadPoint])});
-                    
-                    SymEngine::DenseMatrix linK = evalSymbolicMatrixExpr("B^T*ElastTensor*B*jDet*w",{symbolTable});
-                    SymEngine::DenseMatrix res = evalSymbolicMatrixExpr("B^T*ElastTensor*(epsilon+-epsilon_v)*jDet*w",{symbolTable});
-                    expandMatrix(res); expandMatrix(linK);
-                    sym::roundMatrix(res); sym::roundMatrix(linK);
+                    //
+                    subMatrix(m_isoMesh.m_cachedBMats[cellIdx], symbolTable["B"], r_pref.quadraturePoints[quadPoint]);
+                    symbolTable["jDet"].set(0,0,m_isoMesh.m_cachedJDets[cellIdx]->subs(r_pref.quadraturePoints[quadPoint]));
+                    symbolTable["w"].set(0,0,toExpression(r_pref.weights[quadPoint]));
+                
+                    //
+                    resCell += evalSymbolicMatrixExpr("B^T*ElastTensor*(B*uCell+-epsilon_v)*jDet*w",symbolTable);
+                }
 
-                    LOG << linK.ncols() << " " << linK.nrows() << endl;
-                    LOG << linK << endl;
-                    LOG << endl;
+                // LOG << cellIdx << endl;
 
-                    LOG << res.ncols() << " " << res.nrows() << endl;
-                    LOG << res << endl;
-                    LOG << endl;
+                // Assemblierung in globale K Matrix bzw Residuumsvektor
+                for(size_t localNodeNum = 0; localNodeNum < r_pref.nNodes; localNodeNum++){
 
                     //
-                    // kCell += evalSymbolicMatrixExpr(mat.stressApproach,{symbolTable});
+                    for(const auto& koord : m_isoMesh.globKoords){
 
-                    return;
+                        //
+                        resGlobal.set((cell[localNodeNum] - m_isoMesh.nodeNumOffset) * r_pref.nDimensions + koord, 0, resCell.get(localNodeNum * r_pref.nDimensions + koord,0));
+                    }
                 }
-                LOG << kCell << endl;
-                return;
             }
+
+            // nötig und zeitsparend ???
+            expandMatrix(resGlobal);
+            sym::roundMatrix(resGlobal);
+
+            // resGlobal - f = 0 mit NR lösen
+            // >> u für Zeitschritt bekannt
+            // >> Größen fortplanzen, Startwerte anpassen
+            // >> datasets und nodesets cachen
+            // LOG << resGlobal << endl;
+
+            // im Idealfall ist das Residuum jetzt nur noch von den Einträgen des Verschiebungsvektors u abhängig
+            // ...
+
+            // erst Jacoby Matrix erstellen >> Residuum nach Vektor u ableiten
+            // >> jede Komponente des Vektors resGlobal nach jeder Komponente von u ableiten
+            // >> herauskommt eine Matrix
+            // Beginn der Newton Raphson Iteration
+
+            SymEngine::DenseMatrix jacobianMatrix(resGlobal.nrows(), resGlobal.nrows());
+            SymEngine::zeros(jacobianMatrix);
+            
+            // in eigen sparse matrix einsortieren 
+            for(size_t resRow = 0; resRow < resGlobal.nrows(); resRow++){
+
+                //
+                for(size_t uRow = 0; uRow < resGlobal.nrows(); uRow++){
+                    
+                    //
+                    jacobianMatrix.set(resRow, uRow, resGlobal.get(resRow,0)->diff(SymEngine::symbol("u" + std::to_string(uRow))));
+                }
+            }
+
+            //
+            LOG << jacobianMatrix << endl;
+
+            // hier Iteration und für jeden Schritt in Tangente und Residuum einsetzen
+            // ...
+
+            //
+            Eigen::MatrixXd displacement(jacobianMatrix.nrows(),1);
+            displacement.setZero();
+
+            SymEngine::map_basic_basic subsDisplacement = {};
+            // durch displacement loopen und einsetzen
+
+            // while(residuum(u) != 0vec){ // bzw toleranz
+            
+                // u += -residuum(u)/tangente(u)
+            // }
+
+            return;
         }
 
         //
