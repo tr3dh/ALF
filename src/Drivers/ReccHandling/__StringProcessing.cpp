@@ -51,4 +51,9 @@ namespace string{
         //
         return findFirst(str, seq) == 0;
     }
+
+    //
+    void fullStrip(std::string& str, const char token) {
+        str.erase(std::remove(str.begin(), str.end(), token),str.end());
+    }
 }

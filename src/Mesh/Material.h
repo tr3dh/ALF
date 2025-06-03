@@ -54,9 +54,7 @@ struct IsoMeshMaterial{
     bool hasPdf = false;
 
     //
-    Expression stressApproach = NULL_EXPR;
-    Expression innerVariable = NULL_EXPR;
-    Expression evolutionEq = NULL_EXPR;
+    std::string stressApproach, innerVariable, evolutionEquation;
 
     // entspricht dann numerisches Maximum von size_t -1
     size_t innerVariableDimension = -1;

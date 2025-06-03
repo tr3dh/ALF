@@ -2,6 +2,7 @@
 
 #include "Mesh/Mesh.h"
 #include "UncertaintyCalculation/UncertantyCalculation.h"
+#include "symbolic/symbolicExpressionParser.h"
 
 class FemModel{
 

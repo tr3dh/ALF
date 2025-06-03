@@ -1,7 +1,6 @@
 # ToDo
 
 # String to Expression parser
-. lexer und parser auslagern
 . round in toExpression
 . round decls auslagern
 

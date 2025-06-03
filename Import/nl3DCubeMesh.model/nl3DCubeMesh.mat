@@ -9,7 +9,7 @@
         "innerVariableSize": [
             6
         ],
-        "sigma": "ElastTensor*(epsilon-epsilon_v)"
+        "sigma": "ElastTensor*(epsilon + -epsilon_v)"
     },
     "pdf": {
         "borders": {

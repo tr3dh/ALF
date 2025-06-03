@@ -39,6 +39,8 @@ inline std::ostream& operator<<(std::ostream& os, const Expression& expression) 
     return os;
 }
 
+constexpr int ROUND_PRECISION = 3;
+
 template <typename T>
 inline Expression toExpression(const T& value) {
 
@@ -58,7 +60,7 @@ inline Expression toExpression(const T& value) {
             // Ganzzahl
             return SymEngine::integer(static_cast<int>(value));
         }
-        return SymEngine::real_double(value);
+        return SymEngine::real_double(std::round(value * std::pow(10, ROUND_PRECISION)) / std::pow(10, ROUND_PRECISION));
     }
     else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
 

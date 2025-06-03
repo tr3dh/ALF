@@ -93,14 +93,26 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         const float deltaTime = 1.0f;
         const size_t simulationSteps = (size_t)(simulationTime/deltaTime);
 
-        // Startwerte festlegen
+        // refs
         const IsoMeshMaterial& mat = m_isoMesh.getMaterial();
+        const auto& r_pref = m_isoMesh.getCells().begin()->second.getPrefab();
 
         //
-        LOG << "** " << mat.evolutionEq->subs({
-            {SymEngine::symbol("S"), toExpression(2)},
-            {SymEngine::symbol("ElastTensor"), toExpression(2)}
-        }) << endl;
+        std::unordered_map<std::string, SymEngine::DenseMatrix> symbolTable = {};
+        symbolTable["ElastTensor"] = m_isoMesh.SymCMatrix;
+        symbolTable["epsilon_v"] = SymEngine::DenseMatrix(6,1,
+            {toExpression("ev1"),toExpression("ev2"),toExpression("ev3"),toExpression("ev4"),toExpression("ev5"),toExpression("ev6")});
+        symbolTable["epsilon"] = SymEngine::DenseMatrix(6,1,
+            {toExpression("e1"),toExpression("e2"),toExpression("e3"),toExpression("e4"),toExpression("e5"),toExpression("e6")});
+
+
+        //
+        SymEngine::DenseMatrix kCell(r_pref.nDimensions * r_pref.nNodes, r_pref.nDimensions * r_pref.nNodes);
+        SymEngine::DenseMatrix subsBMat(m_isoMesh.m_cachedBMats.begin()->second);
+        SymEngine::zeros(subsBMat);
+
+        // Startwerte festlegen
+        // ...
 
         // durch Integrationsschritte loopen
         for(size_t stepIdx = 0; stepIdx < simulationSteps; stepIdx++){
@@ -119,6 +131,50 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
             // . delta U finden für Lösung
 
             // startwerte anpassen
+
+            for(const auto& [cellIdx, cell] : m_isoMesh.getCells()){
+
+                // Position in caches : cellIdx
+
+                // KMatrix aufstellen nach spannungsansatz
+
+                // K Matrix formulierung mit Spannungsansatz sigma
+                // K_cell * u = sum(B^T*sigma*jdet*weight)
+
+                // ...
+
+                // Matrix nullen
+                SymEngine::zeros(kCell);
+
+                // Loop durch quadrature Points
+                for(size_t quadPoint = 0; quadPoint < r_pref.nNodes; quadPoint++){
+
+                    subMatrix(m_isoMesh.m_cachedBMats[cellIdx], subsBMat, r_pref.quadraturePoints[quadPoint]);
+                    symbolTable["B"] = subsBMat;
+                    symbolTable["jDet"] = SymEngine::DenseMatrix(1,1,{m_isoMesh.m_cachedJDets[cellIdx]->subs(r_pref.quadraturePoints[quadPoint])});
+                    symbolTable["w"] = SymEngine::DenseMatrix(1,1, {toExpression(r_pref.weights[quadPoint])});
+                    
+                    SymEngine::DenseMatrix linK = evalSymbolicMatrixExpr("B^T*ElastTensor*B*jDet*w",{symbolTable});
+                    SymEngine::DenseMatrix res = evalSymbolicMatrixExpr("B^T*ElastTensor*(epsilon+-epsilon_v)*jDet*w",{symbolTable});
+                    expandMatrix(res); expandMatrix(linK);
+                    sym::roundMatrix(res); sym::roundMatrix(linK);
+
+                    LOG << linK.ncols() << " " << linK.nrows() << endl;
+                    LOG << linK << endl;
+                    LOG << endl;
+
+                    LOG << res.ncols() << " " << res.nrows() << endl;
+                    LOG << res << endl;
+                    LOG << endl;
+
+                    //
+                    // kCell += evalSymbolicMatrixExpr(mat.stressApproach,{symbolTable});
+
+                    return;
+                }
+                LOG << kCell << endl;
+                return;
+            }
         }
 
         //

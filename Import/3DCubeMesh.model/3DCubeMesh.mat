@@ -2,14 +2,13 @@
     "isLinear": true,
     "pdf": {
         "borders": {
-            "xi_max": 0,
-            "xi_min": 0
+            "xi_max": 10,
+            "xi_min": 0.01
         },
-        "function": "b - a*(xi-mu)**2",
+        "function": "(k/lam) * (xi/lam)**(k-1) * exp(-(xi/lam)**k)",
         "params": {
-            "a": 1,
-            "b": 1,
-            "mu": 0.0
+            "k": 1,
+            "lam": 1
         },
         "pdfPreprocessing": {
             "segmentation": 0.1,

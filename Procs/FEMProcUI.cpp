@@ -12,27 +12,6 @@
 
 #define MODELCACHE "../bin/.CACHE"
 
-#include <symengine/expression.h>
-#include <symengine/pow.h>
-#include <symengine/functions.h>
-#include <symengine/add.h>
-#include <symengine/mul.h>
-#include <symengine/symbol.h>
-#include <symengine/real_double.h>
-#include <symengine/rational.h>
-#include <symengine/integer.h>
-#include <symengine/basic.h>
-#include <symengine/number.h>
-#include <unordered_map>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <symengine/matrix.h>
-#include <symengine/expression.h>
-#include <memory>
-#include <cctype>
-#include <stdexcept>
-
 int main(void)
 {
     //
@@ -50,25 +29,9 @@ int main(void)
     LOG << endl;
 
     //
-    std::unordered_map<std::string, SymEngine::DenseMatrix> symbolTable;
-    symbolTable["A"] = SymEngine::DenseMatrix(2,2,{toExpression(10), toExpression(20), toExpression(30), toExpression(40)});
-    symbolTable["B"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(2), toExpression(3), toExpression(4)});
-    symbolTable["C"] = SymEngine::DenseMatrix(2,2,{toExpression(1), toExpression(0), toExpression(0), toExpression(1)});
-    symbolTable["u"] = SymEngine::DenseMatrix(2,1,{toExpression(std::string("u1")), toExpression(std::string("u2"))});
-    symbolTable["ut"] = SymEngine::DenseMatrix(1,2,{toExpression(std::string("u3")), toExpression(std::string("u4"))});
-    symbolTable["U"] = SymEngine::DenseMatrix(2,2,{toExpression(std::string("a")), toExpression(std::string("b")),
-                                                   toExpression(std::string("c")), toExpression(std::string("d"))});
-
-    std::string expr = "A+B^2+4*C^2+U^-2";
-
-    expr.erase(std::remove(expr.begin(), expr.end(), ' '), expr.end());
-    
-    // timeFunction(evalSymbolicMatrixExpr, 100000, expr, symbolTable);
-    LOG << evalSymbolicMatrixExpr(expr, symbolTable) << endl;
-
     FemModel model;
     model.loadFromCache();
- 
+
     //
     enableRLLogging();
     SetTraceLogCallback(RaylibLogCallback);

@@ -90,7 +90,7 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
         // Array für Innere Variable z.b "innerVariable": ["epsilon_v",1],
         ASSERT(matData["nonLinearApproach"].contains("innerVariable"), "Angabe innere Variable für nicht lineares Material fehlt");
-        innerVariable = SymEngine::parse(matData["nonLinearApproach"]["innerVariable"][0]);
+        innerVariable = matData["nonLinearApproach"]["innerVariable"][0];
         innerVariableDimension = matData["nonLinearApproach"]["innerVariable"][1];
 
         ASSERT(matData["nonLinearApproach"].contains("innerVariableSize"), "Angabe innere Variable für nicht lineares Material fehlt");
@@ -106,31 +106,24 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
         // Spannungsansatz
         ASSERT(matData["nonLinearApproach"].contains("sigma"), "Spannungs Ansatz für nicht lineares Material fehlt");
-        stressApproach = SymEngine::parse(matData["nonLinearApproach"]["sigma"]);
+        stressApproach = matData["nonLinearApproach"]["sigma"];
 
-        ASSERT(contains(stressApproach, innerVariable), "Ansatz für Spannung ist nicht von angegebener innererVariable abhängig");
+        ASSERT(string::contains(stressApproach, innerVariable), "Ansatz für Spannung ist nicht von angegebener innererVariable abhängig");
 
+        string::fullStrip(stressApproach);
         LOG << "** sigma = " << stressApproach << " = f(";
+        
+        // args ...
 
-        auto syms = dependencies(stressApproach);
-        for(const auto& sym : syms){
-            LOG << sym << ",";
-        }
         LOG << ")" << endl;
 
         // Evolution
         ASSERT(matData["nonLinearApproach"].contains("evolutionEquation"), "EvolutionsGleichung für innere Variable fehlt");
-        evolutionEq = SymEngine::parse(matData["nonLinearApproach"]["evolutionEquation"]);
+        evolutionEquation = matData["nonLinearApproach"]["evolutionEquation"];
+        string::fullStrip(evolutionEquation);
 
-        LOG << "** " << innerVariable << "_n_plus_1 = " << evolutionEq << endl;
-
-        LOG << "** evo " << " = f(";
-        syms = dependencies(evolutionEq);
-        for(const auto& sym : syms){
-            LOG << sym << ",";
-        }
-
-        LOG << ")" << endl;
+        //
+        LOG << "** " << innerVariable << "_n_plus_1 = " << evolutionEquation << endl;
     }
 
     LOG << endl;

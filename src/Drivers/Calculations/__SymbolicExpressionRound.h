@@ -84,4 +84,13 @@ namespace sym{
         RoundingVisitor visitor(decimal_places);
         return visitor.apply(expr);
     }
+
+    inline void roundMatrix(SymEngine::DenseMatrix& mat, int decimal_places = 3) {
+        RoundingVisitor visitor(decimal_places); // nur einmal erzeugen!
+        for (unsigned i = 0; i < mat.nrows(); ++i) {
+            for (unsigned j = 0; j < mat.ncols(); ++j) {
+                mat.set(i, j, visitor.apply(mat.get(i, j)));
+            }
+        }
+    }
 }

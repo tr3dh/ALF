@@ -143,6 +143,13 @@ bool IsoMesh::createStiffnessMatrix(){
             }
         }
 
+        // nötig und exakt ??
+        expandMatrix(BMatrix);
+        sym::roundMatrix(BMatrix);
+        
+        SymEngine::expand(jDet);
+        sym::round_all_numbers(jDet);
+
         //
         m_cachedJDets.emplace(cellIndex,jDet);
         m_cachedBMats.emplace(cellIndex, BMatrix);

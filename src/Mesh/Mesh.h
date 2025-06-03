@@ -37,9 +37,7 @@ private:
 
     Eigen::SparseMatrix<float> m_kSystem, m_uSystem, m_fSystem;
 
-    //
-    SymEngine::DenseMatrix SymCMatrix;
-    Eigen::MatrixXd CMatrix;
+public:
 
     //
     std::map<NodeIndex, Expression>  m_cachedJDets = {};
@@ -51,6 +49,10 @@ private:
     IsoMeshMaterial m_material;
 
 public:
+
+    //
+    SymEngine::DenseMatrix SymCMatrix;
+    Eigen::MatrixXd CMatrix;
 
     bool loadFromFile(const std::string& path);
 
