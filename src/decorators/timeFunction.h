@@ -1,6 +1,6 @@
 #pragma once 
 
-#include "defines.h"
+#include <chrono>
 
 // Decorator nimmt Funktion, gewünschte Ausführungsanzahl und Funktionsargumente entgegen 
 // führt Funktion entsprechend häufig aus und misst die entsprechende Zeit um die sich der thread

@@ -1,8 +1,8 @@
 # ToDo
 
-# String to Expression parser
-. round in toExpression
-. round decls auslagern
+# Prim
+. Jacoby und Residuum nicht in SymEngine::DenseMatrix sondern eingene SymTriplet listen schreiben
+  mit Symtriplet = tuple(x,y,Expr)
 
 # CleanUp
 . aufteilung in incl/src ?? -> angenehmer für Nutzungs als lib

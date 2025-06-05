@@ -117,8 +117,8 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
         // Residuum entspricht K*u und ist dementsprechend ein Vektor
         SymEngine::DenseMatrix resCell(r_pref.nDimensions * r_pref.nNodes,1);
-        SymEngine::DenseMatrix resGlobal(r_pref.nDimensions * m_isoMesh.getUndeformedNodes().size(),1);
-        SymEngine::zeros(resGlobal);
+        SymEngine::DenseMatrix globalResidual(r_pref.nDimensions * m_isoMesh.getUndeformedNodes().size(),1);
+        SymEngine::zeros(globalResidual);
 
         // Startwerte festlegen
         // ...
@@ -188,45 +188,45 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                     for(const auto& koord : m_isoMesh.globKoords){
 
                         //
-                        resGlobal.set((cell[localNodeNum] - m_isoMesh.nodeNumOffset) * r_pref.nDimensions + koord, 0, resCell.get(localNodeNum * r_pref.nDimensions + koord,0));
+                        globalResidual.set((cell[localNodeNum] - m_isoMesh.nodeNumOffset) * r_pref.nDimensions + koord, 0, resCell.get(localNodeNum * r_pref.nDimensions + koord,0));
                     }
                 }
             }
 
             // nötig und zeitsparend ???
-            expandMatrix(resGlobal);
-            sym::roundMatrix(resGlobal);
+            expandMatrix(globalResidual);
+            sym::roundMatrix(globalResidual);
 
-            // resGlobal - f = 0 mit NR lösen
+            // globalResidual - f = 0 mit NR lösen
             // >> u für Zeitschritt bekannt
             // >> Größen fortplanzen, Startwerte anpassen
             // >> datasets und nodesets cachen
-            // LOG << resGlobal << endl;
+            // LOG << globalResidual << endl;
 
             // im Idealfall ist das Residuum jetzt nur noch von den Einträgen des Verschiebungsvektors u abhängig
             // ...
 
             // erst Jacoby Matrix erstellen >> Residuum nach Vektor u ableiten
-            // >> jede Komponente des Vektors resGlobal nach jeder Komponente von u ableiten
+            // >> jede Komponente des Vektors globalResidual nach jeder Komponente von u ableiten
             // >> herauskommt eine Matrix
             // Beginn der Newton Raphson Iteration
 
-            SymEngine::DenseMatrix jacobianMatrix(resGlobal.nrows(), resGlobal.nrows());
+            SymEngine::DenseMatrix jacobianMatrix(globalResidual.nrows(), globalResidual.nrows());
             SymEngine::zeros(jacobianMatrix);
             
             // in eigen sparse matrix einsortieren 
-            for(size_t resRow = 0; resRow < resGlobal.nrows(); resRow++){
+            for(size_t resRow = 0; resRow < globalResidual.nrows(); resRow++){
 
                 //
-                for(size_t uRow = 0; uRow < resGlobal.nrows(); uRow++){
+                for(size_t uRow = 0; uRow < globalResidual.nrows(); uRow++){
                     
                     //
-                    jacobianMatrix.set(resRow, uRow, resGlobal.get(resRow,0)->diff(SymEngine::symbol("u" + std::to_string(uRow))));
+                    jacobianMatrix.set(resRow, uRow, globalResidual.get(resRow,0)->diff(SymEngine::symbol("u" + std::to_string(uRow))));
                 }
             }
 
             //
-            LOG << jacobianMatrix << endl;
+            // LOG << jacobianMatrix << endl;
 
             // hier Iteration und für jeden Schritt in Tangente und Residuum einsetzen
             // ...
@@ -235,13 +235,43 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
             Eigen::MatrixXd displacement(jacobianMatrix.nrows(),1);
             displacement.setZero();
 
-            SymEngine::map_basic_basic subsDisplacement = {};
-            // durch displacement loopen und einsetzen
+            //
+            SymEngine::map_basic_basic substitutionMap = {};
+
+            //
+            Eigen::SparseMatrix<float> substitutedResidual(jacobianMatrix.nrows(),1);
+            substitutedResidual.setZero();
+
+            Eigen::SparseMatrix<float> substitutedJacobianMatrix(jacobianMatrix.nrows(),jacobianMatrix.ncols());
+            substitutedJacobianMatrix.setZero();
+
+            // for
 
             // while(residuum(u) != 0vec){ // bzw toleranz
             
                 // u += -residuum(u)/tangente(u)
             // }
+
+            // dadurch dass einträge pro Iterationsschritt überschrieben werden kann clear und emplace
+            // weggelassen werden
+
+            mbug(erstelle subsMap)
+
+            // substitutionMap.clear();
+            for(size_t uRow = 0; uRow < displacement.rows(); uRow++){
+
+                substitutionMap[toExpression("u" + std::to_string(uRow))] = toExpression(displacement(uRow,0));
+            }
+
+            mbug(erstelle subRes)
+            subMatrix(globalResidual, substitutedResidual, substitutionMap);
+
+            mbug(erstelle subsJ)
+            
+            subMatrix(jacobianMatrix, substitutedJacobianMatrix, substitutionMap);
+
+            // LOG << jacobianMatrix << endl;
+            LOG << substitutedResidual << endl;
 
             return;
         }

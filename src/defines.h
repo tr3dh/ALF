@@ -87,6 +87,9 @@ namespace fs = std::filesystem;
 
 #include "Drivers/UI/__fileBrowser.h"
 
+// Decorators
+#include "decorators/timeFunction.h"
+
 // typedefs
 typedef uint16_t NodeIndex;
 typedef NodeIndex CellIndex;
