@@ -3,6 +3,8 @@
 # Prim
 . Jacoby und Residuum nicht in SymEngine::DenseMatrix sondern eingene SymTriplet listen schreiben
   mit Symtriplet = tuple(x,y,Expr)
+. m_uSystem zu densematrix machen
+. !! Bugfix : verschiedene angezeigte Lösungen nach mehrfachen Laden von Systemen
 
 # CleanUp
 . aufteilung in incl/src ?? -> angenehmer für Nutzungs als lib

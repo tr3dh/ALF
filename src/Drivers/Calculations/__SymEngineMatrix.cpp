@@ -12,7 +12,7 @@ void clearMatrix(SymEngine::DenseMatrix& matrix){
     }
 }
 
-bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXd& resultMatrix,  const SymEngine::map_basic_basic& subMap, float koeff, bool addUp){
+bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXf& resultMatrix,  const SymEngine::map_basic_basic& subMap, float koeff, bool addUp){
     
     ASSERT(koeff != 0, "Invalider Koeffizient übergeben");
 
@@ -21,7 +21,18 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXd& resultMatr
     for (unsigned i = 0; i < matrix.nrows(); ++i) {
         for (unsigned j = 0; j < matrix.ncols(); ++j) {
 
-            value = koeff * SymEngine::eval_double(*matrix.get(i, j)->subs(subMap));
+            const auto& expr = matrix.get(i, j);
+
+            // if(SymEngine::eq(*expr, *SymEngine::zero)){
+            //     continue;
+            // }
+
+            try{
+                value = koeff * SymEngine::eval_double(*expr->subs(subMap));
+            }
+            catch(...){
+                ASSERT(TRIGGER_ASSERT, "Expression " + expr->__str__() + " konnte nicht evaluiert werden");
+            }
 
             if(std::isnan(value)){
 
@@ -63,9 +74,9 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::SparseMatrix<float>&
 
             const auto& expr = matrix.get(i, j);
 
-            if(SymEngine::eq(*expr, *SymEngine::zero)){
-                continue;
-            }
+            // if(SymEngine::eq(*expr, *SymEngine::zero)){
+            //     continue;
+            // }
 
             value = koeff * SymEngine::eval_double(*expr->subs(subMap));
 
@@ -148,9 +159,9 @@ bool subTriplets(const std::vector<SymTriplet>& matrix, Eigen::SparseMatrix<floa
 
     for(const auto& [i,j,expr] : matrix){
 
-        if(SymEngine::eq(*expr, *SymEngine::zero)){
-            continue;
-        }
+        // if(SymEngine::eq(*expr, *SymEngine::zero)){
+        //     continue;
+        // }
 
         value = koeff * SymEngine::eval_double(*expr->subs(subMap));
 
@@ -189,4 +200,25 @@ void expandMatrix(SymEngine::DenseMatrix& matrix){
             matrix.set(i, j, SymEngine::expand(matrix.get(i,j)));
         }
     }
+}
+
+void removeRow(SymEngine::DenseMatrix &mat, int rowToRemove) {
+
+    unsigned rows = mat.nrows();
+    unsigned cols = mat.ncols();
+    if (rowToRemove >= rows) return;  // ungültiger Index
+
+    SymEngine::DenseMatrix newMat(rows - 1, cols);
+
+    unsigned newRow = 0;
+    for (unsigned r = 0; r < rows; ++r) {
+        if (r == rowToRemove)
+            continue;
+        for (unsigned c = 0; c < cols; ++c) {
+            newMat.set(newRow, c, mat.get(r, c));
+        }
+        ++newRow;
+    }
+
+    mat = std::move(newMat);
 }

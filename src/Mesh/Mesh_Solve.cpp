@@ -38,7 +38,7 @@ void IsoMesh::calculateStrainAndStress(bool calculateOnQuadraturePoints){
 
     LOG << "-- Calculate Strain and Stress" << endl;
 
-    Eigen::MatrixXd BMatrix(nDimensions*(nDimensions + 1)/2, nDimensions * m_Cells.begin()->second.getPrefab().nNodes);
+    Eigen::MatrixXf BMatrix(nDimensions*(nDimensions + 1)/2, nDimensions * m_Cells.begin()->second.getPrefab().nNodes);
     float jDet = 0.0f;
 
     //

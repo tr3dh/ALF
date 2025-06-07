@@ -16,7 +16,11 @@ private:
 
     enum class ReadMode : uint8_t;
 
-    struct Force;
+    struct Force{
+
+        uint8_t direction = -1;
+        float amount = 0;
+    };
 
     static const char tokenIndicator;                                                     // gibt an mit welchem Token die entsprechenden Zeilen beginnen in denen der
     static const std::string tokenIndicatorString;                                        // folgende Abschnitt definiert wird 
@@ -38,11 +42,13 @@ public:
     std::vector<uint8_t> isoKoords = {};
     std::vector<uint8_t> globKoords = {};
 
-    Eigen::SparseMatrix<float> m_kSystem, m_uSystem, m_fSystem;
+    std::map<NodeIndex, std::vector<uint8_t>> m_constraints = {};
+    std::map<NodeIndex, std::vector<Force>> m_loads = {};
 
 public:
 
     //
+    Eigen::SparseMatrix<float> m_kSystem, m_uSystem, m_fSystem;
     std::map<NodeIndex, Expression>  m_cachedJDets = {};
     std::map<NodeIndex, SymEngine::DenseMatrix> m_cachedBMats = {};
 
@@ -55,7 +61,7 @@ public:
 
     //
     SymEngine::DenseMatrix SymCMatrix;
-    Eigen::MatrixXd CMatrix;
+    Eigen::MatrixXf CMatrix;
 
     bool loadFromFile(const std::string& path);
 
@@ -67,7 +73,7 @@ public:
 
     void fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations);
 
-    bool readBoundaryConditions(const std::string& path = NULLSTR);
+    bool readBoundaryConditions(bool apply = true, const std::string& path = NULLSTR);
 
     static void displaceNodes(NodeSet& nodes, const Eigen::SparseMatrix<float>& displacement, size_t nodeNumOffset);
     void solve();

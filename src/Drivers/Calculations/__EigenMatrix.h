@@ -115,3 +115,9 @@ inline void addSparseRow(Eigen::SparseMatrix<float>& mat, const std::vector<T>& 
     mat.resize(newSize, 1);
     mat.setFromTriplets(triplets.begin(), triplets.end());
 }
+
+// Entfernt Zeile rowToRemove aus MatrixXf mat
+void removeRow(Eigen::MatrixXf& mat, int rowToRemove);
+
+// Fügt Zeile row an Position insertAt in MatrixXf mat ein
+void addRow(Eigen::MatrixXf& mat, const Eigen::RowVectorXf& row, int insertAt);

@@ -36,11 +36,11 @@ struct CellData{
 
     // Wrapper für die verschieden dimensionalen van-Mises-Spannungs Berechnungen
     // Ermittelt Netzdimension aus stress Matrix und gibt entsprechenden van-Mises-Spannung zurück 
-    static float vanMisesXd(const Eigen::MatrixXd& stress);
+    static float vanMisesXd(const Eigen::MatrixXf& stress);
 
     // vanMises Stress berechnung für verschieden dimensionale Netze
-    static float vanMises2D(const Eigen::MatrixXd& stress);
-    static float vanMises3D(const Eigen::MatrixXd& stress);
+    static float vanMises2D(const Eigen::MatrixXf& stress);
+    static float vanMises3D(const Eigen::MatrixXf& stress);
 
     CellData(const CellPrefab& prefab);
 
@@ -55,11 +55,11 @@ struct CellData{
 
     const CellPrefab& m_prefab;
 
-    Eigen::MatrixXd strain, stress;
-    std::vector<Eigen::MatrixXd> quadratureStrain = {}, quadratureStress = {};
+    Eigen::MatrixXf strain, stress;
+    std::vector<Eigen::MatrixXf> quadratureStrain = {}, quadratureStress = {};
     
     float cellVolume = 0.0f;
-    Eigen::MatrixXd cellDisplacement;
+    Eigen::MatrixXf cellDisplacement;
 
     float vanMisesStress = 0.0f;
     std::vector<float> quadratureMisesStress = {};

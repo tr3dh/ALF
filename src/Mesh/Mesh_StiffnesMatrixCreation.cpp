@@ -19,8 +19,8 @@ bool IsoMesh::createStiffnessMatrix(){
     Expression jDet = NULL_EXPR;
 
     SymEngine::DenseMatrix BMatrix(nDimensions*(nDimensions + 1)/2, currentCellPrefab.nNodes * nDimensions);
-    Eigen::MatrixXd subsBMatrix(nDimensions*(nDimensions + 1)/2, currentCellPrefab.nNodes * nDimensions);
-    Eigen::MatrixXd kCell(currentCellPrefab.nNodes * nDimensions, currentCellPrefab.nNodes * nDimensions);
+    Eigen::MatrixXf subsBMatrix(nDimensions*(nDimensions + 1)/2, currentCellPrefab.nNodes * nDimensions);
+    Eigen::MatrixXf kCell(currentCellPrefab.nNodes * nDimensions, currentCellPrefab.nNodes * nDimensions);
 
     m_kSystem = Eigen::SparseMatrix<float>(m_nodes.size() * nDimensions, m_nodes.size() * nDimensions);
 
@@ -33,7 +33,7 @@ bool IsoMesh::createStiffnessMatrix(){
     m_material.createElasticityTensor(SymCMatrix, nDimensions);
 
     //
-    CMatrix = Eigen::MatrixXd(SymCMatrix.nrows(), SymCMatrix.nrows());
+    CMatrix = Eigen::MatrixXf(SymCMatrix.nrows(), SymCMatrix.nrows());
     subMatrix(SymCMatrix, CMatrix, {});
 
     // Hier werden die Multiplikationen der Ansatzfunktionsableitungen (liegen in Prefab vor als SymengineMatrix)

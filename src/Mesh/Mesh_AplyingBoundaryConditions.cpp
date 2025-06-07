@@ -1,14 +1,9 @@
 #include "Mesh.h"
 
-struct IsoMesh::Force{
-    uint8_t direction;
-    float amount;
-};
-
 void IsoMesh::applyForces(const std::map<NodeIndex, std::vector<Force>>& externalForces){
 
     //
-    LOG << "-- Aplying loads ..." << endl;
+    LOG << "-- Aplying m_loads ..." << endl;
 
     // für Konstruktion der sparse Matrix
     std::vector<Eigen::Triplet<float>> triplets = {};
@@ -67,7 +62,7 @@ void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixa
     CRITICAL_ASSERT(m_fSystem.rows() == m_kSystem.rows() && m_uSystem.rows() == m_kSystem.rows(), "Matritzen Dimensionen von u,f und K stimmen nicht überein");
 }
 
-bool IsoMesh::readBoundaryConditions(const std::string& path){
+bool IsoMesh::readBoundaryConditions(bool apply, const std::string& path){
         
     std::string boundaryFilePath = path;
     if(boundaryFilePath == NULLSTR){
@@ -97,12 +92,11 @@ bool IsoMesh::readBoundaryConditions(const std::string& path){
         return false;  
     }
 
-    std::map<NodeIndex, std::vector<uint8_t>> constraints = {};
     for(const auto& constraint : ffData["Constraints"]){
 
         for(const auto& [node, dirs] : constraint.items()){
 
-            constraints.try_emplace(string::convert<NodeIndex>(node), dirs.get<std::vector<uint8_t>>());
+            m_constraints.try_emplace(string::convert<NodeIndex>(node), dirs.get<std::vector<uint8_t>>());
         }
     }
 
@@ -114,13 +108,12 @@ bool IsoMesh::readBoundaryConditions(const std::string& path){
         return false;  
     }
 
-    std::map<NodeIndex, std::vector<Force>> loads = {};
     for(const auto& load : ffData["Loads"]){
 
         for(const auto& [node, forceList] : load.items()){
 
             const NodeIndex index = string::convert<NodeIndex>(node);
-            loads.try_emplace(index);
+            m_loads.try_emplace(index);
             
             for(const auto& [_, force] : forceList.items()){
 
@@ -129,15 +122,19 @@ bool IsoMesh::readBoundaryConditions(const std::string& path){
                     const uint8_t direction = string::convert<uint8_t>(dir);
                     for(const auto& [_,isolatedAmount] : amount.items()){
                     
-                        loads[index].emplace_back(direction, isolatedAmount.get<float>());
+                        m_loads[index].emplace_back(direction, isolatedAmount.get<float>());
                     }
                 }
             }
         }
     }
 
-    applyForces(loads);
-    fixNodes(constraints);
+    if(!apply){
+        return true;
+    }
+
+    applyForces(m_loads);
+    fixNodes(m_constraints);
 
     return true;
 }

@@ -2,13 +2,13 @@
 
 CellData::CellData(const CellPrefab& prefab) : m_prefab(prefab){
 
-    cellDisplacement = Eigen::MatrixXd(m_prefab.nNodes * m_prefab.nDimensions, 1);
+    cellDisplacement = Eigen::MatrixXf(m_prefab.nNodes * m_prefab.nDimensions, 1);
     cellDisplacement.setZero();
 
-    strain = Eigen::MatrixXd(m_prefab.nDimensions * (m_prefab.nDimensions + 1)/2, 1);
+    strain = Eigen::MatrixXf(m_prefab.nDimensions * (m_prefab.nDimensions + 1)/2, 1);
     strain.setZero();
 
-    stress = Eigen::MatrixXd(m_prefab.nDimensions * (m_prefab.nDimensions + 1)/2,1);
+    stress = Eigen::MatrixXf(m_prefab.nDimensions * (m_prefab.nDimensions + 1)/2,1);
     stress.setZero();
 
     quadratureStrain.reserve(m_prefab.nNodes);
@@ -45,7 +45,7 @@ CellData& CellData::operator=(const CellData& other) {
     return *this;
 }
 
-float CellData::vanMisesXd(const Eigen::MatrixXd& stress){
+float CellData::vanMisesXd(const Eigen::MatrixXf& stress){
 
     switch (stress.size()){
         case 1:{
@@ -73,7 +73,7 @@ float CellData::vanMisesXd(const Eigen::MatrixXd& stress){
 
 }
 
-float CellData::vanMises2D(const Eigen::MatrixXd& stress){
+float CellData::vanMises2D(const Eigen::MatrixXf& stress){
 
     return std::sqrt(
         std::pow(SIG_XX_2D(stress), 2) +
@@ -83,7 +83,7 @@ float CellData::vanMises2D(const Eigen::MatrixXd& stress){
     );
 }
 
-float CellData::vanMises3D(const Eigen::MatrixXd& stress){
+float CellData::vanMises3D(const Eigen::MatrixXf& stress){
         
     return std::sqrt(
         0.5 * (
