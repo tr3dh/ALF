@@ -52,8 +52,7 @@ PCH_SRC = src/defines.h
 #	@mkdir -p $(@D)
 #	$(CXX) -o $@ $^ Recc/Compilation/proc.res $(LDFLAGS)
 
-proc:
-	make targets
+proc: targets
 
 # Objekt files
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)

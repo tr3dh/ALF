@@ -3,6 +3,7 @@
 #include "Mesh/Mesh.h"
 #include "UncertaintyCalculation/UncertantyCalculation.h"
 #include "symbolic/symbolicExpressionParser.h"
+#include "Solver/NewtonRaphsonSolver.h"
 
 class FemModel{
 

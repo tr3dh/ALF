@@ -87,6 +87,8 @@ namespace fs = std::filesystem;
 
 #include "Drivers/UI/__fileBrowser.h"
 
+#include "Drivers/Vec/__Vec.h"
+
 // Decorators
 #include "decorators/timeFunction.h"
 
@@ -108,3 +110,6 @@ const static std::vector<Symbol> g_isometricKoords = {r,s,t};
 
 static bool g_ComputeShaderBackendEnabled = false;
 static float g_glVersion = 0;
+
+static std::string g_vendorCorp = NULLSTR;
+static bool g_CudaBackendEnabled = false;

@@ -19,11 +19,10 @@
 . headlesss api
 
 # alg. Rendering
-. legende für linienfarben/einfärbungen
 . angabe maximal/minimalwerte
-. autofit (camera/scale + offset) aus frame auslagern --> nur bei jedem update
 . werte mittlung aus frame auslagern --> nur bei jedem update
 . orbit Camera führung um camera.target einfügen
+. shader Pipeline
 
 # Ergebnis ausgabe
 . in Ui

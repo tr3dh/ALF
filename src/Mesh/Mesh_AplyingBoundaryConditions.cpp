@@ -5,9 +5,6 @@ void IsoMesh::applyForces(const std::map<NodeIndex, std::vector<Force>>& externa
     //
     LOG << "-- Aplying m_loads ..." << endl;
 
-    // für Konstruktion der sparse Matrix
-    std::vector<Eigen::Triplet<float>> triplets = {};
-
     m_fSystem = Eigen::SparseMatrix<float>(m_nodes.size() * nDimensions, 1);
 
     for(const auto& [index, forces] : externalForces){
@@ -15,13 +12,13 @@ void IsoMesh::applyForces(const std::map<NodeIndex, std::vector<Force>>& externa
 
             CRITICAL_ASSERT(force.direction < nDimensions, "Ungültige Richtungsangebe");
             LOG << "   Node " << +index << " Force " << force.amount << " N\t\tin direction " << g_globalKoords[force.direction] << endl;
-            triplets.emplace_back((index-nodeNumOffset) * nDimensions + force.direction, 0, force.amount);
+            loadTriplets.emplace_back((index-nodeNumOffset) * nDimensions + force.direction, 0, force.amount);
         }
     }
 
     LOG << endl;
 
-    m_fSystem.setFromTriplets(triplets.begin(), triplets.end());
+    m_fSystem.setFromTriplets(loadTriplets.begin(), loadTriplets.end());
 }
 
 void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations){

@@ -48,6 +48,7 @@ public:
 public:
 
     //
+    std::vector<Eigen::Triplet<float>> loadTriplets = {};
     Eigen::SparseMatrix<float> m_kSystem, m_uSystem, m_fSystem;
     std::map<NodeIndex, Expression>  m_cachedJDets = {};
     std::map<NodeIndex, SymEngine::DenseMatrix> m_cachedBMats = {};

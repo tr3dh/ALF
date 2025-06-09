@@ -7,8 +7,6 @@
 #include "GUI/ImGuiCustomElements.h"
 #include "Rendering/CameraMovement.h"
 #include "Rendering/CellRenderer.h"
-#include "decorators/timeFunction.h"
-#include "symbolic/symbolicExpressionParser.h"
 
 #define MODELCACHE "../bin/.CACHE"
 
@@ -29,20 +27,20 @@ int main(void)
     LOG << endl;
 
     //
-    FemModel model;
-    model.loadFromCache();
-
-    //
     enableRLLogging();
     SetTraceLogCallback(RaylibLogCallback);
     disableRLLogging();
 
     // SetConfigFlags(FLAG_WINDOW_UNDECORATED);
-    InitWindow(600, 600, "<><FEMProc><>");
+    SetConfigFlags(FLAG_WINDOW_HIDDEN);
+    InitWindow(600,600, "<><FEMProc><>");
 
     //
     const char* glVersion = (const char*)glGetString(GL_VERSION);
     LOG << "** OpenGL Version: " << glVersion << endl;
+
+    const char* vendor = (const char*)glGetString(GL_VENDOR);
+    LOG << "** GPU Vendor: " << vendor << endl;
 
     // string splitten da im glVersion String noch Infos über die graphikkarte stehen
     g_glVersion = string::convert<float>(std::string(glVersion).substr(0,3));
@@ -50,8 +48,26 @@ int main(void)
     // ab der 4.3 enthält opengl eine shader pipeline für comp shaders
     g_ComputeShaderBackendEnabled = g_glVersion >= 4.3f;
 
+    //
+    g_vendorCorp = std::string(vendor);
+
+    //
+    g_CudaBackendEnabled = string::contains(g_vendorCorp, "NVIDIA");
+
     LOG << (g_ComputeShaderBackendEnabled ? "** Computeshader Backend freigeschaltet" :
         "** Computeshader Backend gesperrt, opengl version " + std::to_string(g_glVersion).substr(0,3) + " ist nicht mit comp shadern kompatibel, erforderliche Version : OpenGL 4.3") << endl;
+
+    LOG << (g_CudaBackendEnabled ? "** Cuda Backend freigeschaltet" :
+        "** Cuda Backend gesperrt, vendor " + g_vendorCorp + " ist nicht mit Cuda kompatibel") << endl;
+
+    LOG << "** -----------------------------------------" << endl;
+
+    //
+    FemModel model;
+    model.loadFromCache();
+
+    // Fenster jetzt sichtbar machen
+    ClearWindowState(FLAG_WINDOW_HIDDEN);
 
     // Raylib Fenster init
     float winSizeFaktor = 0.5f;

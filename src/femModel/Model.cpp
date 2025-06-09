@@ -146,6 +146,8 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
             // startwerte anpassen
 
+            LOG << "erstelle Residuum" << endl;
+
             START_TIMER;
 
             // auf fixed dofs achten
@@ -175,9 +177,19 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                     //
                     for(const auto& koord : m_isoMesh.globKoords){
 
-                        //
-                        symbolTable["uCell"].set(localNodeNum * r_pref.nDimensions + koord, 0,
-                            toExpression("u" + std::to_string((cell[localNodeNum]-m_isoMesh.nodeNumOffset)*r_pref.nDimensions+koord)));
+                        const NodeIndex& globalDofIndex = (cell[localNodeNum]-m_isoMesh.nodeNumOffset)*r_pref.nDimensions+koord;
+                        const NodeIndex& localDofIndex = localNodeNum * r_pref.nDimensions + koord;
+
+                        // wenn in fixed dofs symbol mit 0 substituieren
+                        if(vectorContains(m_isoMesh.m_indicesToRemove, globalDofIndex)){
+
+                            symbolTable["uCell"].set(localDofIndex, 0, NULL_EXPR);
+                        }
+                        else {
+                            
+                            symbolTable["uCell"].set(localDofIndex, 0,
+                                toExpression("u" + std::to_string(globalDofIndex)));
+                        }
                     }
                 }
 
@@ -220,6 +232,43 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
             LOG_TIMER;
 
+            // benötigt wird ein gekürztes Residuum ein gekürzter symbolVector und der Lösungsvektor
+
+            SymEngine::DenseMatrix symbolVector(globalResidual.nrows(), globalResidual.ncols());
+            
+            for(size_t row = 0; row < globalResidual.nrows(); row++){
+
+                symbolVector.set(row, 0, toExpression("u" + std::to_string(row)));
+            }
+
+            for(const auto& idx : m_isoMesh.m_indicesToRemove){
+
+                removeRow(globalResidual, idx);
+                removeRow(symbolVector, idx);
+            }
+
+            // Kräft abziehen
+            for(size_t row = 0; row < globalResidual.nrows(); row++){
+
+                const auto& load = m_isoMesh.m_fSystem.coeffRef(row,0);
+
+                if(std::abs(load) < 1e-12){
+                    continue;
+                }
+
+                globalResidual.set(row,0, globalResidual.get(row,0) - toExpression(load)); 
+            }
+
+            //
+            Eigen::MatrixXf displacement(globalResidual.nrows(), globalResidual.ncols());
+            displacement.fill(0);
+
+            LOG << "solve" << endl;
+
+            solveNewtonRaphson(globalResidual, symbolVector, displacement);
+
+            LOG_TIMER;
+
             // globalResidual - f = 0 mit NR lösen
             // >> u für Zeitschritt bekannt
             // >> Größen fortplanzen, Startwerte anpassen
@@ -236,160 +285,11 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
             RESET_TIMER;
 
-            // jacobian Matrix erstellen als triplet liste
-            static std::vector<SymTriplet> jacobianMatrix = {};
-            jacobianMatrix.clear();
-            
-            // in eigen sparse matrix einsortieren 
-            for(size_t resRow = 0; resRow < globalResidual.nrows() ; resRow++){
-
-                //
-                for(size_t uRow = 0; uRow < globalResidual.nrows(); uRow++){
-                    
-                    //
-                    const auto& expr = globalResidual.get(resRow,0)->diff(SymEngine::symbol("u" + std::to_string(uRow)));
-                    
-                    //
-                    if(SymEngine::eq(*expr, *SymEngine::zero)){
-                        continue;
-                    }
-
-                    //
-                    jacobianMatrix.emplace_back(resRow, uRow, expr);
-                }
-            }
-
-            // Jacobian Matrix kürzen
-            // indices sind absteigend sortiert
-            for(const auto& idx : m_isoMesh.m_indicesToRemove){
-                
-                // Einträge aus jacobianMatrix entfernen, bei denen i == idxToRemove oder j == idxToRemove
-                jacobianMatrix.erase(
-                    std::remove_if(jacobianMatrix.begin(), jacobianMatrix.end(),
-                        [&](const auto& entry) {
-                            auto& [i, j, expr] = entry;
-                            return i == idx || j == idx;
-                        }),
-                    jacobianMatrix.end()
-                );
-
-                for(auto& [i,j,expr] : jacobianMatrix){
-
-                    if(i > idx){
-                        i--;
-                    }
-
-                    if(j > idx){
-                        j--;
-                    }
-                }
-            }
-
-            LOG << "Jacoby Matrix" << endl;
-            LOG_TIMER;
-
-            // globales Residuum kürzen
-            for(const auto& idx : m_isoMesh.m_indicesToRemove){
-
-                removeRow(globalResidual, idx);
-            }
-
-            // Displacement Ansatz wählen
-            Eigen::MatrixXf displacement(globalResidual.nrows(),1);
-            displacement.fill(0);
-
-            for(size_t row = 0; row < globalResidual.nrows(); row++){
-
-                const float& load = m_isoMesh.m_fSystem.coeffRef(row,0);
-                if(std::abs(load) > 1e-12){
-                    globalResidual.set(row,0,globalResidual.get(row,0) - toExpression(load));
-                }
-            }
-
             //
             // LOG << jacobianMatrix << endl;
 
             // hier Iteration und für jeden Schritt in Tangente und Residuum einsetzen
             // ...
-
-            //
-            SymEngine::map_basic_basic substitutionMap = {};
-
-            //
-            Eigen::MatrixXf substitutedResidual(globalResidual.nrows(),1);
-            substitutedResidual.setZero();
-
-            Eigen::SparseMatrix<float> substitutedJacobianMatrix(globalResidual.nrows(),globalResidual.nrows());
-            substitutedJacobianMatrix.setZero();
-
-            // for
-
-            // while(residuum(u) != 0vec){ // bzw toleranz
-            
-                // u += -residuum(u)/tangente(u)
-            // }
-
-            // dadurch dass einträge pro Iterationsschritt überschrieben werden kann clear und emplace
-            // weggelassen werden
-
-            // global Residual von ungültigen us abhängig
-
-            bool residuumIsNull = false;
-
-            return;
-
-            while(!residuumIsNull){
-
-                substitutionMap.clear();
-
-                // hier muss für alle fixed dofs null übergeben werden und alle anderen Einträge des
-                // gekürzten displacement vektors auf die gesamten dofs zu mappen
-                size_t ndofOffset = 0;
-                for(size_t uRow = 0; uRow < displacement.rows();){
-
-                    if(std::find(m_isoMesh.m_indicesToRemove.begin(), m_isoMesh.m_indicesToRemove.end(), uRow + ndofOffset)
-                        != m_isoMesh.m_indicesToRemove.end()){
-
-                        substitutionMap[toExpression("u" + std::to_string(uRow + ndofOffset))] = NULL_EXPR;
-                        ndofOffset++;
-
-                        continue;
-                    }
-
-                    substitutionMap[toExpression("u" + std::to_string(uRow + ndofOffset))] = toExpression(displacement(uRow,0));
-                    uRow++;
-                }
-
-                RESET_TIMER
-                subMatrix(globalResidual, substitutedResidual, substitutionMap);
-                LOG << "NORM " << substitutedResidual.norm() << endl;
-                residuumIsNull = std::abs(substitutedResidual.norm()) < 10; 
-                LOG_TIMER
-                subTriplets(jacobianMatrix, substitutedJacobianMatrix, substitutionMap);
-                LOG_TIMER
-
-                Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
-                solver.analyzePattern(substitutedJacobianMatrix);
-                solver.factorize(substitutedJacobianMatrix);
-
-                // LOG << substitutedJacobianMatrix.block(0,0,10,10) << endl;
-
-                if(solver.info() != Eigen::Success) {
-                    LOG << "Fehler bei der Faktorisierung!" << endl;
-
-                    for (int k=0; k<substitutedJacobianMatrix.outerSize(); ++k)
-                        for (Eigen::SparseMatrix<float>::InnerIterator it(substitutedJacobianMatrix, k); it; ++it)
-                            if (!std::isfinite(it.value()))
-                                std::cout << "Problematischer Wert an (" << it.row() << "," << it.col() << "): " << it.value() << endl;
-
-                    break;
-                }
-
-                // LOG << displacement.block(0,0,10,1) << endl;
-                displacement -=  0.5 * solver.solve(substitutedResidual);
-
-                LOG_TIMER
-            }
 
             return;
         }
