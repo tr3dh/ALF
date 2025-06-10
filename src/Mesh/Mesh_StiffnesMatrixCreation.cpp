@@ -175,7 +175,7 @@ bool IsoMesh::createStiffnessMatrix(){
 
             kCell += subsBMatrix.transpose() * CMatrix * subsBMatrix *
                 SymEngine::eval_double(*jDet->subs(currentCellPrefab.quadraturePoints[nodeNum])) * currentCellPrefab.weights[nodeNum] *
-                m_material.t;
+                (nDimensions == 2 ? m_material.t : 1);
         }
 
         // Elementsteifigkeits Matrix [kCell] ermittlelt
