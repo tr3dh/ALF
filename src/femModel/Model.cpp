@@ -70,7 +70,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     if(m_isoMesh.getMaterial().isLinear){
 
         RETURNING_ASSERT(m_isoMesh.createStiffnessMatrix(), "KMatrix Erstellung fehlgeschlagen",);
-        
+
         m_isoMesh.readBoundaryConditions();
         m_isoMesh.solve();
 
@@ -102,6 +102,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         //
         std::unordered_map<std::string, SymEngine::DenseMatrix> symbolTable = {};
         symbolTable["ElastTensor"] = m_isoMesh.SymCMatrix;
+        symbolTable["t"] = SymEngine::DenseMatrix(1,1,{toExpression(m_isoMesh.getMaterial().t)});
 
         // epsilon_v mit starwert zeros (mit Nullen gefüllt) initialisieren
         symbolTable["epsilon_v"] = SymEngine::DenseMatrix(m_isoMesh.m_cachedBMats.begin()->second.nrows(),1);
@@ -123,7 +124,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         SymEngine::zeros(globalResidual);
 
         //
-        sym::RoundingVisitor visitor(3);
+        sym::RoundingVisitor visitor;
 
         // Startwerte festlegen
         // ...
@@ -146,19 +147,15 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
             // startwerte anpassen
 
-            LOG << "erstelle Residuum" << endl;
-
-            START_TIMER;
+            LOG << "** erstelle Residuum" << endl;
 
             // auf fixed dofs achten
-            // . gekürzter displacement vektor um m_indicesToRemove.size()
+            // . displacement vektor und symbol vektor aufstellen und kürzen
             // . Residuums erstellung wie gehabt und kürzen
-            // . Jacoby Matrix erstellen wie gehabt und kürzen
-            // . Bei Erstellen substitutionsMap
-            // . Map des gekürzten displacement vektors auf {"u_0", "u_1", ...} mit u_i = 0 für i in fixedDofIndices
-            // . Kraft und Jacoby Matrix zeilen/spalten entfernen für fixedDofIndices
-            // >> delta wird nur für nicht fixed Dofs Berechnet und beaufschlagt
-            // >> trotzdem mitnehmen der indices ohne Beachtung der Vektor kürzung
+            // . gekürzten Kraftvektor von Residuum abziehen
+            // Durch die übergabe des gekürzten Residuums und symbol und displacement Vektors an den NR Solver
+            // wird auch nur eine um die fixierten dofs erstelle Jacoby Matrix erstellt und das delta für das
+            // reduzierte System berechnet
 
             for(const auto& [cellIdx, cell] : m_isoMesh.getCells()){
 
@@ -205,10 +202,8 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                     symbolTable["w"].set(0,0,toExpression(r_pref.weights[quadPoint]));
                 
                     //
-                    resCell += evalSymbolicMatrixExpr("B^T*ElastTensor*(B*uCell)*jDet*w",symbolTable);
+                    resCell += evalSymbolicMatrixExpr("B^T*ElastTensor*(B*uCell+-epsilon_v)*jDet*w*t",symbolTable);
                 }
-
-                // LOG << cellIdx << endl;
 
                 // Assemblierung in globale K Matrix bzw Residuumsvektor
                 for(size_t localNodeNum = 0; localNodeNum < r_pref.nNodes; localNodeNum++){
@@ -224,13 +219,9 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                 }
             }
 
-            LOG_TIMER;
-
             // nötig und zeitsparend ???
             expandMatrix(globalResidual);
             sym::roundMatrix(globalResidual);
-
-            LOG_TIMER;
 
             // benötigt wird ein gekürztes Residuum ein gekürzter symbolVector und der Lösungsvektor
 
@@ -263,11 +254,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
             Eigen::MatrixXf displacement(globalResidual.nrows(), globalResidual.ncols());
             displacement.fill(0);
 
-            LOG << "solve" << endl;
-
-            solveNewtonRaphson(globalResidual, symbolVector, displacement);
-
-            LOG_TIMER;
+            solveNewtonRaphson(globalResidual, symbolVector, displacement, 1);
 
             // globalResidual - f = 0 mit NR lösen
             // >> u für Zeitschritt bekannt
@@ -283,13 +270,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
             // >> herauskommt eine Matrix
             // Beginn der Newton Raphson Iteration
 
-            RESET_TIMER;
-
-            //
-            // LOG << jacobianMatrix << endl;
-
-            // hier Iteration und für jeden Schritt in Tangente und Residuum einsetzen
-            // ...
+            // >> nächster Iterationsschritt
 
             return;
         }

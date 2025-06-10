@@ -8,18 +8,18 @@ namespace sym{
 
     using namespace SymEngine;
 
-    inline double round_to(double value, int decimal_places = 3) {
+    inline double round_to(double value, int decimal_places = g_decimalPlaces) {
         const double multiplier = std::pow(10.0, decimal_places);
         return std::round(value * multiplier) / multiplier;
     }
 
-    inline std::string double_to_string(double value, int decimal_places = 3) {
+    inline std::string double_to_string(double value, int decimal_places = g_decimalPlaces) {
         std::ostringstream oss;
         oss << std::fixed << std::setprecision(decimal_places) << value;
         return oss.str();
     }
 
-    inline void round_subs_map(SymEngine::map_basic_basic& subs, int decimal_places = 3) {
+    inline void round_subs_map(SymEngine::map_basic_basic& subs, int decimal_places = g_decimalPlaces) {
         for(auto& [sym, sub] : subs) {
 
             try {
@@ -39,7 +39,7 @@ namespace sym{
         int decimal_places_;
 
     public:
-        RoundingVisitor(int decimal_places = 3) : decimal_places_(decimal_places) {}
+        RoundingVisitor(int decimal_places = g_decimalPlaces) : decimal_places_(decimal_places) {}
 
         RCP<const Basic> apply(const RCP<const Basic> &expr) {
             expr->accept(*this);
@@ -80,12 +80,12 @@ namespace sym{
     };
 
     // Einfache Funktion zum Runden aller Zahlen in einem Ausdruck
-    inline RCP<const Basic> round_all_numbers(const RCP<const Basic> &expr, int decimal_places = 3) {
+    inline RCP<const Basic> round_all_numbers(const RCP<const Basic> &expr, int decimal_places = g_decimalPlaces) {
         RoundingVisitor visitor(decimal_places);
         return visitor.apply(expr);
     }
 
-    inline void roundMatrix(SymEngine::DenseMatrix& mat, int decimal_places = 3) {
+    inline void roundMatrix(SymEngine::DenseMatrix& mat, int decimal_places = g_decimalPlaces) {
         RoundingVisitor visitor(decimal_places); // nur einmal erzeugen!
         for (unsigned i = 0; i < mat.nrows(); ++i) {
             for (unsigned j = 0; j < mat.ncols(); ++j) {

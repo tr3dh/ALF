@@ -10,6 +10,7 @@ void assembleSubstitutionMap(SymEngine::map_basic_basic& substitutionMap, const 
     }
 }
 
+//
 void solveNewtonRaphson(const SymEngine::DenseMatrix& residual, const SymEngine::DenseMatrix& symbolVector,
     Eigen::MatrixXf& result, const float& tolerance){
 
@@ -54,13 +55,16 @@ void solveNewtonRaphson(const SymEngine::DenseMatrix& residual, const SymEngine:
     subTriplets(jacobianMatrix, substitutedJacobyMatrix, substitutionMap);
 
     //
+    float firstResidualNorm = substitutedResidual.norm();
+
+    //
     Eigen::SparseLU<Eigen::SparseMatrix<float>> solver;
     solver.analyzePattern(substitutedJacobyMatrix);
     
-    while(std::abs(substitutedResidual.norm()) > tolerance){
+    //
+    int numIterations = 0;
 
-        //
-        LOG << substitutedResidual.norm() << endl;
+    while(std::abs(substitutedResidual.norm()) > tolerance){
 
         //
         solver.factorize(substitutedJacobyMatrix);
@@ -74,5 +78,12 @@ void solveNewtonRaphson(const SymEngine::DenseMatrix& residual, const SymEngine:
         //
         subMatrix(residual, substitutedResidual, substitutionMap);
         subTriplets(jacobianMatrix, substitutedJacobyMatrix, substitutionMap);
+
+        //
+        numIterations++;
     }
+
+    //
+    LOG << "** Newton Raphson Iteration " << numIterations << " mal durchgeführt firstNorm : " << 
+            firstResidualNorm << " norm nach Iteration : " << substitutedResidual.norm() << endl;
 }

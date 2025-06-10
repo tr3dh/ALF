@@ -76,6 +76,7 @@ namespace fs = std::filesystem;
 #include "Drivers/Calculations/__SymEngineMatrix.h"
 #include "Drivers/Calculations/__SymbolicExpressionRound.h"
 #include "Drivers/Calculations/__EigenMatrix.h"
+#include "Drivers/Calculations/__MatrixConversions.h"
 
 #include "Drivers/SFML/__sfLine.h"
 #include "Drivers/SFML/__sfPolygon.h"
