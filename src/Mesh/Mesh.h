@@ -49,11 +49,13 @@ public:
 
     //
     std::vector<Eigen::Triplet<float>> loadTriplets = {};
-    Eigen::SparseMatrix<float> m_kSystem, m_uSystem, m_fSystem;
+    Eigen::SparseMatrix<float> m_kSystem, m_fSystem;
+    Eigen::MatrixXf m_uSystem;
     std::map<NodeIndex, Expression>  m_cachedJDets = {};
     std::map<NodeIndex, SymEngine::DenseMatrix> m_cachedBMats = {};
 
     std::vector<NodeIndex> m_indicesToRemove = {};
+    std::vector<NodeIndex> m_indicesToAdd = {};
 
     std::string m_matPath = NULLSTR;
     IsoMeshMaterial m_material;
@@ -76,10 +78,10 @@ public:
 
     bool readBoundaryConditions(bool apply = true, const std::string& path = NULLSTR);
 
-    static void displaceNodes(NodeSet& nodes, const Eigen::SparseMatrix<float>& displacement, size_t nodeNumOffset);
+    static void displaceNodes(NodeSet& nodes, const Eigen::MatrixXf& displacement, size_t nodeNumOffset);
     void solve();
 
-    void calculateStrainAndStress(bool calculateOnQuadraturePoints = false);
+    void calculateStrainAndStress(DataSet& dataSet, const Eigen::MatrixXf& displacement, bool calculateOnQuadraturePoints = false);
 
     void display(const DataSet& dataSet, const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0,
         const std::vector<NodeSet*>& nodeSets = {}, const std::vector<Color*> setColors = {}, int displayOnNodeSet = 0,
@@ -93,7 +95,7 @@ public:
     const CellSet& getCells() const;
     const Eigen::SparseMatrix<float>& getStiffnesMatrix() const;
     const DataSet& getCellData() const;
-    const Eigen::SparseMatrix<float>& getDisplacement() const;
+    const Eigen::MatrixXf& getDisplacement() const;
 
     void saveMaterial();
     const std::string& getMaterialPath();

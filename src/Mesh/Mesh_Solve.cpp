@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-void IsoMesh::displaceNodes(NodeSet& nodes, const Eigen::SparseMatrix<float>& displacement, size_t nodeNumOffset){
+void IsoMesh::displaceNodes(NodeSet& nodes, const Eigen::MatrixXf& displacement, size_t nodeNumOffset){
 
     // size gibt hier rows * cols zurück
     size_t dimension = nodes.begin()->second.getDimension();
@@ -13,7 +13,7 @@ void IsoMesh::displaceNodes(NodeSet& nodes, const Eigen::SparseMatrix<float>& di
     for(const auto& [index, node] : nodes){
 
         for(size_t coord = 0; coord < dimension; coord++){
-            nodes[index][coord] += displacement.coeff((index-nodeNumOffset) * dimension + coord,0);
+            nodes[index][coord] += displacement((index-nodeNumOffset) * dimension + coord,0);
         }
     }
 }
@@ -26,15 +26,14 @@ void IsoMesh::solve(){
     solver.compute(m_kSystem);
     m_uSystem = solver.solve(m_fSystem);
 
-    std::sort(m_indicesToRemove.begin(), m_indicesToRemove.end());
-    addSparseRow(m_uSystem, m_indicesToRemove);
+    addDenseRows(m_uSystem, Eigen::RowVectorXf::Zero(1), m_indicesToAdd);
 
     m_defNodes = m_nodes;
-    displaceNodes(m_defNodes, m_uSystem, nodeNumOffset);
+    displaceNodes(m_defNodes, m_uSystem.sparseView(), nodeNumOffset);
 }
 
 //
-void IsoMesh::calculateStrainAndStress(bool calculateOnQuadraturePoints){
+void IsoMesh::calculateStrainAndStress(DataSet& dataSet, const Eigen::MatrixXf& displacement, bool calculateOnQuadraturePoints){
 
     LOG << "-- Calculate Strain and Stress" << endl;
 
@@ -42,15 +41,15 @@ void IsoMesh::calculateStrainAndStress(bool calculateOnQuadraturePoints){
     float jDet = 0.0f;
 
     //
-    m_cellData.reserve(m_Cells.size());
+    dataSet.reserve(m_Cells.size());
 
     //
     int nodeNum = 0;
     for(const auto& [cellIndex, cell] : m_Cells){
 
-        m_cellData.try_emplace(cellIndex, cell.getPrefab());
+        dataSet.try_emplace(cellIndex, cell.getPrefab());
 
-        CellData& r_cellData = m_cellData.at(cellIndex);
+        CellData& r_cellData = dataSet.at(cellIndex);
         const CellPrefab& r_prefab = m_Cells[cellIndex].getPrefab();
 
         // 1, 2, 3, 4, ...
@@ -59,14 +58,22 @@ void IsoMesh::calculateStrainAndStress(bool calculateOnQuadraturePoints){
             // x, y, z, ...
             for(const auto& globKoord : globKoords){
                 
-                r_cellData.cellDisplacement(nodeNum * nDimensions + globKoord, 0) = m_uSystem.coeffRef((cell[nodeNum] - nodeNumOffset) * nDimensions + globKoord, 0);
+                r_cellData.cellDisplacement(nodeNum * nDimensions + globKoord, 0) = displacement((cell[nodeNum] - nodeNumOffset) * nDimensions + globKoord, 0);
             }
         }
 
         // 1, 2, 3, 4, ...
         for(nodeNum = 0; nodeNum < r_prefab.nNodes; nodeNum++){
 
-            subMatrix(m_cachedBMats[cellIndex], BMatrix, r_prefab.quadraturePoints[nodeNum]);
+            try{
+                subMatrix(m_cachedBMats[cellIndex], BMatrix, r_prefab.quadraturePoints[nodeNum]);
+            } catch(...){
+                LOG << "SymEngine Matrix : " << m_cachedBMats[cellIndex].nrows() << " " << m_cachedBMats[cellIndex].ncols() <<
+                        "Substitutions Container (Eigen Dense) " << BMatrix.rows() << " " << BMatrix.cols() << endl;
+
+                RETURNING_ASSERT(TRIGGER_ASSERT, "substition von cached BMatrix in Eigen BMatrix Container fehlgeschlagen ",);
+            }
+
             jDet = SymEngine::eval_double(*m_cachedJDets[cellIndex]->subs(r_prefab.quadraturePoints[nodeNum]));
 
             // hier gibt es zwei optionen :
@@ -82,7 +89,8 @@ void IsoMesh::calculateStrainAndStress(bool calculateOnQuadraturePoints){
                 
                 r_cellData.quadratureStrain.emplace_back(BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum]);
                 r_cellData.quadratureStress.emplace_back(CMatrix * BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum]);
-            } else {
+            }
+            else {
 
                 r_cellData.strain += BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum];
                 r_cellData.stress += CMatrix * BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum];

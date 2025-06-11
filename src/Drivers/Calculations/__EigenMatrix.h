@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../ReccHandling/__Asserts.h"
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 
@@ -44,7 +45,12 @@ inline void removeSparseRowAndCol(Eigen::SparseMatrix<float>& mat, const std::ve
 
 template<typename T>
 inline void removeSparseRow(Eigen::SparseMatrix<float>& mat, const std::vector<T>& rowsToRemove) {
-    assert(mat.cols() == 1);
+
+    RETURNING_ASSERT(mat.cols() == 1, "Funktion nicht für Martrizen mit Spaltenanzahl ungleich 1 ausgelegt",);
+    if (rowsToRemove.empty()) return;
+
+    RETURNING_ASSERT(std::is_sorted(rowsToRemove.begin(), rowsToRemove.end(), std::greater<>()), "indices nicht absteigend sortiert",);
+
     std::vector<Eigen::Triplet<float>> triplets;
     triplets.reserve(mat.nonZeros());
 
@@ -80,10 +86,10 @@ inline void removeSparseRow(Eigen::SparseMatrix<float>& mat, const std::vector<T
 template<typename T>
 inline void addSparseRow(Eigen::SparseMatrix<float>& mat, const std::vector<T>& rowsToAdd) {
     
-    assert(mat.cols() == 1);
+    RETURNING_ASSERT(mat.cols() == 1, "Funktion nicht für Martrizen mit Spaltenanzahl ungleich 1 ausgelegt",);
     if (rowsToAdd.empty()) return;
     
-    assert(std::is_sorted(rowsToAdd.begin(), rowsToAdd.end()));
+    RETURNING_ASSERT(std::is_sorted(rowsToAdd.begin(), rowsToAdd.end()), "Reihenindices sind nicht aufsteigend sortiert",);
     
     std::vector<Eigen::Triplet<float>> triplets;
     triplets.reserve(mat.nonZeros() + rowsToAdd.size());
@@ -117,7 +123,64 @@ inline void addSparseRow(Eigen::SparseMatrix<float>& mat, const std::vector<T>& 
 }
 
 // Entfernt Zeile rowToRemove aus MatrixXf mat
-void removeRow(Eigen::MatrixXf& mat, int rowToRemove);
+template<typename T>
+inline void removeRow(Eigen::MatrixXf& mat, const T& rowToRemove){
+
+    int numRows = mat.rows();
+    int numCols = mat.cols();
+
+    if (rowToRemove < 0 || rowToRemove >= numRows) return; // Ungültiger Index
+
+    if (rowToRemove < numRows - 1) {
+        mat.block(rowToRemove, 0, numRows - rowToRemove - 1, numCols) =
+            mat.block(rowToRemove + 1, 0, numRows - rowToRemove - 1, numCols);
+    }
+
+    mat.conservativeResize(numRows - 1, numCols);
+}
 
 // Fügt Zeile row an Position insertAt in MatrixXf mat ein
-void addRow(Eigen::MatrixXf& mat, const Eigen::RowVectorXf& row, int insertAt);
+template<typename T>
+inline void addRow(Eigen::MatrixXf& mat, const Eigen::RowVectorXf& row, const T& insertAt) {
+
+    int numRows = mat.rows();
+    int numCols = mat.cols();
+
+    mat.conservativeResize(numRows + 1, numCols);
+
+    // Insert the new row
+    Eigen::MatrixXf block = mat.block(insertAt, 0, numRows - insertAt, numCols);
+    mat.block(insertAt + 1, 0, numRows - insertAt, numCols) = block;
+
+    mat.row(insertAt) = row;
+}
+
+//
+template<typename T>
+inline void removeDenseRows(Eigen::MatrixXf& mat, const std::vector<T>& rowsToRemove){
+
+    if (rowsToRemove.empty()) return;
+
+    RETURNING_ASSERT(std::is_sorted(rowsToRemove.begin(), rowsToRemove.end(), std::greater<>()), "indices nicht absteigend sortiert",);
+
+    for(const auto& idx : rowsToRemove){
+
+        //
+        removeRow(mat,idx);
+    }
+}
+
+//
+template<typename T>
+inline void addDenseRows(Eigen::MatrixXf& mat, const Eigen::RowVectorXf& row, const std::vector<T>& rowsToAdd){
+
+    if (rowsToAdd.empty()) return;
+    
+    RETURNING_ASSERT(std::is_sorted(rowsToAdd.begin(), rowsToAdd.end()), "Reihenindices sind nicht aufsteigend sortiert",);
+
+    for(const auto& idx : rowsToAdd){
+
+        //
+        addRow(mat,row,idx);
+    }
+}

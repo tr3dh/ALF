@@ -27,7 +27,7 @@ void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixa
     LOG << "-- Aplying node Constraints ..." << endl;
 
     m_indicesToRemove.clear();
-    m_uSystem = Eigen::SparseMatrix<float>(m_nodes.size() * nDimensions, 1);
+    m_uSystem = Eigen::MatrixXf(m_nodes.size() * nDimensions, 1);
 
     for(const auto& [index, dirVec] : nodeFixations){
         for(const auto& direction : dirVec){
@@ -42,8 +42,11 @@ void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixa
 
     LOG << endl;
 
-    // Absteigend sortieren
-    std::sort(m_indicesToRemove.begin(), m_indicesToRemove.end(), std::greater<NodeIndex>());
+    m_indicesToAdd = m_indicesToRemove;
+
+    // Absteigend und aufsteigend sortieren
+    std::sort(m_indicesToRemove.begin(), m_indicesToRemove.end(), std::greater<NodeIndex>());       // Absteigend
+    std::sort(m_indicesToAdd.begin(), m_indicesToAdd.end());                                        // Aufsteigend
 
     LOG << "-- Removing indices {";
     for(const auto& i : m_indicesToRemove){
@@ -52,7 +55,7 @@ void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixa
     LOG << "}" << endl;
     LOG << endl;
 
-    removeSparseRow(m_uSystem, m_indicesToRemove);
+    removeDenseRows(m_uSystem, m_indicesToRemove);
     removeSparseRow(m_fSystem, m_indicesToRemove);
     removeSparseRowAndCol<NodeIndex>(m_kSystem, m_indicesToRemove);
 

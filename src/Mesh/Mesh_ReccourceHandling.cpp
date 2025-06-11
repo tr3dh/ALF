@@ -39,7 +39,7 @@ const DataSet& IsoMesh::getCellData() const{
     return m_cellData;
 }
 
-const Eigen::SparseMatrix<float>& IsoMesh::getDisplacement() const{
+const Eigen::MatrixXf& IsoMesh::getDisplacement() const{
     return m_uSystem;
 }
 

@@ -8,6 +8,7 @@
 . Toleranz und entsprechende Dezimalstellen aus file Laden
 
 # CleanUp
+. Compiler Warnungen beheben
 . aufteilung in incl/src ?? -> angenehmer für Nutzungs als lib
 . if mat has pdf einfügen
 . size == 0 checks ins rendering

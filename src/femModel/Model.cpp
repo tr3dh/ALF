@@ -74,7 +74,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         m_isoMesh.readBoundaryConditions();
         m_isoMesh.solve();
 
-        m_isoMesh.calculateStrainAndStress();
+        m_isoMesh.calculateStrainAndStress(m_isoMesh.m_cellData, m_isoMesh.m_uSystem);
 
         // if mat has pdf einfügen
         if(m_isoMesh.getMaterial().hasPdf){
@@ -165,7 +165,12 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         }
 
         // Ergebnis Container und Arbeitsgröße für den Newton Raphson Solver
-        Eigen::MatrixXf displacement(symbolVector.nrows(), 1);
+        // ist bereits mit m_uSystem
+
+        // speichern der Daten in SimulationFrame struct mit {displacement, defNodes, DataSet, innerVariable}
+        // Option : innere Variable in Frame einlagern oder slot im CellData einrichten
+        // der displacement vektor dient dann immer als Lösungsvektor und es wird ins frame Dataset geschrieben
+        // und auch die Daten daraus für die sustitution entnommen
 
         // durch Integrationsschritte loopen
         for(size_t stepIdx = 0; stepIdx < simulationSteps; stepIdx++){
@@ -186,7 +191,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
             // startwerte anpassen
 
             // auf fixed dofs achten
-            // . displacement vektor und symbol vektor aufstellen und kürzen
+            // . displacement vektor und symbol vektor aufstellen und kürzen (für m_uSystem bereits geschehen)
             // . Residuums erstellung wie gehabt und kürzen
             // . gekürzten Kraftvektor von Residuum abziehen
             // Durch die übergabe des gekürzten Residuums und symbol und displacement Vektors an den NR Solver
@@ -320,17 +325,28 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
             }
 
             // startwert Nullvektor
-            displacement.fill(0);
+            m_isoMesh.m_uSystem.fill(0);
 
             // globalResidual - f = 0 mit NR lösen
-            solveNewtonRaphson(globalResidual, symbolVector, displacement, 1);
+            solveNewtonRaphson(globalResidual, symbolVector, m_isoMesh.m_uSystem, 5);
 
             // Ermitteln von Spannug/Dehnung etc. für Substitution und cachen
-            // der Spannungs/Dehnungswerte und Verschiebungen 
+            // der Spannungs/Dehnungswerte und Verschiebungen
+
+            // Für ermitteln Spannung und Dehnung muss zunächst der Spannungsvektor so aufgefüllt werden dass
+            // er wieder von der Länge mit allen dofs übereinstimmt
+            addDenseRows(m_isoMesh.m_uSystem, Eigen::RowVectorXf::Zero(1), m_isoMesh.m_indicesToAdd);
+
+            // Nodes deformieren
+            m_isoMesh.m_defNodes = m_isoMesh.m_nodes;
+            m_isoMesh.displaceNodes(m_isoMesh.m_defNodes, m_isoMesh.m_uSystem, m_isoMesh.nodeNumOffset);
+
+            // nach dem der spannungs Vektor wieder vollständig ist können nun spannungen und Dehnungen ermittelt werden
+            m_isoMesh.calculateStrainAndStress(m_isoMesh.m_cellData, m_isoMesh.m_uSystem);
 
             // für finale substitution in Evogl
             // . nach oben in Schleife durch Elemente legen ??
-            assembleSubstitutionMap(substituteDisplacement, symbolVector, displacement);
+            assembleSubstitutionMap(substituteDisplacement, symbolVector, m_isoMesh.m_uSystem);
 
             // über einfache SymEngine Substitutionen bzw subsMatrix kann jetzt der Ausdruck für die innere
             // Variable, der mittels der Matrixsubstitution ermittelt wurde mit den Einträgen des Verschiebungsvektors substituiert und so
@@ -476,8 +492,8 @@ void FemModel::sampling(){
     float lowerXi = -m_deviation;
 
     //
-    u_upperXi = m_isoMesh.getDisplacement().toDense() * (1-upperXi);
-    u_lowerXi = m_isoMesh.getDisplacement().toDense() * (1-lowerXi);
+    u_upperXi = m_isoMesh.getDisplacement() * (1-upperXi);
+    u_lowerXi = m_isoMesh.getDisplacement() * (1-lowerXi);
 
     //
     n_upperXi = m_isoMesh.getUndeformedNodes();
