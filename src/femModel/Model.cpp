@@ -54,6 +54,47 @@ void FemModel::unload(){
     *this = FemModel();
 }
 
+// Container für die ErgebnisWerte eines Schritts der Zeitschrittintegration
+struct SimulationFrame{
+
+    //
+    SimulationFrame() = default;
+
+    SimulationFrame(const size_t& dofs){
+
+    }
+
+    void setupDisplacement(const size_t& dofs){
+    
+        displacement = Eigen::MatrixXf(dofs,1);
+        displacement.fill(0);
+    }
+
+    void refillDisplacement(const std::vector<NodeIndex>& fixedDofs){
+
+        // Für ermitteln Spannung und Dehnung muss zunächst der Spannungsvektor so aufgefüllt werden dass
+        // er wieder von der Länge mit allen dofs übereinstimmt
+        addDenseRows(displacement, Eigen::RowVectorXf::Zero(1), fixedDofs);
+    }
+
+    //
+    DataSet cellDataSet;
+    Eigen::MatrixXf displacement;
+    // CellSet und undeformed Nodes liegen im isoMesh
+    NodeSet deformedNodes;
+};
+
+void fromEigenDense(SymEngine::DenseMatrix& target, Eigen::MatrixXf& source){
+
+    RETURNING_ASSERT(target.nrows() == source.rows() && target.ncols() == source.cols(), "Unültige Dimensionen",);
+
+    for (int i = 0; i < target.nrows(); ++i) {
+        for (int j = 0; j < target.ncols(); ++j) {
+            target.set(i, j, SymEngine::real_double(source(i, j)));
+        }
+    }
+}
+
 FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
     //
@@ -104,7 +145,35 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
         // Substitutionsparameter die sich über Iteration nicht ändern
         symbolTable["ElastTensor"] = m_isoMesh.SymCMatrix;
+        
+        symbolTable["I"] = SymEngine::DenseMatrix(m_isoMesh.SymCMatrix);
+        SymEngine::eye(symbolTable["I"]);
+
         symbolTable["t"] = SymEngine::DenseMatrix(1,1,{toExpression((m_isoMesh.nDimensions == 2 ? m_isoMesh.getMaterial().t : 1))});
+
+        // Deviatoren
+        if(m_isoMesh.nDimensions == 2) {
+            // 2D Deviator-Matrix
+            symbolTable["S"] = SymEngine::DenseMatrix(3,3, {
+                toExpression("2/3"), toExpression("-1/3"), toExpression("0"),
+                toExpression("-1/3"), toExpression("2/3"), toExpression("0"),
+                toExpression("0"),   toExpression("0"),   toExpression("1")
+            });
+        } else if(m_isoMesh.nDimensions == 3) {
+            // 3D Deviator-Matrix
+            symbolTable["S"] = SymEngine::DenseMatrix(6,6, {
+                toExpression("2/3"),  toExpression("-1/3"), toExpression("-1/3"), toExpression("0"), toExpression("0"), toExpression("0"),
+                toExpression("-1/3"), toExpression("2/3"),  toExpression("-1/3"), toExpression("0"), toExpression("0"), toExpression("0"),
+                toExpression("-1/3"), toExpression("-1/3"), toExpression("2/3"),  toExpression("0"), toExpression("0"), toExpression("0"),
+                toExpression("0"),    toExpression("0"),    toExpression("0"),    toExpression("1"), toExpression("0"), toExpression("0"),
+                toExpression("0"),    toExpression("0"),    toExpression("0"),    toExpression("0"), toExpression("1"), toExpression("0"),
+                toExpression("0"),    toExpression("0"),    toExpression("0"),    toExpression("0"), toExpression("0"), toExpression("1")
+            });
+        }
+
+        //
+        symbolTable["tetha"] = SymEngine::DenseMatrix(1,1,{toExpression(100000)});
+        symbolTable["deltaT"] = SymEngine::DenseMatrix(1,1,{toExpression(deltaTime)});
 
         // Container für sich ändernde Paramter
 
@@ -123,6 +192,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         symbolTable["epsilon_v_n_plus_1"] = SymEngine::DenseMatrix(m_isoMesh.m_cachedBMats.begin()->second.nrows(),1);
         
         // Startwerte
+        SymEngine::zeros(symbolTable["epsilon_n"]);
         SymEngine::zeros(symbolTable["epsilon_v_n"]);
 
         // Container für Werte der inneren Variable
@@ -172,6 +242,18 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         // der displacement vektor dient dann immer als Lösungsvektor und es wird ins frame Dataset geschrieben
         // und auch die Daten daraus für die sustitution entnommen
 
+        // Container der Simulationswerte
+        std::vector<SimulationFrame> simulationFrames = {};
+
+        //
+        simulationFrames.resize(simulationSteps);
+
+        //
+        SymEngine::map_basic_basic substituteDisplacement = {};
+
+        //
+        const auto cellNumOffset = m_isoMesh.getCells().begin()->first;
+
         // durch Integrationsschritte loopen
         for(size_t stepIdx = 0; stepIdx < simulationSteps; stepIdx++){
 
@@ -199,15 +281,19 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
             // reduzierte System berechnet
 
             //
+            bool firstFrame = stepIdx == 0;
+
+            //
+            SimulationFrame& r_currentFrame = simulationFrames[stepIdx];
+            SimulationFrame& r_previousFrame = firstFrame ? simulationFrames[stepIdx] : simulationFrames[stepIdx-1];
+            r_currentFrame.setupDisplacement(m_isoMesh.m_nodes.size() * m_isoMesh.nDimensions - m_isoMesh.m_indicesToRemove.size());
+
+            //
             LOG << "** erstelle Residuum für Iterationsschritt " << stepIdx << endl;
 
             //
+            globalResidual.resize(m_isoMesh.m_nodes.size() * m_isoMesh.nDimensions,1);
             SymEngine::zeros(globalResidual);
-
-            const auto cellNumOffset = m_isoMesh.getCells().begin()->first;
-
-            //
-            SymEngine::map_basic_basic substituteDisplacement = {};
 
             //
             for(const auto& [cellIdx, cell] : m_isoMesh.getCells()){
@@ -248,7 +334,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                         }
                     }
                 }
-
+                
                 // Loop durch quadrature Points
                 for(size_t quadPoint = 0; quadPoint < r_pref.nNodes; quadPoint++){
 
@@ -257,8 +343,9 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                     symbolTable["jDet"].set(0,0,m_isoMesh.m_cachedJDets[cellIdx]->subs(r_pref.quadraturePoints[quadPoint]));
                     symbolTable["w"].set(0,0,toExpression(r_pref.weights[quadPoint]));
                     
-                    // Dehnung aus letzem Iterationsschritt
-                    symbolTable["epsilon_n"] = SymEngine::DenseMatrix(1,1); // hier Dehnung aus letzem Iterationsschritt einfügen
+                    if(!firstFrame){
+                        fromEigenDense(symbolTable["epsilon_n"], r_previousFrame.cellDataSet.at(cellIdx).strain);
+                    }
 
                     // Dehnung aus aktuellem Schritt mit B*u substutuieren
                     symbolTable["epsilon_n_plus_1"] = evalSymbolicMatrixExpr("B*uCell", symbolTable);
@@ -266,21 +353,17 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                     // Wert innere Variable aus letztem Schritt in innerVariableContainer
                     symbolTable["epsilon_v_n"] = innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint];
 
-                    // bei Start der Iteration
-                    if(stepIdx == 0){
-
-                        // startWerte
-                        symbolTable["epsilon_v_n_plus_1"] = symbolTable["epsilon_v_n"];
-                    }
-                    else{
-
-                        // fortpflanzen der inneren Variable über Evolutionsgleichung
-                        symbolTable["epsilon_v_n_plus_1"] = symbolTable["epsilon_v_n"];
-                    }
-
                     // beim fortpflanzen mit der Evolutionsgleichung bleibt innere Variable in beim Euler implizit
                     // imnmer noch von u abhängig, um sich die Werte dann später abspeichern zu können muss
                     // die Evolutionsgleichung noch einmal mit bekanntem Verschiebungsvektor u subtituiert werden 
+
+                    symbolTable["epsilon_v_n_plus_1"] = firstFrame ? symbolTable["epsilon_v_n"] :
+                        evalSymbolicMatrixExpr(
+                            "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+                                symbolTable);
+
+                    // cachen der von u abhängigen Formel im innerVariable Container
+                    innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint] = symbolTable["epsilon_v_n_plus_1"];
 
                     //
                     cellResidual += evalSymbolicMatrixExpr(
@@ -324,38 +407,40 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                 globalResidual.set(row,0, globalResidual.get(row,0) - toExpression(load)); 
             }
 
-            // startwert Nullvektor
-            m_isoMesh.m_uSystem.fill(0);
-
             // globalResidual - f = 0 mit NR lösen
-            solveNewtonRaphson(globalResidual, symbolVector, m_isoMesh.m_uSystem, 5);
+            solveNewtonRaphson(globalResidual, symbolVector, r_currentFrame.displacement, 5);
 
             // Ermitteln von Spannug/Dehnung etc. für Substitution und cachen
             // der Spannungs/Dehnungswerte und Verschiebungen
 
-            // Für ermitteln Spannung und Dehnung muss zunächst der Spannungsvektor so aufgefüllt werden dass
-            // er wieder von der Länge mit allen dofs übereinstimmt
-            addDenseRows(m_isoMesh.m_uSystem, Eigen::RowVectorXf::Zero(1), m_isoMesh.m_indicesToAdd);
-
-            // Nodes deformieren
-            m_isoMesh.m_defNodes = m_isoMesh.m_nodes;
-            m_isoMesh.displaceNodes(m_isoMesh.m_defNodes, m_isoMesh.m_uSystem, m_isoMesh.nodeNumOffset);
-
-            // nach dem der spannungs Vektor wieder vollständig ist können nun spannungen und Dehnungen ermittelt werden
-            m_isoMesh.calculateStrainAndStress(m_isoMesh.m_cellData, m_isoMesh.m_uSystem);
-
             // für finale substitution in Evogl
             // . nach oben in Schleife durch Elemente legen ??
-            assembleSubstitutionMap(substituteDisplacement, symbolVector, m_isoMesh.m_uSystem);
+            assembleSubstitutionMap(substituteDisplacement, symbolVector, r_currentFrame.displacement);
+
+            // Für ermitteln Spannung und Dehnung muss zunächst der Spannungsvektor so aufgefüllt werden dass
+            // er wieder von der Länge mit allen dofs übereinstimmt
+            r_currentFrame.refillDisplacement(m_isoMesh.m_indicesToAdd);
+
+            // Nodes deformieren
+            r_currentFrame.deformedNodes = m_isoMesh.m_nodes;
+            m_isoMesh.displaceNodes(r_currentFrame.deformedNodes, r_currentFrame.displacement, m_isoMesh.nodeNumOffset);
+
+            // nach dem der spannungs Vektor wieder vollständig ist können nun spannungen und Dehnungen ermittelt werden
+            m_isoMesh.calculateStrainAndStress(r_currentFrame.cellDataSet, r_currentFrame.displacement);
 
             // über einfache SymEngine Substitutionen bzw subsMatrix kann jetzt der Ausdruck für die innere
             // Variable, der mittels der Matrixsubstitution ermittelt wurde mit den Einträgen des Verschiebungsvektors substituiert und so
             // vollständig aufgelöst werden und in den Container geschrieben sodass er für die Berechnungen im nächsten Schritt
             // für die Substitution herangezogen werden kann
 
+            for(auto& var : innerVariableContainer){
+
+                subMatrix(var,var,substituteDisplacement);
+            }
+
             // >> nächster Iterationsschritt
 
-            return;
+            LOG << "Iterationsschritt " << stepIdx << endl;
         }
 
         //

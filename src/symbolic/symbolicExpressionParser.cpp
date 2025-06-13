@@ -182,10 +182,20 @@ SymEngine::DenseMatrix evalSymbolicMatrixExpr(std::string expr, const std::unord
         return SymEngine::DenseMatrix(1,1,{toExpression(0)});
     }
 
-    if(expr.at(0) == '(' && expr.at(expr.size()-1) == ')'){
-    
-        //
-        expr = expr.substr(1,expr.size()-2);
+    if (expr.at(0) == '(') {
+        
+        int count = 0;
+        size_t i = 0;
+        for (; i < expr.size(); ++i) {
+            if (expr[i] == '(') count++;
+            else if (expr[i] == ')') count--;
+            // Wenn count bei 0 ist Klammer die schließende Klammer zur ersten öffnenden
+            if (count == 0) break;
+        }
+
+        if (i == expr.size() - 1) {
+            expr = expr.substr(1, expr.size() - 2);
+        }
     }
 
     const std::string dominantOperator = getDominantOperator(expr);
@@ -266,6 +276,15 @@ SymEngine::DenseMatrix evalSymbolicMatrixExpr(std::string expr, const std::unord
          
             result *= base;            
         }
+
+        return result;
+    }
+    else if(dominantOperator == "Identity"){
+
+        size_t matrixSize = SymEngine::eval_double(*evalSymbolicMatrixExpr(args[0], symbolTable).get(0,0));
+
+        SymEngine::DenseMatrix result(matrixSize, matrixSize);
+        SymEngine::eye(result);
 
         return result;
     }

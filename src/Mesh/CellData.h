@@ -8,6 +8,7 @@ enum class MeshData : uint8_t{
     STRAIN,     
     STRESS,
     VANMISES_STRESS,
+    INNER_VARIABLE,
     NONE,
 };
 
@@ -58,6 +59,9 @@ struct CellData{
     Eigen::MatrixXf strain, stress;
     std::vector<Eigen::MatrixXf> quadratureStrain = {}, quadratureStress = {};
     
+    // 
+    // Eigen::MatrixXf innerVariable;
+
     float cellVolume = 0.0f;
     Eigen::MatrixXf cellDisplacement;
 

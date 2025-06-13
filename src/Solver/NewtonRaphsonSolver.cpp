@@ -3,6 +3,8 @@
 //
 void assembleSubstitutionMap(SymEngine::map_basic_basic& substitutionMap, const SymEngine::DenseMatrix& symbolVector, Eigen::MatrixXf& result){
 
+    ASSERT(symbolVector.nrows() == result.rows(), "Symbol Vector und Werte Vektor für substitution nicht gleich groß");
+
     substitutionMap.clear();
     for(size_t rowInSymbolVector = 0; rowInSymbolVector < symbolVector.nrows(); rowInSymbolVector++){
 
