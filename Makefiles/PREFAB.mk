@@ -213,13 +213,14 @@ enet:
 # funktioniert noch nicht einwandfrei !!
 microTex:
 	@if [ -d "thirdParty/MicroTeX" ]; then \
+			rm -rf thirdParty/MicroTeX; \
 			echo "Info: 'thirdParty/MicroTeX' existiert bereits. Überspringe Build.";\
 		else \
 			echo "Info: builde MicroTeX."; \
 			cd thirdParty && git clone https://github.com/NanoMichael/MicroTeX; \
 			cd MicroTeX;\
 			mkdir build && cd build;\
-			cmake ..;\
+			cmake .. -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF -DCMAKE_CXX_FLAGS="-DWIN32_LEAN_AND_MEAN -DNOMINMAX";\
 			cmake --build .;\
 		fi
 
@@ -302,8 +303,11 @@ prefab:
 	$(PACMAN) mingw-w64-x86_64-nlohmann-json
 
 	$(PACMAN) mingw-w64-x86_64-imagemagick
+	$(PACMAN) mingw-w64-x86_64-poppler
 	$(PACMAN) mingw-w64-x86_64-tinyxml2
 	$(PACMAN) mingw-w64-x86_64-raylib
+	$(PACMAN) mingw-w64-x86_64-ghostscript
+
 	@make r3d
 	@make raylibCpp
 

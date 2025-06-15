@@ -1,7 +1,11 @@
 {
     "isLinear": false,
     "nonLinearApproach": {
-        "evolutionEquation": "(1+(1/tetha)*S*ElastTensor*deltaT)**-1*(epsilon_v_n + (1/tetha)*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+        // Benötigt die konkrete Angabe des Simulationsschritts über innerVarialbe + _n || _n_plus_1
+        "evolutionEquation": "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+        // 0 für Skalar
+        // 1 für Vektor
+        // ...
         "innerVariable": [
             "epsilon_v",
             1
@@ -9,7 +13,22 @@
         "innerVariableSize": [
             3
         ],
-        "sigma": "ElastTensor*(epsilon + -epsilon_v)"
+        // spannungs Asatz wird für Residuumserstellung verwendet R = K*u-f = int(B^T*sigma) - false
+        "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)",
+        "params":{
+            "tetha":{
+                "rows": 1,
+                "cols": 1,
+                "data": [["100000"]]
+            },
+            "Identity2D":{
+                "rows": 3,
+                "cols": 3,
+                "data": [["1", "0", "0"],
+                         ["0", "1", "0"],
+                         ["0", "0", "1"]]
+            }
+        }
     },
     "stdParams": {
         "E": 20000.0,

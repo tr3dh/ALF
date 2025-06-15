@@ -5,11 +5,11 @@
             "xi_max": 0,
             "xi_min": 0
         },
-        "function": "exp(-0.5*(-mu + xi)**2/sigma**2)/(sqrt(2*pi)*sigma)",
+        "function": "b - a*(xi-mu)**2",
         "params": {
-            "mu": 0.0,
-            "pi": 3.1415,
-            "sigma": 0.5
+            "a": 1,
+            "b": 1,
+            "mu": 0.0
         },
         "pdfPreprocessing": {
             "segmentation": 0.1,

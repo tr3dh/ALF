@@ -21,6 +21,9 @@ demo:
 execDemo:
 	@make exec TARGET=build/3dRenderingDemo
 
+formula:
+	@make launch TARGET=build/FormulaEdit
+
 flush:
 	rm build/*.ini
 

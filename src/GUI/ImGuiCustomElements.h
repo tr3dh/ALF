@@ -17,8 +17,11 @@ void NormalizeLineBreaks(std::string& text, size_t maxLen);
 // callback funktion zum einfügen von umbrüchen bei überschreiten der zeilenlänge
 int LinebreakCallback(ImGuiInputTextCallbackData* data);
 
+//
+bool InputString(const std::string& label, std::string& source, const std::string& suffix = "_strInput");
+
 // hauptfunktion für die eingabe von ausdrücken im inputfeld
-void InputExpression(const std::string& label, Expression& source, const std::string& suffix = "_exprInput");
+bool InputExpression(const std::string& label, Expression& source, const std::string& suffix = "_exprInput");
 
 void displayExpression(const std::string& label, Expression& source, const std::string& suffix = "_exprDisplay");
 

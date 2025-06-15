@@ -1,11 +1,16 @@
 # ToDo
 
+# Änderungen
+. if abfrage multiline input text einfügen
+
+# neu
+. inputExpression für strings implementieren
+
 # Prim
-. Jacoby und Residuum nicht in SymEngine::DenseMatrix sondern eingene SymTriplet listen schreiben
-  mit Symtriplet = tuple(x,y,Expr)
-. m_uSystem zu densematrix machen
-. Dicke t in 3D Systemen ??
-. Toleranz und entsprechende Dezimalstellen aus file Laden
+. Toleranz und entsprechende Dezimalstellen aus file Laden ??
+. Simulation ins Mesh verlegen
+. Rendering der Simulation über frame switch mit frame conunter der hochgezählt wird wenn Zeit ab frmaeswitch verstrichen ist
+  über frame switch dauer liegt
 
 # CleanUp
 . Compiler Warnungen beheben
@@ -53,3 +58,5 @@ https://catlikecoding.com/unity/tutorials/pseudorandom-noise/simplex-noise/
 https://cgvr.cs.uni-bremen.de/teaching/cg_literatur/simplexnoise.pdf
 https://www.youtube.com/watch?v=zI41iCSwEFs&t=2s
 https://github.com/EFV0804/vulkan_compute_shader/blob/main/simple_compute_exemple/simple_compute_exemple.cpp
+https://github.com/FacundoGFlores/NSL
+https://github.com/TendTo/Linear-System-Solver

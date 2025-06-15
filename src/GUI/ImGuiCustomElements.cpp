@@ -77,7 +77,7 @@ int LinebreakCallback(ImGuiInputTextCallbackData* data) {
 }
 
 // hauptfunktion für die eingabe von ausdrücken im inputfeld
-void InputExpression(const std::string& label, Expression& source, const std::string& suffix) {
+bool InputString(const std::string& label, std::string& source, const std::string& suffix) {
     
     // durchschnittliche zeichenbreite für abschätzung der max token pro zeile
     static float avgCharWidth;
@@ -91,7 +91,7 @@ void InputExpression(const std::string& label, Expression& source, const std::st
 
     // aktueller string aus dem expression objekt
     static std::string currentSourceStr;
-    currentSourceStr = source->__str__();
+    currentSourceStr = source;
 
     // berechnung wie viele tokens (zeichen) in eine zeile passen
     static float lineLen, lineTokens;
@@ -106,6 +106,8 @@ void InputExpression(const std::string& label, Expression& source, const std::st
         NormalizeLineBreaks(exprStr, lineTokens);
 
         size_t copyLen = std::min(exprStr.size(), expressionBuffer.size() - 1);
+
+        std::fill(expressionBuffer.begin(), expressionBuffer.end(), 0);
         std::copy(exprStr.begin(), exprStr.begin() + copyLen, expressionBuffer.begin());
         expressionBuffer[copyLen] = '\0';
 
@@ -130,24 +132,52 @@ void InputExpression(const std::string& label, Expression& source, const std::st
         passButton = true;
     }
 
+    if (ImGui::Button("parse")){
+        passButton = true;
+    }
+
     // bei klick auf parse button: ausdruck analysieren
-    if (ImGui::Button("parse") || passButton) {
+    if (passButton) {
 
         // vor dem Parsen Zeilenumbrüche entfernen
         std::string toParse(expressionBuffer.data());
         toParse.erase(std::remove(toParse.begin(), toParse.end(), '\n'), toParse.end());
-        source = SymEngine::parse(toParse);
+
+        source = toParse;
 
         // Buffer neu laden aus aktualisierter source die jetzt in der Theorie den gleichen Inhalt unter Umständen umgeformt enthalten sollte
-        std::string updated = source->__str__();
+        std::string updated = source;
         NormalizeLineBreaks(updated, lineTokens);
         size_t copyLen = std::min(updated.size(), expressionBuffer.size() - 1);
 
+        std::fill(expressionBuffer.begin(), expressionBuffer.end(), 0);
         std::copy(updated.begin(), updated.begin() + copyLen, expressionBuffer.begin());
         expressionBuffer[copyLen] = '\0';
 
         lastSourceStr = updated;
+
+        return true;
     }
+
+    return false;
+}
+
+bool InputExpression(const std::string& label, Expression& source, const std::string& suffix) {
+
+    std::string expressionString = source->__str__();
+
+    if(InputString(label, expressionString, suffix)){
+
+        source = SymEngine::parse(expressionString);
+
+        expressionString = source->__str__();
+
+        ImGui::ClearActiveID();
+        // ImGui::SetKeyboardFocusHere(-1);
+
+        return true;
+    }
+    return false;
 }
 
 void displayExpression(const std::string& label, Expression& source, const std::string& suffix){

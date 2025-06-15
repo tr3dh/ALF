@@ -357,6 +357,8 @@ int main(void)
             }
             if (ImGui::BeginMenu("Hardware"))
             {
+                ImGui::Text("OpenGL Version : %f", g_glVersion);
+                ImGui::Text("GPU Vendor : %s", vendor);
 
                 ImGui::EndMenu();
             }

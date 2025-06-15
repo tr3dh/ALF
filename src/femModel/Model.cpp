@@ -141,6 +141,10 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         const auto& r_pref = m_isoMesh.getCells().begin()->second.getPrefab();
 
         //
+        std::string innerVariablePreviousFrame = mat.innerVariable + "_n";
+        std::string innerVariableCurrentFrame = mat.innerVariable + "_n_plus_1";
+        
+        //
         std::unordered_map<std::string, SymEngine::DenseMatrix> symbolTable = {};
 
         // Substitutionsparameter die sich über Iteration nicht ändern
@@ -172,8 +176,12 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         }
 
         //
-        symbolTable["tetha"] = SymEngine::DenseMatrix(1,1,{toExpression(100000)});
         symbolTable["deltaT"] = SymEngine::DenseMatrix(1,1,{toExpression(deltaTime)});
+
+        // params aus dem nicht linearen Materialmodell
+        for(const auto& [param, val] : mat.nonlinearModellParams){
+            symbolTable[param] = val;
+        }
 
         // Container für sich ändernde Paramter
 
@@ -188,12 +196,12 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         symbolTable["uCell"] = SymEngine::DenseMatrix(r_pref.nNodes * r_pref.nDimensions,1);
 
         // innere Variable
-        symbolTable["epsilon_v_n"] = SymEngine::DenseMatrix(m_isoMesh.m_cachedBMats.begin()->second.nrows(),1);
-        symbolTable["epsilon_v_n_plus_1"] = SymEngine::DenseMatrix(m_isoMesh.m_cachedBMats.begin()->second.nrows(),1);
+        symbolTable[innerVariablePreviousFrame] = SymEngine::DenseMatrix(mat.innerVariableSize.size() > 0 ? mat.innerVariableSize[0] : 1, mat.innerVariableSize.size() > 1 ? mat.innerVariableSize[1] : 1);
+        symbolTable[innerVariableCurrentFrame] = symbolTable[innerVariablePreviousFrame];
         
         // Startwerte
         SymEngine::zeros(symbolTable["epsilon_n"]);
-        SymEngine::zeros(symbolTable["epsilon_v_n"]);
+        SymEngine::zeros(symbolTable[innerVariablePreviousFrame]);
 
         // Container für Werte der inneren Variable
         // Einordnung über vec[cellIdx * r_pref.nNodes + quadPoint]
@@ -202,7 +210,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         innerVariableContainer.resize(r_pref.nNodes * m_isoMesh.m_Cells.size());
 
         //
-        SymEngine::DenseMatrix nullVariable = symbolTable["epsilon_v_n"];
+        SymEngine::DenseMatrix nullVariable = symbolTable[innerVariablePreviousFrame];
         for(auto& var : innerVariableContainer){
             var = nullVariable;
         }
@@ -351,23 +359,26 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                     symbolTable["epsilon_n_plus_1"] = evalSymbolicMatrixExpr("B*uCell", symbolTable);
 
                     // Wert innere Variable aus letztem Schritt in innerVariableContainer
-                    symbolTable["epsilon_v_n"] = innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint];
+                    symbolTable[innerVariablePreviousFrame] = innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint];
 
                     // beim fortpflanzen mit der Evolutionsgleichung bleibt innere Variable in beim Euler implizit
                     // imnmer noch von u abhängig, um sich die Werte dann später abspeichern zu können muss
                     // die Evolutionsgleichung noch einmal mit bekanntem Verschiebungsvektor u subtituiert werden 
 
-                    symbolTable["epsilon_v_n_plus_1"] = firstFrame ? symbolTable["epsilon_v_n"] :
+                    symbolTable[innerVariableCurrentFrame] = firstFrame ? symbolTable[innerVariablePreviousFrame] :
                         evalSymbolicMatrixExpr(
-                            "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+                            mat.evolutionEquation,
                                 symbolTable);
 
+                    symbolTable["sigma"] = evalSymbolicMatrixExpr(
+                        mat.stressApproach, symbolTable);
+
                     // cachen der von u abhängigen Formel im innerVariable Container
-                    innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint] = symbolTable["epsilon_v_n_plus_1"];
+                    innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint] = symbolTable[innerVariableCurrentFrame];
 
                     //
                     cellResidual += evalSymbolicMatrixExpr(
-                        "B^T*ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)*jDet*w*t",symbolTable);
+                        "B^T*sigma*jDet*w*t",symbolTable);
                 }
 
                 // Assemblierung in globale K Matrix bzw Residuumsvektor
@@ -395,7 +406,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                 removeRow(globalResidual, idx);
             }
 
-            // Kräft abziehen
+            // Kräfte abziehen
             for(size_t row = 0; row < globalResidual.nrows(); row++){
 
                 const auto& load = m_isoMesh.m_fSystem.coeffRef(row,0);

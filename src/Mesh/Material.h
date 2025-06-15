@@ -55,6 +55,7 @@ struct IsoMeshMaterial{
 
     //
     std::string stressApproach, innerVariable, evolutionEquation;
+    std::map<std::string, SymEngine::DenseMatrix> nonlinearModellParams = {};
 
     // entspricht dann numerisches Maximum von size_t -1
     size_t innerVariableDimension = -1;

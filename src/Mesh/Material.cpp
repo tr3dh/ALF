@@ -2,6 +2,22 @@
 
 const std::string IsoMeshMaterial::fileSuffix = ".mat";
 
+SymEngine::DenseMatrix fromJson(const nlohmann::json& j) {
+
+    unsigned rows = j.at("rows");
+    unsigned cols = j.at("cols");
+    const auto& data = j.at("data");
+
+    std::vector<Expression> elements;
+
+    for (const auto& row : data) {
+        for (const auto& entry : row) {
+            elements.push_back(toExpression(entry.get<std::string>()));
+        }
+    }
+    return SymEngine::DenseMatrix(rows, cols, elements);
+}
+
 bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
     RETURNING_ASSERT(string::endsWith(path, fileSuffix), "Invalide Dateiendung beim Laden eines Materials aus " + path, false);
@@ -124,6 +140,16 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
         //
         LOG << "** " << innerVariable << "_n_plus_1 = " << evolutionEquation << endl;
+
+        if(!matData["nonLinearApproach"].contains("params")){
+            return true;
+        }
+
+        for (const auto& [param, value] : matData["nonLinearApproach"]["params"].items()) {
+
+            nonlinearModellParams.try_emplace(param, fromJson(value));
+            LOG << "** substitution " << param << " : \n" << nonlinearModellParams[param] << endl;
+        }
     }
 
     LOG << endl;
