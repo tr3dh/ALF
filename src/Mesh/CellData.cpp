@@ -170,6 +170,15 @@ float CellData::getData(const MeshData& data, int globKoord, int forQuadraturePo
 
             break;
         }
+        case MeshData::INNER_VARIABLE:{
+
+            if(forQuadraturePoint != -1){
+                // fdata = innerVariableContainer[...];
+            } else {
+                fdata = innerVariable(globKoord,0);
+            }
+
+        }
         default:{
             break;
         }

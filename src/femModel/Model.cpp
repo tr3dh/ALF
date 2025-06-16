@@ -449,6 +449,27 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
                 subMatrix(var,var,substituteDisplacement);
             }
 
+            // mitteln und abspeichern der Substitutionsergebnisse für die einzelnen Zellen
+            for(const auto& [cellIdx, cell] : m_isoMesh.getCells()){
+
+                //
+                const auto cellStorePositon = cellIdx - cellNumOffset; 
+
+                r_currentFrame.cellDataSet.at(cellIdx).innerVariable = Eigen::MatrixXf(innerVariableContainer.begin()->nrows(), 
+                                innerVariableContainer.begin()->ncols());
+                r_currentFrame.cellDataSet.at(cellIdx).innerVariable.setZero();
+                
+                // Loop durch quadrature Points
+                for(size_t quadPoint = 0; quadPoint < r_pref.nNodes; quadPoint++){
+
+                    // cachen der von u abhängigen Formel im innerVariable Container
+                    subMatrix(innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint], r_currentFrame.cellDataSet.at(cellIdx).innerVariable,{},
+                        1, true);
+
+                    r_currentFrame.cellDataSet.at(cellIdx).innerVariable *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
+                }
+            }
+
             // >> nächster Iterationsschritt
 
             LOG << "Iterationsschritt " << stepIdx << endl;

@@ -9,8 +9,16 @@
 # Prim
 . Toleranz und entsprechende Dezimalstellen aus file Laden ??
 . Simulation ins Mesh verlegen
+. innere Variable in celldata abspeichern
+. unsicherheitsverechnung in nicht linearer Simulation ??
 . Rendering der Simulation über frame switch mit frame conunter der hochgezählt wird wenn Zeit ab frmaeswitch verstrichen ist
   über frame switch dauer liegt
+. Auswahl der zu printenden Größe auf Netz
+
+# Releases
+. Release statt Debug build initialisieren
+. in Software release beide anbiete
+. bei Release schreibt LOG in file (.> atomic Logger)
 
 # CleanUp
 . Compiler Warnungen beheben

@@ -1,4 +1,22 @@
 {
+    "isLinear": true,
+    "pdf": {
+        "borders": {
+            "xi_max": 0.5,
+            "xi_min": -0.5
+        },
+        "function": "k",
+        "params": {
+            "k": 1
+        },
+        "pdfPreprocessing": {
+            "segmentation": 0.1,
+            "tolerance": 0.01
+        },
+        "pdfSampling": {
+            "samples": 100000
+        }
+    },
     "stdParams": {
         "E": 20000.0,
         "t": 0.10000000149011612,

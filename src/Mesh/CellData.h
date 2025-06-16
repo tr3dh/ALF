@@ -56,7 +56,7 @@ struct CellData{
 
     const CellPrefab& m_prefab;
 
-    Eigen::MatrixXf strain, stress;
+    Eigen::MatrixXf strain, stress, innerVariable;
     std::vector<Eigen::MatrixXf> quadratureStrain = {}, quadratureStress = {};
     
     // 
