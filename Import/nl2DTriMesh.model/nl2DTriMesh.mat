@@ -1,65 +1,23 @@
 {
     "isLinear": false,
     "nonLinearApproach": {
+        "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)",
         "evolutionEquation": "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
-        "innerVariable": [
-            "epsilon_v",
-            1
-        ],
-        "innerVariableSize": [
-            3
-        ],
+        "innerVariable": ["epsilon_v",1],
+        "innerVariableSize": [3],
         "params": {
             "Identity2D": {
+                "rows": 3,
                 "cols": 3,
-                "data": [
-                    [
-                        "1",
-                        "0",
-                        "0"
-                    ],
-                    [
-                        "0",
-                        "1",
-                        "0"
-                    ],
-                    [
-                        "0",
-                        "0",
-                        "1"
-                    ]
-                ],
-                "rows": 3
+                "data": [["1","0","0"],
+                        ["0","1","0"],
+                        ["0","0","1"]]
             },
             "tetha": {
+                "rows": 1,
                 "cols": 1,
-                "data": [
-                    [
-                        "100000"
-                    ]
-                ],
-                "rows": 1
+                "data": [["50000"]]
             }
-        },
-        "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)"
-    },
-    "pdf": {
-        "borders": {
-            "xi_max": 0,
-            "xi_min": 0
-        },
-        "function": "exp(-0.5*(-mu + xi)**2/sigma**2)/(sqrt(2*pi)*sigma)",
-        "params": {
-            "mu": 0.0,
-            "pi": 3.1415,
-            "sigma": 0.5
-        },
-        "pdfPreprocessing": {
-            "segmentation": 0.1,
-            "tolerance": 0.01
-        },
-        "pdfSampling": {
-            "samples": 100000
         }
     },
     "stdParams": {

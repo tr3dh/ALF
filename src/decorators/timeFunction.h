@@ -2,6 +2,10 @@
 
 #include <chrono>
 
+using chrono = std::chrono::high_resolution_clock;
+using timePoint = chrono::time_point;
+using duration = std::chrono::duration<double>;
+
 #define START_TIMER \
     auto start = std::chrono::high_resolution_clock::now(); \
     auto end = std::chrono::high_resolution_clock::now(); \

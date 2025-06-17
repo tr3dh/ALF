@@ -2,12 +2,14 @@
     "isLinear": true,
     "pdf": {
         "borders": {
-            "xi_max": 10,
-            "xi_min": -0.01
+            "xi_max": 0,
+            "xi_min": 0
         },
-        "function": "lam * exp(-lam * xi)",
+        "function": "exp(-0.5*(-mu + xi)**2/sigma**2)/(sqrt(2*pi)*sigma)",
         "params": {
-            "lam": 1
+            "mu": 0.0,
+            "pi": 3.1415,
+            "sigma": 0.5
         },
         "pdfPreprocessing": {
             "segmentation": 0.1,

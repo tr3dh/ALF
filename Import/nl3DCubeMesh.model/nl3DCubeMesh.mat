@@ -1,33 +1,23 @@
 {
     "isLinear": false,
     "nonLinearApproach": {
-        "evolutionEquation": "(1+(1/tetha)*S*ElastTensor*deltaT)**-1*(epsilon_v_n + (1/tetha)*S*ElastTensor*deltaT*epsilon_n_plus_1)",
-        "innerVariable": [
-            "epsilon_v",
-            1
-        ],
-        "innerVariableSize": [
-            6
-        ],
-        "sigma": "ElastTensor*(epsilon + -epsilon_v)"
-    },
-    "pdf": {
-        "borders": {
-            "xi_max": 0,
-            "xi_min": 0
-        },
-        "function": "(1/2)*sqrt(2)*exp(-0.5*(-mu + xi)**2/sigma**2)/(sqrt(pi)*sigma)",
+        "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)",
+        "evolutionEquation": "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+        "innerVariable": ["epsilon_v",1],
+        "innerVariableSize": [6],
         "params": {
-            "mu": 0.0,
-            "pi": 3.141,
-            "sigma": 0.5
-        },
-        "pdfPreprocessing": {
-            "segmentation": 0.10000000149011612,
-            "tolerance": 0.009999999776482582
-        },
-        "pdfSampling": {
-            "samples": 100000
+            "Identity2D": {
+                "rows": 3,
+                "cols": 3,
+                "data": [["1","0","0"],
+                        ["0","1","0"],
+                        ["0","0","1"]]
+            },
+            "tetha": {
+                "rows": 1,
+                "cols": 1,
+                "data": [["10000"]]
+            }
         }
     },
     "stdParams": {

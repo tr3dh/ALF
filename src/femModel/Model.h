@@ -5,6 +5,36 @@
 #include "symbolic/symbolicExpressionParser.h"
 #include "Solver/NewtonRaphsonSolver.h"
 
+// Container für die ErgebnisWerte eines Schritts der Zeitschrittintegration
+struct SimulationFrame{
+
+    //
+    SimulationFrame() = default;
+
+    SimulationFrame(const size_t& dofs){
+
+    }
+
+    void setupDisplacement(const size_t& dofs){
+    
+        displacement = Eigen::MatrixXf(dofs,1);
+        displacement.fill(0);
+    }
+
+    void refillDisplacement(const std::vector<NodeIndex>& fixedDofs){
+
+        // Für ermitteln Spannung und Dehnung muss zunächst der Spannungsvektor so aufgefüllt werden dass
+        // er wieder von der Länge mit allen dofs übereinstimmt
+        addDenseRows(displacement, Eigen::RowVectorXf::Zero(1), fixedDofs);
+    }
+
+    //
+    DataSet cellDataSet;
+    Eigen::MatrixXf displacement;
+    // CellSet und undeformed Nodes liegen im isoMesh
+    NodeSet deformedNodes;
+};
+
 class FemModel{
 
 public:
@@ -19,6 +49,7 @@ public:
     FemModel(const std::string& path);
     void reload();
     void unload();
+    void calculate();
 
     bool loadFromCache();
     bool loadFromFile(const std::string& path);
@@ -44,7 +75,7 @@ public:
     Vector3 modelCenter {0,0,0}, modelExtend = {0,0,0};
     float maxModelExtent = 0.0f, modelDistance = 0.0f;
 
-    Color undeformedFrame = WHITE, deformedFrame = RED, deformedFramePlusXi = YELLOW, deformedFrameMinusXi = GREEN;
+    Color undeformedFrame = BLACK, deformedFrame = RED, deformedFramePlusXi = YELLOW, deformedFrameMinusXi = GREEN;
 
     bool m_materialIsLinear = true;
 
@@ -60,4 +91,12 @@ private:
     NodeSet n_upperXi, n_lowerXi;
     Eigen::MatrixXf u_upperXi, u_lowerXi;
     DataSet data_upperXi, data_lowerXi;
+
+    // Container der Simulationswerte
+    std::vector<SimulationFrame> m_simulationFrames = {};
+
+    // Zeitschrittintegration
+    float m_simulationTime = 10.0f;
+    float m_deltaTime = 0.1f;
+    size_t m_simulationSteps = (size_t)(m_simulationTime/m_deltaTime);
 };

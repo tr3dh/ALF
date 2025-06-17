@@ -7,13 +7,19 @@
 . inputExpression für strings implementieren
 
 # Prim
+. deltaTime und Zeitspanne aus mat file laden
 . Toleranz und entsprechende Dezimalstellen aus file Laden ??
-. Simulation ins Mesh verlegen
-. innere Variable in celldata abspeichern
 . unsicherheitsverechnung in nicht linearer Simulation ??
-. Rendering der Simulation über frame switch mit frame conunter der hochgezählt wird wenn Zeit ab frmaeswitch verstrichen ist
-  über frame switch dauer liegt
 . Auswahl der zu printenden Größe auf Netz
+. Auswahl des Netztes auf den Größe geprintet wird
+. Bestätigen des Ladens aus Cache
+. !! bei sampling der pdf im nicht lin model display wird assertion ausgelöst
+
+!! <ERROR> !! -> Assertion failed:
+        \ Debug Instruction : ├╝bergebene Nodes und Displacement sind inkompatibel
+        \ File: src/Mesh/Mesh_Solve.cpp
+        \ Line: 9
+        \ Function: displaceNodes
 
 # Releases
 . Release statt Debug build initialisieren

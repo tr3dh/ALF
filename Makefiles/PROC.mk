@@ -1,8 +1,26 @@
 CXX := g++
+BUILD_MODE ?= DEBUG
+
+CXXFLAGS :=\
+
+LDFLAGS :=\
+
+NATIVEWIN_FLAGS =\
+	-Wl,--subsystem,windows\
+	-mwindows
+
+SUFFIX := \
+
+ifeq ($(BUILD_MODE),DEBUG)
+    CXXFLAGS += -g -DDEBUG
+	SUFFIX = _d
+else
+    CXXFLAGS += -O3 -DNDEBUG -march=native -funroll-loops -flto -ffunction-sections -fdata-sections
+	LDFLAGS += $(NATIVEWIN_FLAGS) -flto -fuse-linker-plugin -Wl,-O2 -Wl,--gc-sections -Wl,--as-needed
+endif
 
 #	-I./thirdParty/enet/include 
-CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
-	-g \
+CXXFLAGS += -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-Wno-deprecated-literal-operator \
 	-Wno-cpp \
 	-I./src \
@@ -20,7 +38,7 @@ CXXFLAGS := -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 # -lr3d vor lraylib einfügen falls nötig
 # -lbase nach -L...vulkan/build/base einfügen
 # -L./thirdParty/enet/build -lenet vor winsocks
-LDFLAGS := -L./src \
+LDFLAGS += -L./src \
 	-L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
 	-L./thirdParty/rlImGui/bin -lrlimgui \
@@ -52,14 +70,23 @@ PCH_SRC = src/defines.h
 #	@mkdir -p $(@D)
 #	$(CXX) -o $@ $^ Recc/Compilation/proc.res $(LDFLAGS)
 
-proc: targets
+.PHONY: proc debug release
+
+proc:
+	$(MAKE) -j targets 
+
+debug:
+	$(MAKE) BUILD_MODE=DEBUG proc 
+
+release:
+	$(MAKE) BUILD_MODE=RELEASE proc
 
 # Objekt files
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
 
-SRCLIB := build/libfemPROC.a
+SRCLIB := build/libfemPROC$(SUFFIX).a
 $(SRCLIB): $(OBJ) $(PCH)
 	ar rcs $(SRCLIB) $^
 
@@ -78,19 +105,15 @@ build/%.o: $(PROC_DIR)/%.cpp $(PCH)
 
 build/% : build/%.o $(PROCSRC)
 	@mkdir -p $(@D)
-	$(CXX) -o $@ $^ Recc/Compilation/proc.res $(LDFLAGS)
+	$(CXX) -o $@$(SUFFIX) $^ Recc/Compilation/proc.res $(LDFLAGS)
 
 targets: $(PROCS_OBJ) $(PROCS_TARGETS)
 
 targetsFromObj:
-	@make targets PROC_SRC=$(OBJ)
+	@$(MAKE) targets PROC_SRC=$(OBJ)
 
 targetsFromLib:
-	@make targets PROC_SRC=$(SRCLIB)
-
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)
-	@mkdir -p $(@D)
-	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
+	@$(MAKE) targets PROC_SRC=$(SRCLIB)
 
 # Precompiled Header
 $(PCH): $(PCH_SRC)
@@ -98,7 +121,7 @@ $(PCH): $(PCH_SRC)
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 header:
-	@make $(PCH) -j
+	@$(MAKE) $(PCH) -j
 
 ICON ?= Recc/Compilation/icon
 icon:
@@ -116,6 +139,11 @@ clean:
 
 clear:
 	rm -r build
+
+clearBuild:
+	@echo "Cleaning build directory (except .exe files)..."
+	@find build -type f ! \( -name "*.exe" -o -name "*.a" \) -delete
+	@find build -type d -empty -delete
 
 remComp:
 	@find build -type f \( -name '*.o' -o -name '*.d' \) -delete

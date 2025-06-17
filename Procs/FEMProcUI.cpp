@@ -230,7 +230,7 @@ int main(void)
         }
 
         // nur wenn nicht ImGui::GetIO().WantCaptureMouse
-        fpsCam = (orbitCam && planarCam) || IsKeyDown(KEY_SPACE);
+        fpsCam = (orbitCam && planarCam);
 
         if(IsKeyPressed(KEY_LEFT_ALT) || camera.position == (Vector3){0,0,0}){
 

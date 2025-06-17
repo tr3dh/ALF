@@ -1,28 +1,27 @@
-include Makefiles/Gitconfig.mk
-include Makefiles/PREFAB.mk
-include Makefiles/PROC.mk
-include Makefiles/Export.mk
+include $(MAKE)files/Gitconfig.mk
+include $(MAKE)files/PREFAB.mk
+include $(MAKE)files/Export.mk
 
 build: header proc
 
 all:
 	@echo "--- start Clock ---"
-	@time make build -j
+	@time $(MAKE) build -j
 	@echo "-------------------"
 
 TARGET = build/FEMProcUI
 exec:
 	@echo "Wechsel in: $(dir $(TARGET))"
-	cd $(dir $(TARGET)) && ./$(notdir $(TARGET))
+	cd $(dir $(TARGET)) && ./$(notdir $(TARGET)$(SUFFIX))
 
 demo:
-	@make launch TARGET=build/3dRenderingDemo
+	@$(MAKE) launch TARGET=build/3dRenderingDemo
 
 execDemo:
-	@make exec TARGET=build/3dRenderingDemo
+	@$(MAKE) exec TARGET=build/3dRenderingDemo
 
 formula:
-	@make launch TARGET=build/FormulaEdit
+	@$(MAKE) launch TARGET=build/FormulaEdit
 
 flush:
 	rm build/*.ini
