@@ -117,6 +117,9 @@
     // Makefile Configs
     "makefile.configureOnOpen": true,
 
+    //
+    "editor.wordWrap": "off",
+
     // Vim Emulation Configs
     "vim.easymotion": true,
     "vim.incsearch": true,

@@ -316,7 +316,7 @@ void FemModel::calculate(){
             }
 
             // globalResidual - f = 0 mit NR lösen
-            solveNewtonRaphson(globalResidual, symbolVector, r_currentFrame.displacement, 1.5);
+            solveNewtonRaphson(globalResidual, symbolVector, r_currentFrame.displacement, m_isoMesh.nDimensions == 2 ? 0.5f : 5.0f);
 
             // Ermitteln von Spannug/Dehnung etc. für Substitution und cachen
             // der Spannungs/Dehnungswerte und Verschiebungen

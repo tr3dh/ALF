@@ -22,7 +22,7 @@ void solveNewtonRaphson(const SymEngine::DenseMatrix& residual, const SymEngine:
     jacobianMatrix.clear();
     
     // durchlaufe jede Reihe des Residuums
-    for(size_t rowInResidual = 0; rowInResidual < residual.nrows() ; rowInResidual++){
+    for(size_t rowInResidual = 0; rowInResidual < residual.nrows(); rowInResidual++){
 
         // durchlaufe jeden Symbolischen Eintrag
         for(size_t rowInSymbolVector = 0; rowInSymbolVector < symbolVector.nrows(); rowInSymbolVector++){

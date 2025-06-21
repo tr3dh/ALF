@@ -23,6 +23,9 @@ execDemo:
 formula:
 	@$(MAKE) launch TARGET=build/FormulaEdit
 
+temp:
+	@$(MAKE) launch TARGET=build/temp
+
 flush:
 	rm build/*.ini
 

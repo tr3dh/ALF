@@ -93,6 +93,9 @@ namespace fs = std::filesystem;
 // Decorators
 #include "decorators/timeFunction.h"
 
+//
+#include "Serialization/ByteSequence.h"
+
 // typedefs
 typedef uint16_t NodeIndex;
 typedef NodeIndex CellIndex;
@@ -114,3 +117,6 @@ static float g_glVersion = 0;
 
 static std::string g_vendorCorp = NULLSTR;
 static bool g_CudaBackendEnabled = false;
+
+// so und in precompiles dann ohne extern
+// extern template void removeRow(Eigen::MatrixXf&, const int&);

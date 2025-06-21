@@ -21,6 +21,22 @@
         \ Line: 9
         \ Function: displaceNodes
 
+. API schreiben
+        . Befehle :
+        . do fem
+        . wich node -> pos node
+        . wich elem -> elem info
+        . info über spannungen im element
+        . init window ohne display und auf render texture rendern
+        -> png und als asci konvert im terminal printen
+
+. Abspieloptionen : 
+        . Frame schieber
+        . deltaTime anpassen (abspieltempo)
+        . pausieren
+
+. Precompiles verbessern
+
 # Releases
 . Release statt Debug build initialisieren
 . in Software release beide anbiete
