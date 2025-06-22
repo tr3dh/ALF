@@ -86,6 +86,6 @@ void solveNewtonRaphson(const SymEngine::DenseMatrix& residual, const SymEngine:
     }
 
     //
-    LOG << "** Newton Raphson Iteration " << numIterations << " mal durchgeführt firstNorm : " << 
-            firstResidualNorm << " norm nach Iteration : " << substitutedResidual.norm() << endl;
+    LOG << numIterations << " NR Iterationen, Norm " << 
+            firstResidualNorm << " --> " << substitutedResidual.norm();
 }

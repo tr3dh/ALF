@@ -65,6 +65,9 @@ int main(void)
     //
     FemModel model;
     model.loadFromCache();
+    model.reload();
+    model.reload();
+    model.reload();
 
     // Fenster jetzt sichtbar machen
     ClearWindowState(FLAG_WINDOW_HIDDEN);
@@ -311,11 +314,9 @@ int main(void)
         static bool splitScreen = false;
         static bool splitScreenVertical = true;
 
-        const CellPrefab& r_pref = model.getMesh().getCells().begin()->second.getPrefab();
-
-        r_pref.nDimensions == 3 ? BeginMode3D(camera) : (void)0;
+        model.getMesh().getCells().begin()->second.getPrefab().nDimensions == 3 ? BeginMode3D(camera) : (void)0;
         model.display(MeshData::VANMISES_STRESS, 0, false, false, displayFrame, displayFrameCenter, {100,100}, splitScreen, splitScreenVertical);
-        r_pref.nDimensions == 3 ? EndMode3D() : (void)0;
+        model.getMesh().getCells().begin()->second.getPrefab().nDimensions == 3 ? EndMode3D() : (void)0;
 
         static std::string modelSource;
         modelSource = fs::path(model.getSource()).filename().string();
@@ -340,6 +341,11 @@ int main(void)
 
                             modelSource = fs::path(model.getSource()).filename().string();
                         });
+
+                        // Center camera
+                        camera.target = model.modelCenter;
+                        float distance = model.maxModelExtent / (2.0f * tanf(camera.fovy * 0.5f * (PI/180.0f)));
+                        camera.position = (Vector3){model.modelCenter.x - distance, model.modelCenter.y + distance, model.modelCenter.z - distance};
                     }
 
                     ImGui::EndMenu();
@@ -359,6 +365,14 @@ int main(void)
             {
                 ImGui::Text("OpenGL Version : %f", g_glVersion);
                 ImGui::Text("GPU Vendor : %s", vendor);
+
+                ImGui::EndMenu();
+            }
+            if(ImGui::BeginMenu("Temp")){
+
+                if(ImGui::MenuItem("Clear Caches")){
+                    system("find ../Import -type f -name '*.RESULTCACHE' -delete");
+                }
 
                 ImGui::EndMenu();
             }

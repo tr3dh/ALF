@@ -20,11 +20,13 @@ public:
 
     const CellPrefab& getPrefab() const;
 
+    void toByteSequence(ByteSequence& seq) const;
+    void fromByteSequence(ByteSequence& seq);
+
 private:
 
-    const prefabIndex m_prefabIndex = 0;
-    const CellPrefab& m_cellPrefab;
-    const std::vector<NodeIndex> m_nodeIndices = {};
+    prefabIndex m_prefabIndex = 0;
+    std::vector<NodeIndex> m_nodeIndices = {};
 };
 
 typedef std::map<CellIndex, Cell> CellSet;

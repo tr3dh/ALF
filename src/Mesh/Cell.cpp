@@ -1,13 +1,13 @@
 #include "Cell.h"
 
-Cell::Cell() : m_cellPrefab(CellPrefab::nullRef){};
+Cell::Cell() = default;
 
 Cell::Cell(const prefabIndex& prefIndex, const std::vector<NodeIndex>& nodeIndices) :
-    m_prefabIndex(prefIndex), m_nodeIndices(nodeIndices), m_cellPrefab(getCachedCellPrefab(prefIndex)){
+    m_prefabIndex(prefIndex), m_nodeIndices(nodeIndices){
 
     //
-    ASSERT(m_nodeIndices.size() == m_cellPrefab.nNodes, "Ungültige Anzahl an Nodes übergeben, " +
-        std::to_string(m_cellPrefab.nNodes) + " erforderlich " + std::to_string(m_nodeIndices.size()) + " erhalten");
+    ASSERT(m_nodeIndices.size() == getPrefab().nNodes, "Ungültige Anzahl an Nodes übergeben, " +
+        std::to_string(getPrefab().nNodes) + " erforderlich " + std::to_string(m_nodeIndices.size()) + " erhalten");
 }
 
 // nicht const Koordinaten abfrage -> Einträge können über zurückgegebene Referenz bearbeitet werden
@@ -20,7 +20,7 @@ const NodeIndex& Cell::operator[](size_t index) const{
 // Logging
 std::ostream& operator<<(std::ostream& os, const Cell& cell) {
 
-    os << "Cell-" << cell.m_cellPrefab.label << " {";
+    os << "Cell-" << cell.getPrefab().label << " {";
     for (const auto& [i, index] : std::views::enumerate(cell.m_nodeIndices)) {
         if (i > 0) os << ", ";
         os << index;
@@ -34,5 +34,13 @@ prefabIndex Cell::getPrefabIndex() const{
 }
 
 const CellPrefab& Cell::getPrefab() const{
-    return m_cellPrefab;
+    return getCachedCellPrefab(m_prefabIndex);
+}
+
+void Cell::toByteSequence(ByteSequence& seq) const {
+    seq.insertMultiple(m_nodeIndices,m_prefabIndex);
+}
+
+void Cell::fromByteSequence(ByteSequence& seq){
+    seq.extractMultiple(m_prefabIndex,m_nodeIndices);
 }

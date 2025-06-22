@@ -35,7 +35,14 @@
         . deltaTime anpassen (abspieltempo)
         . pausieren
 
-. Precompiles verbessern
+. Precompiles verbessern includes in includes templs in defines
+
+. getprefabs nur an relevanter stelle
+
+. clear caches, encode/decode file in ui einfügen
+
+. segfault beim mehrfachen reload (-> wenn cached B Mats im isomesh einkommentiert sind und serialisiert werden)
+. nur wenn innerhalb der ui der reload geschieht
 
 # Releases
 . Release statt Debug build initialisieren

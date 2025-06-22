@@ -2,16 +2,18 @@
     "isLinear": true,
     "pdf": {
         "borders": {
-            "xi_max": 0.5,
-            "xi_min": -0.5
+            "xi_max": 0,
+            "xi_min": 0
         },
-        "function": "k",
+        "function": "(1/2)*sqrt(2)*exp(-0.5*(-mu + xi)**2/sigma**2)/(sqrt(pi)*sigma)",
         "params": {
-            "k": 1
+            "mu": 0.0,
+            "pi": 3.142,
+            "sigma": 0.593
         },
         "pdfPreprocessing": {
-            "segmentation": 0.1,
-            "tolerance": 0.01
+            "segmentation": 0.10000000149011612,
+            "tolerance": 0.009999999776482582
         },
         "pdfSampling": {
             "samples": 100000

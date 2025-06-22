@@ -15,7 +15,7 @@ NodeIndex cacheCellPrefab(const std::string& prefabLabel){
         //
         if(cellPref.label == prefabLabel){
 
-            LOG << LOG_BLUE << "** Prefab mit Label " << prefabLabel << " im Cache gefunden";
+            LOG << LOG_BLUE << "** Prefab mit Label " << prefabLabel << " im Cache gefunden" << endl;
             return index;
         }
     }

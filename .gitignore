@@ -11,6 +11,9 @@
 *.gch
 *.h.gch
 
+# Caches
+*.RESULTCACHE
+
 # Temp Dateien
 *.tmp
 *.NOTE

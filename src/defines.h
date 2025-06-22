@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 namespace fs = std::filesystem;
+typedef fs::file_time_type fileTime;
 
 #include <string>
 #include <optional>
@@ -95,6 +96,7 @@ namespace fs = std::filesystem;
 
 //
 #include "Serialization/ByteSequence.h"
+#include "Serialization/SequenceSerializations.h"
 
 // typedefs
 typedef uint16_t NodeIndex;
@@ -117,6 +119,3 @@ static float g_glVersion = 0;
 
 static std::string g_vendorCorp = NULLSTR;
 static bool g_CudaBackendEnabled = false;
-
-// so und in precompiles dann ohne extern
-// extern template void removeRow(Eigen::MatrixXf&, const int&);

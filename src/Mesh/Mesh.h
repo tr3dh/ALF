@@ -28,24 +28,23 @@ private:
     static const std::string cellToken;
     static const std::string endToken;
 
+// Attribs
+
     std::string meshPath = NULLSTR;
 
 public:
+
     size_t nDimensions = 0;
     size_t nodeNumOffset = 0;
     NodeSet m_nodes = {}, m_defNodes = {};
     DataSet m_cellData;
     CellSet m_Cells = {};
 
-public:
-
     std::vector<uint8_t> isoKoords = {};
     std::vector<uint8_t> globKoords = {};
 
     std::map<NodeIndex, std::vector<uint8_t>> m_constraints = {};
     std::map<NodeIndex, std::vector<Force>> m_loads = {};
-
-public:
 
     //
     std::vector<Eigen::Triplet<float>> loadTriplets = {};
@@ -60,11 +59,15 @@ public:
     std::string m_matPath = NULLSTR;
     IsoMeshMaterial m_material;
 
-public:
-
     //
     SymEngine::DenseMatrix SymCMatrix;
     Eigen::MatrixXf CMatrix;
+
+public:
+
+    void toByteSequence(ByteSequence& seq) const;
+
+    void fromByteSequence(ByteSequence& seq);
 
     bool loadFromFile(const std::string& path);
 
@@ -101,9 +104,4 @@ public:
     const std::string& getMaterialPath();
     const IsoMeshMaterial& getMaterial() const;
     IsoMeshMaterial& getMaterial();
-
-    //
-    void setSelfPointer(IsoMesh* ptr);
-    IsoMesh* getSelfPointer();
-    IsoMesh* g_self = nullptr;
 };

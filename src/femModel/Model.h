@@ -28,10 +28,12 @@ struct SimulationFrame{
         addDenseRows(displacement, Eigen::RowVectorXf::Zero(1), fixedDofs);
     }
 
+    void toByteSequence(ByteSequence& seq) const;
+    void fromByteSequence(ByteSequence& seq);
+
     //
     DataSet cellDataSet;
     Eigen::MatrixXf displacement;
-    // CellSet und undeformed Nodes liegen im isoMesh
     NodeSet deformedNodes;
 };
 
@@ -55,6 +57,9 @@ public:
     bool loadFromFile(const std::string& path);
     void storePathInCache();
 
+    bool loadCachedResults();
+    void cacheResults();
+
     void sampling();
 
     const std::vector<float>& getSamples();
@@ -76,14 +81,17 @@ public:
     float maxModelExtent = 0.0f, modelDistance = 0.0f;
 
     Color undeformedFrame = BLACK, deformedFrame = RED, deformedFramePlusXi = YELLOW, deformedFrameMinusXi = GREEN;
-
     bool m_materialIsLinear = true;
 
 private:
 
+    std::string m_encoderKey = "Andromeda";
+
     std::string m_modelPath = NULLSTR;
     std::string m_meshPath = NULLSTR;
     std::string m_matPath = NULLSTR;
+    std::string m_constraintPath = NULLSTR;
+    std::string m_resCachePath = NULLSTR;
     std::vector<float> m_samples = {};
 
     IsoMesh m_isoMesh;

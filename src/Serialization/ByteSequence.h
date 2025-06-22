@@ -31,6 +31,37 @@ struct IsInstanceOf<Template<Args...>, Template> : std::true_type {};
         EXTRACT_LOGIK;\
     }
 
+    // die Aufrufe der Member Attribute müssen per member.ATTRIB abgesetzt werden
+#define OVERRIDE_BYTESEQUENZ_SERIALIZATION_INLINE(STRUCTURE, INSERT_LOGIK, EXTRACT_LOGIK) \
+    template<>\
+    inline void ByteSequence::insert<STRUCTURE>(const STRUCTURE& member) {\
+        INSERT_LOGIK;\
+    }\
+    \
+    template<>\
+    inline void ByteSequence::extract<STRUCTURE>(STRUCTURE& member) {\
+        EXTRACT_LOGIK;\
+    }
+
+struct ByteSequence;
+
+// Prüft, ob T eine Methode fromByteSequence(ByteSequence&) hat
+template<typename, typename = std::void_t<>>
+struct hasFromByteSequence : std::false_type {};
+
+template<typename, typename = std::void_t<>>
+struct hasToByteSequence : std::false_type {};
+
+template<typename T>
+struct hasFromByteSequence<T, std::void_t<
+    decltype(std::declval<T>().fromByteSequence(std::declval<ByteSequence&>()))
+>> : std::true_type {};
+
+template<typename T>
+struct hasToByteSequence<T, std::void_t<
+    decltype(std::declval<T>().toByteSequence(std::declval<ByteSequence&>()))
+>> : std::true_type {};
+
 // # ByteSequence
 // Bei folgender ByteSequenz werden extract und insert solange rekursiv aufgerufen bis die aufgeschlüsselten Member statische Größen aufweisen
 // und dann per Memcopy ein/ausgefügt
@@ -238,11 +269,6 @@ struct ByteSequence{
             //
             insert(std::string(member));
         }
-        else if constexpr (std::is_class<T>::value){
-
-            // member funktion aufrufen und bytesequenz als referenz übergeben
-            member.toByteSequence(*this);
-        }
         // Aufruf des inserts für statische member weil Typ zu den Standardgrößen mit statischer Speichergröße zählt
         // oder aus anderen Gründen eine statische Speicher größe aufweist
         else if constexpr(std::is_fundamental<T>::value ||
@@ -250,7 +276,20 @@ struct ByteSequence{
                                                             
             insertStaticMember(member);
         }
+        else if constexpr (std::is_class<T>::value){
+
+            if constexpr (hasToByteSequence<T>::value) {
+
+                // member funktion aufrufen und bytesequenz als referenz übergeben
+                member.toByteSequence(*this);
+            } else {
+                toByteSequence(member, *this);
+            }
+        }
         else {
+
+            toByteSequence(member, *this);
+
             RETURNING_ASSERT(TRIGGER_ASSERT,
                 "Einfügen von " + std::string(typeid(T).name())
                 + " in Bytesequenz schlägt fehl, da member dynamsiche Attribute aufweist, Verhalten muss deklariert werden",);
@@ -295,11 +334,6 @@ struct ByteSequence{
                 extract(member[counter]);
             }
         }
-        else if constexpr (std::is_class<T>::value){
-
-            // member funktion aufrufen und bytesequenz als referenz übergeben
-            member.fromByteSequence(*this);
-        }
         // Aufruf des inserts für statische member weil Typ zu den Standardgrößen mit statischer Speichergröße zählt
         // oder aus anderen Gründen eine statische Speicher größe aufweist
         else if constexpr(std::is_fundamental<T>::value ||
@@ -307,15 +341,29 @@ struct ByteSequence{
                                                             
             extractStaticMember(member);
         }
+        else if constexpr (std::is_class<T>::value){
+
+            // member funktion aufrufen und bytesequenz als referenz übergeben
+            if constexpr (hasFromByteSequence<T>::value) {
+
+                // member funktion aufrufen und bytesequenz als referenz übergeben
+                member.fromByteSequence(*this);
+            } else {
+                fromByteSequence(member, *this);
+            }
+        }
         else {
+
+            fromByteSequence(member, *this);
+
             RETURNING_ASSERT(TRIGGER_ASSERT,
-                "Einfügen in Bytesequenz schlägt fehl, da member dynamsiche Attribute aufweist, Verhalten muss deklariet werden",);
+                "Einfügen in Bytesequenz schlägt fehl, da member dynamsiche Attribute aufweist, Verhalten muss deklariert werden",);
         }
     }
 
     // Wrapper der insert für eine Member liste aufruft
     template<typename... Ts>
-    void insertMultiple(Ts&... members) {
+    void insertMultiple(const Ts&... members) {
 
         // Fold über Komma
         (insert(members), ...);

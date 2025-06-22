@@ -94,6 +94,14 @@ struct dynNodeXd {
         return m_dimension;
     }
 
+    void toByteSequence(ByteSequence& seq) const {
+        seq.insertMultiple(m_Coordinates,m_dimension);
+    }
+
+    void fromByteSequence(ByteSequence& seq){
+        seq.extractMultiple(m_dimension,m_Coordinates);
+    }
+
 private:
     size_t m_dimension = 0;
     std::vector<T> m_Coordinates = {};

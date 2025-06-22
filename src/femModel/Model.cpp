@@ -3,6 +3,14 @@
 const std::string FemModel::fileSuffix = ".model";
 const std::string FemModel::cachePath = "../bin/MODEL.CACHE";
 
+void SimulationFrame::toByteSequence(ByteSequence& seq) const{
+    seq.insertMultiple(cellDataSet, displacement, deformedNodes);
+}
+
+void SimulationFrame::fromByteSequence(ByteSequence& seq){
+    seq.extractMultiple(deformedNodes, displacement, cellDataSet);
+}
+
 std::string FemModel::getPathFromCache(){
 
     // in ../bin nach cache suchen
@@ -44,7 +52,11 @@ bool FemModel::loadFromCache(){
 void FemModel::reload(){
 
     if(initialzed()){
-        loadFromFile(m_modelPath);
+
+        const std::string modelPath = m_modelPath;
+
+        unload();
+        loadFromFile(modelPath);
     } else {
         _ERROR << "kein valider Pfad im Modell hinterlegt\n" << endl;
     }
@@ -63,9 +75,26 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     LOG << "   Lade Mesh aus " << m_meshPath << endl;
     LOG << endl;
 
-    m_isoMesh.setSelfPointer(&this->m_isoMesh);
+    m_resCachePath = path + "/" + string::split(fs::path(path).filename().string(),'.')[0] + ".RESULTCACHE";
+    m_constraintPath = path + "/" + string::split(fs::path(path).filename().string(),'.')[0] + ".fem";
+    m_matPath = path + "/" + string::split(fs::path(path).filename().string(),'.')[0] + ".mat";
+
+    // Laden aller files damit gechachte Prefab Indices ihre Gültigkeit beibehalten
+    for (const auto& entry : fs::directory_iterator("../Recc/Cells")) {
+        if (entry.is_regular_file()) {
+
+            // name ohne dateiendung
+            cacheCellPrefab(entry.path().stem().string());
+        }
+    }
+
     m_isoMesh.loadFromFile(m_meshPath);
     m_isoMesh.loadIsoMeshMaterial();
+
+    // aus Cache laden
+    if(loadCachedResults()){
+        return;
+    }
 
     calculate();
 }

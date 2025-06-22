@@ -45,8 +45,25 @@ int main() {
     LOG << std::fixed << std::setprecision(4);
     LOG << endl;
 
-    ByteSequence bs, cs;
+    ByteSequence bs;
 
-    bs += A("Hello World");
-    LOG << bs.get<A>().getB() << endl;
+    bs += fs::last_write_time("../Import/2DQuadMesh.model/2DQuadMesh.mat");
+    LOG << (bs.get<fs::file_time_type>() == fs::last_write_time("../Import/2DQuadMesh.model/2DQuadMesh.mat")) << endl;
+
+    // cacheCellPrefab("CPS4R");
+
+    // bs += CellSet({{1,Cell(1,{1,2,3,4})},{2,Cell(1,{5,6,7,8})}});
+
+    // for(const auto& [idx,cell] : bs.get<CellSet>()){
+    //     LOG << idx << " " << cell << endl;
+    // }
+
+    // CellData dat(getCachedCellPrefab(1));
+
+    // bs+=dat;
+
+    // LOG << bs.get<CellData>().cellDisplacement << endl;
+
+    // bs+=SimulationFrame();
+    // bs.get<SimulationFrame>();
 }

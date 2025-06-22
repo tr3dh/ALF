@@ -43,32 +43,25 @@ struct CellData{
     static float vanMises2D(const Eigen::MatrixXf& stress);
     static float vanMises3D(const Eigen::MatrixXf& stress);
 
+    CellData();
     CellData(const CellPrefab& prefab);
 
-    CellData(const CellData& other);
-    CellData& operator=(const CellData& other);
-
     void calculateCellStrainAndStress();
-
     void calculateVanMisesStress();
-
     float getData(const MeshData& data, int globKoord, int forQuadraturePoint = -1, bool returnAbs = false) const;
 
-    const CellPrefab& m_prefab;
+    void operator*=(const Coeffs& coeffs);
 
+    void toByteSequence(ByteSequence& seq) const;
+    void fromByteSequence(ByteSequence& seq);
+
+    prefabIndex m_prefIdx = 0; 
     Eigen::MatrixXf strain, stress, innerVariable;
-    std::vector<Eigen::MatrixXf> quadratureStrain = {}, quadratureStress = {};
     
-    // 
-    // Eigen::MatrixXf innerVariable;
-
     float cellVolume = 0.0f;
     Eigen::MatrixXf cellDisplacement;
 
     float vanMisesStress = 0.0f;
-    std::vector<float> quadratureMisesStress = {};
-
-    void operator*=(const Coeffs& coeffs);
 };
 
 typedef std::unordered_map<CellIndex, CellData> DataSet;
