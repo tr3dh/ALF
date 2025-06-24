@@ -34,6 +34,7 @@ exportRelease: fullRelease
 	cp -f README.md tmp/
 
 	rm -f tmp/build/3dRenderingDemo.exe
+	rm -f tmp/build/3dRenderingDemo_d.exe
 
 	rm -f FemPROC.zip
 	zip -r FemPROC.zip tmp/*

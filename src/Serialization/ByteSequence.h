@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <boost/pfr.hpp>
 
 namespace fs = std::filesystem;
 
@@ -31,7 +32,7 @@ struct IsInstanceOf<Template<Args...>, Template> : std::true_type {};
         EXTRACT_LOGIK;\
     }
 
-    // die Aufrufe der Member Attribute müssen per member.ATTRIB abgesetzt werden
+// die Aufrufe der Member Attribute müssen per member.ATTRIB abgesetzt werden
 #define OVERRIDE_BYTESEQUENZ_SERIALIZATION_INLINE(STRUCTURE, INSERT_LOGIK, EXTRACT_LOGIK) \
     template<>\
     inline void ByteSequence::insert<STRUCTURE>(const STRUCTURE& member) {\
@@ -45,21 +46,56 @@ struct IsInstanceOf<Template<Args...>, Template> : std::true_type {};
 
 struct ByteSequence;
 
-// Prüft, ob T eine Methode fromByteSequence(ByteSequence&) hat
+// SFINAE templates
+
+// Folgende Templates prüfen ob es für entsprechende Typen die Funktionen to und fromByteSequenz
+// gibt oder ob die Typen diese Funktionen als attribute haben
+// dementsprechend kann in template basierten Logiken mit if constexpr gechekt werden ob diese Funktionen
+// für die entsprechende Typen definiert worden sind und für diesen Fall können sie dann ausgeführt werden
+
+// SFINAE (Substitution Failure Is Not An Error) ist eine Template Logik in C++,
+// mit der man prüfen kann, ob ein Typ bestimmte Funktionen oder Attribute besitzt,
+// ohne dass der Compiler dabei Fehler wirft, wenn sie nicht vorhanden sind.
+// Das heißt, wenn beim Versuch, eine Funktion oder ein Member zu verwenden, die Substitution 
+// fehlschlägt, wird das einfach ignoriert und nicht als Fehler gewertet.
+// So kann man in Template-Logiken mit if constexpr oder template-Spezialisierungen 
+// einfach checken, ob eine Funktion oder ein Member existiert,
+// und nur dann entsprechenden Code ausführen.
+
+//
+template<typename, typename = std::void_t<>>
+struct hasFromByteSequenceAttrib : std::false_type {};
+
+template<typename T>
+struct hasFromByteSequenceAttrib<T, std::void_t<
+    decltype(std::declval<T&>().fromByteSequence(std::declval<ByteSequence&>()))
+>> : std::true_type {};
+
+//
+template<typename, typename = std::void_t<>>
+struct hasToByteSequenceAttrib : std::false_type {};
+
+template<typename T>
+struct hasToByteSequenceAttrib<T, std::void_t<
+    decltype(std::declval<const T&>().toByteSequence(std::declval<ByteSequence&>()))
+>> : std::true_type {};
+
+//
 template<typename, typename = std::void_t<>>
 struct hasFromByteSequence : std::false_type {};
 
+template<typename T>
+struct hasFromByteSequence<T, std::void_t<
+    decltype(fromByteSequence(std::declval<T&>(), std::declval<ByteSequence&>()))
+>> : std::true_type {};
+
+//
 template<typename, typename = std::void_t<>>
 struct hasToByteSequence : std::false_type {};
 
 template<typename T>
-struct hasFromByteSequence<T, std::void_t<
-    decltype(std::declval<T>().fromByteSequence(std::declval<ByteSequence&>()))
->> : std::true_type {};
-
-template<typename T>
 struct hasToByteSequence<T, std::void_t<
-    decltype(std::declval<T>().toByteSequence(std::declval<ByteSequence&>()))
+    decltype(toByteSequence(std::declval<const T&>(), std::declval<ByteSequence&>()))
 >> : std::true_type {};
 
 // # ByteSequence
@@ -105,7 +141,39 @@ struct hasToByteSequence<T, std::void_t<
 //      int b; std::string c;
 // };
 // ```
+// 
+// Eine Weitere Möglichkeit für die Serialisierung ist das schreiben von Klassen externen Serialisierungsfunktionen
+// Das bietet sich an wenn es aufgrund vieler typedefs bei den insert/extract template overrides zu Konflikten kommmt
+// Grundsätzlich bieten sich die Serialisierungsfunktionen für größere und komplexere Deklarationen an
+// 
+// ```c++
+// struct A{ ... };
 //
+//     
+// void toByteSequence(const A& member, ByteSequence& seq) const {
+//     seq.insertMultiple(...);
+//     seq.encode(...);
+// }
+//
+// void fromByteSequence(A& member, ByteSequence& seq){
+//     seq.extractMultiple(...);
+//     seq.decode(...);
+// }
+// ```
+//
+// für typen die ausschließlich von standardtypen, deren vektoren oder maps oder anderen bereits serialisierten typen abhängig
+// kann die Funktion die Serialisierung über pfr selbst übernehmen
+// Damit lassen vor allem die meisten selbstgeschriebenen Objekte ohne weitere Deklarationen nutzen
+// Ausnahmen sind komplexe selbst allokierende Objekte wie Symengine- oder Eigen Matritzen
+// Sind die jedoch serialisiert können sie jedoch einfach als öffentliche Attribute von eigenen Klassen, vektoren, maps, etc verwendet werden
+// und im Hintergrund automatisch über die pfr Entpackung weitergeleitet bzw. an den rekursiven Aufruf übergeben werden.
+//
+// PFR erkennt bei Structs automatisch deren öffentliche Felder, entpackt sie
+// und übergibt sie direkt an gewünschte Funktion, hier Rekursion bzw. Serialisierung.
+//
+// Hierbei muss beachtet werden, dass pfr und die automatische Serialierung NUR für öffentliche Attribute funktioniert
+// alles andere muss über eine Memberfunktion to und fromByteSequnece geregelt werden.
+// 
 // dabei kann auf sämtliche funktionen der ByteSequenz zugegriffen werden
 // zb. über eine Klassen interne Verschlüsselung oder ähnliches
 //
@@ -276,23 +344,28 @@ struct ByteSequence{
                                                             
             insertStaticMember(member);
         }
-        else if constexpr (std::is_class<T>::value){
+        else if constexpr (hasToByteSequenceAttrib<T>::value) {
 
-            if constexpr (hasToByteSequence<T>::value) {
+            // member funktion aufrufen und bytesequenz als referenz übergeben
+            member.toByteSequence(*this);
+        }
+        else if constexpr (hasToByteSequence<T>::value){
 
-                // member funktion aufrufen und bytesequenz als referenz übergeben
-                member.toByteSequence(*this);
-            } else {
-                toByteSequence(member, *this);
-            }
+            toByteSequence(member, *this);
         }
         else {
 
-            toByteSequence(member, *this);
+            //
+            constexpr std::size_t nFields = boost::pfr::tuple_size_v<T>;
+            auto memberAsTuple = boost::pfr::structure_to_tuple(member);
 
-            RETURNING_ASSERT(TRIGGER_ASSERT,
-                "Einfügen von " + std::string(typeid(T).name())
-                + " in Bytesequenz schlägt fehl, da member dynamsiche Attribute aufweist, Verhalten muss deklariert werden",);
+            // index für pfr feld Liste extrahieren
+            [this, &memberAsTuple]<std::size_t... Is>(std::index_sequence<Is...>) {
+
+                // Laufvariable Is läuft von vorne nach hinten
+                // >> invert über
+                (..., insert(std::get<nFields - 1 - Is>(memberAsTuple)));
+            }(std::make_index_sequence<nFields>{});
         }
     }
 
@@ -341,23 +414,21 @@ struct ByteSequence{
                                                             
             extractStaticMember(member);
         }
-        else if constexpr (std::is_class<T>::value){
+        // member funktion aufrufen und bytesequenz als referenz übergeben
+        else if constexpr (hasFromByteSequenceAttrib<T>::value) {
 
             // member funktion aufrufen und bytesequenz als referenz übergeben
-            if constexpr (hasFromByteSequence<T>::value) {
+            member.fromByteSequence(*this);
+        }
+        else if constexpr (hasFromByteSequence<T>::value){
 
-                // member funktion aufrufen und bytesequenz als referenz übergeben
-                member.fromByteSequence(*this);
-            } else {
-                fromByteSequence(member, *this);
-            }
+            fromByteSequence(member, *this);
         }
         else {
 
-            fromByteSequence(member, *this);
-
-            RETURNING_ASSERT(TRIGGER_ASSERT,
-                "Einfügen in Bytesequenz schlägt fehl, da member dynamsiche Attribute aufweist, Verhalten muss deklariert werden",);
+            boost::pfr::for_each_field(member, [this](auto& field) {
+                extract(field);
+            });
         }
     }
 
@@ -410,6 +481,7 @@ struct ByteSequence{
             bytes[i] ^= key[i % key_len];
         }
     }
+    
     void decode(const uint8_t* key, size_t key_len) {
         encode(key, key_len);
     }

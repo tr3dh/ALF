@@ -2,7 +2,7 @@
     "isLinear": false,
     "nonLinearApproach": {
         "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)",
-        "evolutionEquation": "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+        "evolutionEquation": "(I+eta^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+eta^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
         "innerVariable": ["epsilon_v",1],
         "innerVariableSize": [6],
         "params": {
@@ -13,7 +13,7 @@
                         ["0","1","0"],
                         ["0","0","1"]]
             },
-            "tetha": {
+            "eta": {
                 "rows": 1,
                 "cols": 1,
                 "data": [["10000"]]

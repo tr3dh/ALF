@@ -4,6 +4,8 @@ IsoMesh::IsoMesh() = default;
 
 void IsoMesh::toByteSequence(ByteSequence& seq) const {
 
+    // seq.insert(m_cachedBMats);
+
     seq.insertMultiple(
         nDimensions,
         nodeNumOffset,
@@ -56,4 +58,7 @@ void IsoMesh::fromByteSequence(ByteSequence& seq) {
         nodeNumOffset,
         nDimensions
     );
+
+    // klappt aus irgendeinem grund nicht während ui betrieb
+    // seq.extract(m_cachedBMats);
 }

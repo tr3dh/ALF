@@ -65,9 +65,6 @@ int main(void)
     //
     FemModel model;
     model.loadFromCache();
-    model.reload();
-    model.reload();
-    model.reload();
 
     // Fenster jetzt sichtbar machen
     ClearWindowState(FLAG_WINDOW_HIDDEN);
@@ -540,8 +537,7 @@ int main(void)
             case 3:{
 
                 //
-                static IsoMeshMaterial& mat = model.getMesh().getMaterial();
-                mat = model.getMesh().getMaterial();
+                IsoMeshMaterial& mat = model.getMesh().getMaterial();
 
                 switch (selectedSubTab[selectedTab]){
 

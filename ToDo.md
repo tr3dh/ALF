@@ -44,6 +44,8 @@
 . segfault beim mehrfachen reload (-> wenn cached B Mats im isomesh einkommentiert sind und serialisiert werden)
 . nur wenn innerhalb der ui der reload geschieht
 
+. automatic pfr ByteSequence
+
 # Releases
 . Release statt Debug build initialisieren
 . in Software release beide anbiete
@@ -78,6 +80,7 @@
 . 3d Rendering der deformierten Netze in Raylib
 . cachen von Kmatrix, fem Ergebnisse in modell ordner und nur laden wenn änderungsdatum sich verändert hat
 . compute shader mit raylib
+. automatische bytesequenz serialisierung über pfr (boost und standalone)
 
 # Markdowns
 . vec x_n+1 fixen (pfeil mittig über gesamte Benennung gerendert)
