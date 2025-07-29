@@ -66,10 +66,10 @@ bool IsoMesh::readBoundaryConditions(bool apply, const std::string& path){
         
     std::string boundaryFilePath = path;
     if(boundaryFilePath == NULLSTR){
-        boundaryFilePath = meshPath.substr(0, meshPath.find_last_of('.')) + ".fem";
+        boundaryFilePath = meshPath.substr(0, meshPath.find_last_of('.')) + ".Constraints";
     }        
 
-    CRITICAL_ASSERT(string::endsWith(boundaryFilePath, ".fem"), "Übergebener Pfad endet auf ungültige File Endung, erwartetes format : *.fem");
+    CRITICAL_ASSERT(string::endsWith(boundaryFilePath, ".Constraints"), "Übergebener Pfad endet auf ungültige File Endung, erwartetes format : *.fem");
 
     LOG << LOG_BLUE << "-- Reading file : " << boundaryFilePath << endl;
     LOG << endl;

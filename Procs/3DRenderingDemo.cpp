@@ -169,7 +169,7 @@ public:
         float specularStr    = 0.5f;
         int shininess        = 256;
         Vector4 materialColor= { 1.0f, 0.5f, 0.31f, 1.0f };
-        int useTexture = true;
+        int useTexture = false;
 
         SetShaderValue(m_phongShader, GetShaderLocation(m_phongShader, "viewPos"),      &viewPos,      SHADER_UNIFORM_VEC3);
         SetShaderValue(m_phongShader, GetShaderLocation(m_phongShader, "lightPos"),     &lightPos,     SHADER_UNIFORM_VEC3);

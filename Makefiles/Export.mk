@@ -5,12 +5,12 @@ fullRelease:
 	$(MAKE) clear
 
 	$(MAKE) debug
-	$(MAKE) lib BUILD_MODE=DEBUG
+#$(MAKE) lib BUILD_MODE=DEBUG
 
 	$(MAKE) clearBuild
 	
 	$(MAKE) release
-	$(MAKE) lib BUILD_MODE=RELEASE
+#$(MAKE) lib BUILD_MODE=RELEASE
 
 	$(MAKE) dllCopy
 

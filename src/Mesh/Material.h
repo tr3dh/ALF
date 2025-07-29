@@ -53,6 +53,16 @@ struct IsoMeshMaterial{
     bool isLinear = true;
     bool hasPdf = false;
 
+    float simulationDuration = 5.0f;
+    float deltaTime = 1.0f;
+
+    unsigned int precisionDigits = 6.0f;
+
+    float normTolerance = 5.0f;
+    unsigned int breakNRAfterNumIterations = 10;
+
+    size_t simulationSteps = (size_t)(simulationDuration/deltaTime);
+
     //
     std::string stressApproach, innerVariable, evolutionEquation;
     std::map<std::string, SymEngine::DenseMatrix> nonlinearModellParams = {};

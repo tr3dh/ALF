@@ -39,12 +39,25 @@
 
 . getprefabs nur an relevanter stelle
 
-. clear caches, encode/decode file in ui einfügen
-
 . segfault beim mehrfachen reload (-> wenn cached B Mats im isomesh einkommentiert sind und serialisiert werden)
 . nur wenn innerhalb der ui der reload geschieht
 
-. automatic pfr ByteSequence
+. frame counter in model auslagern ?? -> Tests mit dem nacheinander laden verschiedener framecounts sodass der framecounter einmal viel zu hoch ist und nicht gerendert werden kann --> was passiert ??
+
+. serialisierungen komplett auf to/from bs umstellen und in cpp auslagern, sodas weniger kompilieraufwand durch vorkompilierung in o file
+
+. weiteres 3d format testen und checken ob rendering switch klappt
+
+. hintergrund farbe anpassungs dialog
+
+. Falsche schreibweise ::: INDIDES in .ISOPARAM C3D8R und Ladelogik
+
+. Parser kopiert expression string ???
+. ref in parser übergabe
+
+. bin für cwd des explorers
+
+. Ladebalken während synchroner Ladevorgänge
 
 # Releases
 . Release statt Debug build initialisieren

@@ -15,11 +15,15 @@ void FemModel::calculate(){
 
     if(m_isoMesh.getMaterial().isLinear){
 
+        displayProgress(0, "Erstelle Steifigkeitsmatrix");
         RETURNING_ASSERT(m_isoMesh.createStiffnessMatrix(), "KMatrix Erstellung fehlgeschlagen",);
 
         m_isoMesh.readBoundaryConditions();
+
+        displayProgress(0.4, "Berechne Verschiebung");
         m_isoMesh.solve();
 
+        displayProgress(0.8, "Berechne Dehnung und Spannung");
         m_isoMesh.calculateStrainAndStress(m_isoMesh.m_cellData, m_isoMesh.m_uSystem);
 
         // if mat has pdf einfügen
@@ -29,15 +33,19 @@ void FemModel::calculate(){
 
     } else {
 
+        //
+        displayProgress(0, "Bereite Zeitschrittsimulation vor");
+
         // KMatrix wird hier erstellt um BMatrix und Jacoby Matrix caches zu füllen, da diese Matritzen in jedem weiteren
         // Schritt der Zeitintegration benötigt werden und um die KMatrix und das Ergebnis der linearen Fem zum vergleich
         // heranzuziehen
+        displayProgress(0, "Erstelle Steifigkeitsmatrix");
         RETURNING_ASSERT(m_isoMesh.createStiffnessMatrix(), "KMatrix Erstellung fehlgeschlagen",);
         RETURNING_ASSERT(m_isoMesh.readBoundaryConditions(), "BoundaryConditions konnten nicht gelesen werden",);
         // fixNodes für Jacoby machen
 
         // refs
-        const IsoMeshMaterial& mat = m_isoMesh.getMaterial();
+        IsoMeshMaterial& mat = m_isoMesh.getMaterial();
         const auto& r_pref = m_isoMesh.getCells().begin()->second.getPrefab();
 
         //
@@ -151,6 +159,11 @@ void FemModel::calculate(){
         // und auch die Daten daraus für die sustitution entnommen
 
         //
+        m_simulationTime = mat.simulationDuration;
+        m_deltaTime = mat.deltaTime;
+        m_simulationSteps = mat.simulationSteps;
+
+        //
         m_simulationFrames.resize(m_simulationSteps);
 
         //
@@ -184,6 +197,13 @@ void FemModel::calculate(){
             // Durch die übergabe des gekürzten Residuums und symbol und displacement Vektors an den NR Solver
             // wird auch nur eine um die fixierten dofs erstelle Jacoby Matrix erstellt und das delta für das
             // reduzierte System berechnet
+
+            //
+            char message[128];
+            snprintf(message, sizeof(message), "Berechne Zeitschritt [%d/%d]", stepIdx, m_simulationSteps);
+
+            //
+            displayProgress((float)stepIdx/(float)m_simulationSteps, message);
 
             //
             bool firstFrame = stepIdx == 0;
@@ -253,7 +273,8 @@ void FemModel::calculate(){
                     }
 
                     // Dehnung aus aktuellem Schritt mit B*u substutuieren
-                    symbolTable["epsilon_n_plus_1"] = evalSymbolicMatrixExpr("B*uCell", symbolTable);
+                    static std::string strain = "B*uCell";
+                    symbolTable["epsilon_n_plus_1"] = evalSymbolicMatrixExpr(strain, symbolTable);
 
                     // Wert innere Variable aus letztem Schritt in innerVariableContainer
                     symbolTable[innerVariablePreviousFrame] = innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint];
@@ -274,8 +295,9 @@ void FemModel::calculate(){
                     innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint] = symbolTable[innerVariableCurrentFrame];
 
                     //
+                    static std::string residual = "B^T*sigma*jDet*w*t";
                     cellResidual += evalSymbolicMatrixExpr(
-                        "B^T*sigma*jDet*w*t",symbolTable);
+                        residual, symbolTable);
                 }
 
                 // Assemblierung in globale K Matrix bzw Residuumsvektor
@@ -318,7 +340,7 @@ void FemModel::calculate(){
             // globalResidual - f = 0 mit NR lösen
             LOG << "\r";
             LOG << "## Progress [" << stepIdx + 1 << " / " << m_simulationSteps << "] Steps | "; 
-            solveNewtonRaphson(globalResidual, symbolVector, r_currentFrame.displacement, m_isoMesh.nDimensions == 2 ? 0.5f : 5.0f);
+            solveNewtonRaphson(globalResidual, symbolVector, r_currentFrame.displacement, mat.normTolerance, mat.breakNRAfterNumIterations);
             LOG << endl;            // Wenn alles in Zeile geschrieben werden soll auskommentieren
             LOG << std::flush;
 

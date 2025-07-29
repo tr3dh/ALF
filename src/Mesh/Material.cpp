@@ -1,6 +1,6 @@
 #include "Material.h"
 
-const std::string IsoMeshMaterial::fileSuffix = ".mat";
+const std::string IsoMeshMaterial::fileSuffix = ".Material";
 
 SymEngine::DenseMatrix fromJson(const nlohmann::json& j) {
 
@@ -150,6 +150,33 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
             nonlinearModellParams.try_emplace(param, fromJson(value));
             LOG << "** substitution " << param << " : \n" << nonlinearModellParams[param] << endl;
         }
+
+        if(matData["nonLinearApproach"].contains("normTolerance")){
+            normTolerance = matData["nonLinearApproach"]["normTolerance"].get<decltype(normTolerance)>();
+        }
+
+        if(matData["nonLinearApproach"].contains("precissionDigits")){
+            precisionDigits = matData["nonLinearApproach"]["precissionDigits"].get<decltype(precisionDigits)>();
+        }
+
+        if(matData["nonLinearApproach"].contains("simulationDuration")){
+            simulationDuration = matData["nonLinearApproach"]["simulationDuration"].get<decltype(simulationDuration)>();
+        }
+
+        if(matData["nonLinearApproach"].contains("simulationTimeStep")){
+            deltaTime = matData["nonLinearApproach"]["simulationTimeStep"].get<decltype(deltaTime)>();
+        }
+
+        if(matData["nonLinearApproach"].contains("breakNRAfterNumIterations")){
+            breakNRAfterNumIterations = matData["nonLinearApproach"]["breakNRAfterNumIterations"].get<decltype(breakNRAfterNumIterations)>();
+        }
+
+        // Default für rundung der Expressions setzen
+        g_decimalPlaces = precisionDigits;
+        LOG << "-- Nachkommastellen für Rundung eingestellt auf " << g_decimalPlaces << endl;
+
+        //
+        simulationSteps = (size_t)(simulationDuration/deltaTime);
     }
 
     LOG << endl;
@@ -213,7 +240,7 @@ void IsoMeshMaterial::save(const std::string& path){
 void IsoMeshMaterial::substitutePdf(){
 
     sym::round_subs_map(subs,3);
-    pdf_xi = sym::round_all_numbers(pdf->subs(subs),3);
+    pdf_xi = sym::roundAllNumbers(pdf->subs(subs),3);
 
     LOG << LOG_GREEN << "   substituted pdf(xi) = " << pdf_xi << endl;
 

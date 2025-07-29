@@ -84,6 +84,7 @@ typedef fs::file_time_type fileTime;
 #include "Drivers/SFML/__sfLog.h"
 
 #include "Drivers/Raylib/__rlLogging.h"
+#include "Drivers/Raylib/__rlProgressDisplay.h"
 
 #include "Drivers/Visualisation/__Coloration.h"
 
@@ -119,3 +120,5 @@ static float g_glVersion = 0;
 
 static std::string g_vendorCorp = NULLSTR;
 static bool g_CudaBackendEnabled = false;
+
+static Color g_backgroundColor = Color(30,30,30,255);

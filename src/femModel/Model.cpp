@@ -71,13 +71,13 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     //
     LOG << "-- Modell aus " << m_modelPath << " konstruiert" << endl;
 
-    m_meshPath = path + "/" + string::split(fs::path(path).filename().string(),'.')[0] + ".inp";
+    m_meshPath = path + "/" +  ".Mesh";
     LOG << "   Lade Mesh aus " << m_meshPath << endl;
     LOG << endl;
 
-    m_resCachePath = path + "/" + string::split(fs::path(path).filename().string(),'.')[0] + ".RESULTCACHE";
-    m_constraintPath = path + "/" + string::split(fs::path(path).filename().string(),'.')[0] + ".fem";
-    m_matPath = path + "/" + string::split(fs::path(path).filename().string(),'.')[0] + ".mat";
+    m_resCachePath = path + "/" + ".RESULTCACHE";
+    m_constraintPath = path + "/" + ".Constraints";
+    m_matPath = path + "/" + ".Material";
 
     // Laden aller files damit gechachte Prefab Indices ihre Gültigkeit beibehalten
     for (const auto& entry : fs::directory_iterator("../Recc/Cells")) {
@@ -88,6 +88,7 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
         }
     }
 
+    //
     m_isoMesh.loadFromFile(m_meshPath);
     m_isoMesh.loadIsoMeshMaterial();
 

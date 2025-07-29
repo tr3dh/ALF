@@ -41,7 +41,7 @@ void IsoMesh::fromByteSequence(ByteSequence& seq) {
         m_matPath,
         m_indicesToAdd,
         m_indicesToRemove,
-        // m_cachedBMats,   hier kommst zum segfault, aber auch nur während des reloads in der UI
+        // m_cachedBMats,   // hier kommst zum segfault, aber auch nur während des reloads in der UI
         m_cachedJDets,
         m_uSystem,
         m_fSystem,

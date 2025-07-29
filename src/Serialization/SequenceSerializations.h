@@ -82,7 +82,7 @@ template<>
 inline void ByteSequence::extract<SymEngine::DenseMatrix>(SymEngine::DenseMatrix& member) {
 
     size_t rows, cols;
-    extractMultiple(cols, rows);
+    extractMultiple(rows, cols);
 
     if(member.nrows() != rows || member.ncols() != cols){
         member.resize(rows,cols);

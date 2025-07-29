@@ -80,7 +80,7 @@ namespace sym{
     };
 
     // Einfache Funktion zum Runden aller Zahlen in einem Ausdruck
-    inline RCP<const Basic> round_all_numbers(const RCP<const Basic> &expr, int decimal_places = g_decimalPlaces) {
+    inline RCP<const Basic> roundAllNumbers(const RCP<const Basic> &expr, int decimal_places = g_decimalPlaces) {
         RoundingVisitor visitor(decimal_places);
         return visitor.apply(expr);
     }

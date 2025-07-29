@@ -14,7 +14,7 @@ void assembleSubstitutionMap(SymEngine::map_basic_basic& substitutionMap, const 
 
 //
 void solveNewtonRaphson(const SymEngine::DenseMatrix& residual, const SymEngine::DenseMatrix& symbolVector,
-    Eigen::MatrixXf& result, const float& tolerance){
+    Eigen::MatrixXf& result, const float& tolerance, unsigned int breakAfterIterations){
 
     // jacobian Matrix erstellen als triplet liste
     // äquivalent zu einer sparse Matrix mit SymEngine Expressions als Einträgen
@@ -83,9 +83,28 @@ void solveNewtonRaphson(const SymEngine::DenseMatrix& residual, const SymEngine:
 
         //
         numIterations++;
+
+        //
+        if(numIterations >= breakAfterIterations){
+            
+            break;
+        }
     }
 
     //
     LOG << numIterations << " NR Iterationen, Norm " << 
             firstResidualNorm << " --> " << substitutedResidual.norm();
+
+    //
+    if(numIterations == 0){
+
+        LOG << LOG_RED << "\n!! Newton Raphson Verfahren nicht durchgeführt - Residuumsnorm erfüllt bereits die Torleranz" << endl;
+    }
+    else if(numIterations >= breakAfterIterations){
+
+        LOG << LOG_RED << "\n!! Newton Raphson Verfahren konvergiert nach maximaler Anzahl zulässiger Durchläufe von " <<
+            breakAfterIterations << " Iterationen nicht (für Toleranz von " << tolerance << ")" << endl;
+    }
+
+
 }

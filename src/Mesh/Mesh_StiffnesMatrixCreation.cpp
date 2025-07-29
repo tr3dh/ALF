@@ -148,7 +148,7 @@ bool IsoMesh::createStiffnessMatrix(){
         sym::roundMatrix(BMatrix);
         
         SymEngine::expand(jDet);
-        sym::round_all_numbers(jDet);
+        sym::roundAllNumbers(jDet);
 
         //
         m_cachedJDets.emplace(cellIndex,jDet);

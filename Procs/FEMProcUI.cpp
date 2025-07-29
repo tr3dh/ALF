@@ -62,13 +62,6 @@ int main(void)
 
     LOG << "** -----------------------------------------" << endl;
 
-    //
-    FemModel model;
-    model.loadFromCache();
-
-    // Fenster jetzt sichtbar machen
-    ClearWindowState(FLAG_WINDOW_HIDDEN);
-
     // Raylib Fenster init
     float winSizeFaktor = 0.5f;
 
@@ -106,6 +99,13 @@ int main(void)
 
     //
     SetupImGuiStyle();
+
+    // Fenster jetzt sichtbar machen
+    ClearWindowState(FLAG_WINDOW_HIDDEN);
+
+    //
+    FemModel model;
+    model.loadFromCache();
 
     float imguiScale = 1.0f;
 
@@ -278,7 +278,7 @@ int main(void)
         }
 
         BeginDrawing();
-        ClearBackground(Color(30,30,30,255));
+        ClearBackground(WHITE);//Color(30,30,30,255));
 
         //
         rlImGuiBegin();
@@ -368,7 +368,7 @@ int main(void)
             if(ImGui::BeginMenu("Temp")){
 
                 if(ImGui::MenuItem("Clear Caches")){
-                    system("find ../Import -type f -name '*.RESULTCACHE' -delete");
+                    system("powershell -Command \"Get-ChildItem -Path ../Import -Filter *.RESULTCACHE -Recurse | Remove-Item\"");
                 }
 
                 ImGui::EndMenu();

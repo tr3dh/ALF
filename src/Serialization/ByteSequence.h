@@ -337,13 +337,6 @@ struct ByteSequence{
             //
             insert(std::string(member));
         }
-        // Aufruf des inserts für statische member weil Typ zu den Standardgrößen mit statischer Speichergröße zählt
-        // oder aus anderen Gründen eine statische Speicher größe aufweist
-        else if constexpr(std::is_fundamental<T>::value ||
-            std::is_trivially_copyable<T>::value && std::is_standard_layout<T>::value){
-                                                            
-            insertStaticMember(member);
-        }
         else if constexpr (hasToByteSequenceAttrib<T>::value) {
 
             // member funktion aufrufen und bytesequenz als referenz übergeben
@@ -352,6 +345,13 @@ struct ByteSequence{
         else if constexpr (hasToByteSequence<T>::value){
 
             toByteSequence(member, *this);
+        }
+        // Aufruf des inserts für statische member weil Typ zu den Standardgrößen mit statischer Speichergröße zählt
+        // oder aus anderen Gründen eine statische Speicher größe aufweist
+        else if constexpr(std::is_fundamental<T>::value ||
+            std::is_trivially_copyable<T>::value && std::is_standard_layout<T>::value){
+                                                            
+            insertStaticMember(member);
         }
         else {
 
@@ -407,13 +407,6 @@ struct ByteSequence{
                 extract(member[counter]);
             }
         }
-        // Aufruf des inserts für statische member weil Typ zu den Standardgrößen mit statischer Speichergröße zählt
-        // oder aus anderen Gründen eine statische Speicher größe aufweist
-        else if constexpr(std::is_fundamental<T>::value ||
-            std::is_trivially_copyable<T>::value && std::is_standard_layout<T>::value){
-                                                            
-            extractStaticMember(member);
-        }
         // member funktion aufrufen und bytesequenz als referenz übergeben
         else if constexpr (hasFromByteSequenceAttrib<T>::value) {
 
@@ -423,6 +416,13 @@ struct ByteSequence{
         else if constexpr (hasFromByteSequence<T>::value){
 
             fromByteSequence(member, *this);
+        }
+        // Aufruf des inserts für statische member weil Typ zu den Standardgrößen mit statischer Speichergröße zählt
+        // oder aus anderen Gründen eine statische Speicher größe aufweist
+        else if constexpr(std::is_fundamental<T>::value ||
+            std::is_trivially_copyable<T>::value && std::is_standard_layout<T>::value){
+                                                            
+            extractStaticMember(member);
         }
         else {
 
