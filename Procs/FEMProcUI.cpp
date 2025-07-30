@@ -32,7 +32,7 @@ int main(void)
     disableRLLogging();
 
     // SetConfigFlags(FLAG_WINDOW_UNDECORATED);
-    SetConfigFlags(FLAG_WINDOW_HIDDEN);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIDDEN);
     InitWindow(600,600, "<><FEMProc><>");
 
     //
@@ -308,11 +308,16 @@ int main(void)
         Vector2 displayFrameCenter = {leftFrameCorner.x + displayFrame.x/2, leftFrameCorner.y + displayFrame.y/2}; // Center des Frames
 
         //
+        static int plotOnMesh = 0;
+        static int plotData = static_cast<decltype(plotData)>(MeshData::VANMISES_STRESS);            // Van Mises Stress
+        static int plotKoord = 0;           // x (für van Mises Stress gibts nur eine Größe deshalb 0)
+
+        //
         static bool splitScreen = false;
         static bool splitScreenVertical = true;
 
         model.getMesh().getCells().begin()->second.getPrefab().nDimensions == 3 ? BeginMode3D(camera) : (void)0;
-        model.display(MeshData::VANMISES_STRESS, 0, false, false, displayFrame, displayFrameCenter, {100,100}, splitScreen, splitScreenVertical);
+        model.display(static_cast<MeshData>(plotData), plotKoord, plotOnMesh, displayFrame, displayFrameCenter, {100,100}, splitScreen, splitScreenVertical);
         model.getMesh().getCells().begin()->second.getPrefab().nDimensions == 3 ? EndMode3D() : (void)0;
 
         static std::string modelSource;
@@ -458,15 +463,16 @@ int main(void)
                 ImGui::SetWindowCollapsed(openVertTabWin, ImGuiCond_Always);
             }
 
-            static int selectedTab = 3;
+            static int selectedTab = 0;
             static std::map<int, int> selectedSubTab; // selectedSubTab[tabID] = subTabID
 
-            const char* tabNames[] = { "Model", "Constraints", "Isomparam", "Material" };
+            const char* tabNames[] = { "Model", "Constraints", "Isomparam", "Material", "Rendering" };
             std::map<int, std::vector<const char*>> subTabNames = {
                 {0, {"Import", "Export", "Settings"}},
                 {1, {}},
                 {2, {}},
-                {3, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings", "rendering"}}
+                {3, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}},
+                {4, {"MeshDisplay", "Animation", "pdf"}}
             };
 
             maxWidth = 0.0f;
@@ -769,16 +775,6 @@ int main(void)
 
                         break;
                     }
-                    case 5:{
-
-                        ImGui::Text("Appearance");
-                        ImGui::Separator();
-
-                        ImGui::Checkbox("SplitScreen", &splitScreen);
-                        ImGui::Checkbox("SplitVertical", &splitScreenVertical);
-
-                        break;
-                    }
                     default:{
 
                         break;
@@ -796,6 +792,203 @@ int main(void)
 
                 break;
             }
+            case 4:{
+                
+                switch (selectedSubTab[selectedTab]){
+                    case 0:{
+
+                        std::string camPerspective = "Camera : ";
+                        if(fpsCam){camPerspective += "FPS";}
+                        else if(orbitCam){camPerspective += "ORBITAL";}
+                        else if(planarCam){camPerspective += "NORMAL PLANAR";}
+                        else{camPerspective += "NONE";}
+
+                        ImGui::Text(camPerspective.c_str());
+                        ImGui::Separator();
+
+                        ImGui::Text("Edit MeshColors");
+                        ImGui::Separator();
+
+                        RaylibColorEdit(model.undeformedFrame, "\tundeformed Mesh");
+                        RaylibColorEdit(model.deformedFrame, "\tdeformed Mesh");
+                        RaylibColorEdit(model.deformedFramePlusXi, "\tdeformed Mesh plus xi");
+                        RaylibColorEdit(model.deformedFrameMinusXi, "\tdeformed Mesh minus xi");
+
+                        ImGui::Separator();
+
+                        ImGui::Text("Edit Datadisplay");
+                        ImGui::Separator();
+                        {
+                            static const char* items[] = { "undeformed Mesh", "deformed Mesh", "deformed Mesh plus xi", "deformed Mesh minus xi" };
+                            static int selectedIndex = 0;
+
+                            ImGui::PushItemWidth(200);
+                            if (ImGui::BeginCombo("##DM", "Display on Mesh"))
+                            {
+                                for (int i = 0; i < IM_ARRAYSIZE(items); i++)
+                                {
+                                    bool isSelected = (selectedIndex == i);
+                                    if (ImGui::Selectable(items[i], isSelected))
+                                    {
+                                        selectedIndex = i;
+                                        plotOnMesh = selectedIndex;
+                                    }
+
+                                    if (isSelected)
+                                        ImGui::SetItemDefaultFocus(); // Für bessere UX
+                                }
+                                ImGui::EndCombo();
+                            }
+                        }
+
+                        {
+                            static const char* items[] = { "Strain", "Stress", "Van-Mises-Stress", "InnerVariable" };
+                            static int selectedIndex = 2;
+                            
+                            if (ImGui::BeginCombo("##DD", "Display Data"))
+                            {
+                                for (int i = 0; i < IM_ARRAYSIZE(items); i++)
+                                {
+                                    bool isSelected = (selectedIndex == i);
+                                    if (ImGui::Selectable(items[i], isSelected))
+                                    {
+                                        selectedIndex = i;
+                                        plotData = selectedIndex;
+                                    }
+
+                                    if (isSelected)
+                                        ImGui::SetItemDefaultFocus(); // Für bessere UX
+                                }
+                                ImGui::EndCombo();
+                            }
+                        }
+
+                        {
+                            const auto& mat = model.getMesh().getMaterial();
+
+                            size_t totalSize = 1;
+                            for (size_t dim : mat.innerVariableSize) {
+                                totalSize *= dim;
+                            }
+
+                            // static: damit sie zwischen Frames gültig bleiben
+                            static std::vector<std::string> indexStrings;
+                            static std::vector<const char*> indexLabels;
+
+                            indexStrings.clear();
+                            indexLabels.clear();
+
+                            for (size_t i = 0; i < totalSize; ++i) {
+                                auto [x,y] = get2DIndexFromLinear(i,
+                                    {mat.innerVariableSize.size() > 0 ? mat.innerVariableSize[0] : 0,
+                                     mat.innerVariableSize.size() > 1 ? mat.innerVariableSize[1] : 0});
+
+                                indexStrings.push_back("var["+std::to_string(x)+"|"+std::to_string(y)+"]");
+                                indexLabels.push_back(indexStrings.back().c_str());
+                            }
+
+                            std::map<int, std::vector<const char*>> koordLabels = {
+                                {0, {model.getMesh().nDimensions == 3 ?
+                                    "xx", "xy", "xz", "yy", "yz", "zz" : "xx", "xy", "yy"}},
+                                {1, {model.getMesh().nDimensions == 3 ?
+                                    "xx", "xy", "xz", "yy", "yz", "zz" : "xx", "xy", "yy"}},
+                                {2, {"default"}},
+                                {3, indexLabels}
+                            };
+                            
+                            if(plotKoord >= koordLabels[plotData].size()){
+                                plotKoord = 0;
+                            }
+
+                            const auto& items = koordLabels[plotData];
+                            static int selectedIndex = 0;
+
+                            if (ImGui::BeginCombo("##DK", "Display for Koord"))
+                            {
+                                for (int i = 0; i < items.size(); ++i)
+                                {
+                                    bool isSelected = (selectedIndex == i);
+                                    if (ImGui::Selectable(items[i], isSelected))
+                                    {
+                                        selectedIndex = i;
+                                        plotKoord = selectedIndex;
+                                    }
+
+                                    if (isSelected)
+                                        ImGui::SetItemDefaultFocus();
+                                }
+                                ImGui::EndCombo();
+                            }
+                        }
+
+                        break;
+                    }
+                    case 1:{
+
+                        ImGui::Text("Anim");
+                        ImGui::SameLine();
+
+                        if(model.animationPaused){
+
+                            if(ImGui::Button("Play")){
+                                model.animationPaused = false;
+                            }
+                        }
+                        else {
+
+                            if(ImGui::Button("Pause")){
+                                model.animationPaused = true;
+                            }
+                        }
+
+                        ImGui::SameLine();
+                        if(ImGui::Button("Reset")){
+                            model.frameCounter = 0;
+                        }
+
+                        ImGui::Text("Frame");
+                        ImGui::SameLine();
+
+                        static bool wasActiveLastFrame = false;
+
+                        if(ImGui::SliderInt("##frameSlider", &model.frameCounter, 0, model.m_simulationSteps - 1)){
+
+                        }
+
+                        static bool cachedPaused = model.animationPaused;
+
+                        // Erste Berführung des Sliders
+                        if (ImGui::IsItemActive() && !wasActiveLastFrame) {
+                            cachedPaused = model.animationPaused;
+                            model.animationPaused = true;
+                        }
+
+                        // nach Loslassen
+                        if (ImGui::IsItemDeactivatedAfterEdit()) {
+                            model.animationPaused = cachedPaused;
+                        }
+
+                        wasActiveLastFrame = ImGui::IsItemActive();
+
+                        InputSliderFloat("deltaTime", model.m_deltaTime, 0.001, 0.5);
+
+                        break;
+                    }
+                    case 2:{
+
+                        ImGui::Text("Apperance 2D Models with pdf");
+                        ImGui::Separator();
+
+                        ImGui::Checkbox("SplitScreen", &splitScreen);
+                        ImGui::Checkbox("SplitVertical", &splitScreenVertical);
+
+                        break;
+                    }
+                    default:{
+                        break;
+                    }
+                }
+            }
             }
             ImGui::EndChild();
 
@@ -810,22 +1003,9 @@ int main(void)
         ImVec2 pivot = ImVec2(0.0f, 1.0f);
         ImGui::SetNextWindowPos(legendWinPos, ImGuiCond_Always, pivot);
 
-        ImGui::Begin("##Legend", nullptr, lwinFlags);
+        // ImGui::Begin("##Legend", nullptr, lwinFlags);
 
-        std::string camPerspective = "Camera : ";
-        if(fpsCam){camPerspective += "FPS";}
-        else if(orbitCam){camPerspective += "ORBITAL";}
-        else if(planarCam){camPerspective += "NORMAL PLANAR";}
-        else{camPerspective += "NONE";}
-
-        ImGui::Text(camPerspective.c_str());
-
-        RaylibColorEdit(model.undeformedFrame, "\tundeformed Mesh");
-        RaylibColorEdit(model.deformedFrame, "\tdeformed Mesh");
-        RaylibColorEdit(model.deformedFramePlusXi, "\tdeformed Mesh plus xi");
-        RaylibColorEdit(model.deformedFrameMinusXi, "\tdeformed Mesh minus xi");
-
-        ImGui::End();
+        // ImGui::End();
 
         RenderFileDialog();
 

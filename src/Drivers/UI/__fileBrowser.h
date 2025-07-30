@@ -13,5 +13,4 @@ void OpenFileDialog(const char* title, const std::vector<std::string>& filters, 
                     const std::string& pwdPath, std::function<void(const std::string&)> callback);
 
 void RenderFileDialog();
-
 void HandleFileDialog();

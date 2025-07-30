@@ -4,7 +4,7 @@
 
 enum class MeshData : uint8_t{
 
-    DISPLACEMENT,
+    // DISPLACEMENT,
     STRAIN,     
     STRESS,
     VANMISES_STRESS,
@@ -30,6 +30,8 @@ struct Coeffs {
 #define T_ZY_3D(STRESS)   (STRESS)(3,0)
 #define T_ZX_3D(STRESS)   (STRESS)(4,0)
 #define T_YX_3D(STRESS)   (STRESS)(5,0)
+
+std::pair<size_t, size_t> get2DIndexFromLinear(size_t linearIndex, const std::vector<size_t>& dims);
 
 struct CellData{
 

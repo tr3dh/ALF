@@ -1,5 +1,27 @@
 #include "CellData.h"
 
+std::pair<size_t, size_t> get2DIndexFromLinear(size_t linearIndex, const std::vector<size_t>& dims) {
+    
+    if (dims[0] == 0 && dims[1] == 0) {
+        return {0, 0};
+    }
+    // Zeilen/Spalten Vektoren
+    else if (dims[0] == 0 && dims[1] != 0) {
+        return {linearIndex, 0};
+    }
+    else if (dims[0] != 0 && dims[1] == 0) {
+        return {0, linearIndex};
+    }
+    // Matrix
+    else {
+
+        size_t major = dims[1];
+        size_t row = linearIndex / major;
+        size_t col = linearIndex % major;
+        return {row, col};
+    }
+}
+
 CellData::CellData() = default;
 
 CellData::CellData(const CellPrefab& prefab){
@@ -111,7 +133,14 @@ float CellData::getData(const MeshData& data, int globKoord, int forQuadraturePo
         }
         case MeshData::INNER_VARIABLE:{
 
-            fdata = innerVariable(globKoord,0);
+            if(innerVariable.size() == 0){
+                fdata = 0;
+            }
+            else {
+
+                auto [x,y] = get2DIndexFromLinear(globKoord, {(size_t)innerVariable.rows(), (size_t)innerVariable.cols()});
+                fdata = innerVariable(x,y);
+            }
         }
         default:{
             break;

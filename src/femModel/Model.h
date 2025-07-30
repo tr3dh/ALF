@@ -70,7 +70,7 @@ public:
     const IsoMesh& getMesh() const;
     IsoMesh& getMesh();
 
-    void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, bool displayOnDeformedMesh = false, bool displayOnQuadraturePoints = false,
+    void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, int displayOnMesh = 0,
         const Vector2& winSize = {100,100}, const Vector2& frameOffset = {-1,-1}, const Vector2& padding = {50,50}, bool splitScreen = false, bool splitScreenVertical = true);
 
     void importPdf(const std::string& pdfPath);
@@ -103,8 +103,14 @@ private:
     // Container der Simulationswerte
     std::vector<SimulationFrame> m_simulationFrames = {};
 
+public:
+
     // Zeitschrittintegration
     float m_simulationTime = 10.0f;
     float m_deltaTime = 0.1f;
     size_t m_simulationSteps = (size_t)(m_simulationTime/m_deltaTime);
+
+    //
+    bool animationPaused = false;
+    int frameCounter = 0; 
 };

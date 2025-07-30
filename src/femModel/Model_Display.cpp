@@ -1,11 +1,10 @@
 #include "Model.h"
 
-void FemModel::display(const MeshData& displayedData, const int& globKoord, bool displayOnDeformedMesh, bool displayOnQuadraturePoints,
+void FemModel::display(const MeshData& displayedData, const int& globKoord, int displayOnMesh,
     const Vector2& winSize, const Vector2& frameOffset, const Vector2& padding, bool splitScreen, bool splitScreenVertical){
 
     static timePoint frameStart = chrono::now();
 
-    static size_t frameCounter = 0; 
     static std::vector<Color*> colors = {&undeformedFrame, &deformedFrame, &deformedFramePlusXi, &deformedFrameMinusXi}; 
         
     Vector2 leftCorner = frameOffset - winSize/2, rightCorner = leftCorner + frameOffset; 
@@ -21,7 +20,8 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, bool
             
             frameStart = chrono::now();
             
-            if(frameCounter >= m_simulationSteps - 1){
+            if(animationPaused){}
+            else if(frameCounter >= m_simulationSteps - 1){
                 frameCounter = 0;
             } else {
                 frameCounter++;
@@ -74,6 +74,10 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, bool
         maxModelExtent = fmaxf(fmaxf(modelExtend.x, modelExtend.y), modelExtend.z);
     }
 
+    if(displayOnMesh >= nodeSetsForDisplay.size()){
+        displayOnMesh = 0;
+    }
+
     if(splitScreenVertical){
 
         // Vertikaler Split
@@ -104,16 +108,16 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, bool
     if(!m_isoMesh.getMaterial().isLinear){
 
         auto& r_currentFrame = m_simulationFrames[frameCounter];
-        m_isoMesh.display(r_currentFrame.cellDataSet, displayedData, globKoord, nodeSetsForDisplay, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, winSize, frameOffset, padding);
+        m_isoMesh.display(r_currentFrame.cellDataSet, displayedData, globKoord, nodeSetsForDisplay, colors, displayOnMesh, 0,  false, winSize, frameOffset, padding);
     }
     else if(splitScreen && m_isoMesh.getUndeformedNodes().begin()->second.getDimension() == 2 && m_isoMesh.getMaterial().hasPdf){
 
-        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, nodeSetsForDisplay, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[0], padding/3);
-        m_isoMesh.display(data_upperXi, displayedData, globKoord, {&n_upperXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[1], padding/3);
-        m_isoMesh.display(data_lowerXi, displayedData, globKoord, {&n_lowerXi}, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, frameSize, frameOffsets[2], padding/3);
+        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, nodeSetsForDisplay, colors, displayOnMesh, 0,  false, frameSize, frameOffsets[0], padding/3);
+        m_isoMesh.display(data_upperXi, displayedData, globKoord, {&n_upperXi}, colors, displayOnMesh, 0,  false, frameSize, frameOffsets[1], padding/3);
+        m_isoMesh.display(data_lowerXi, displayedData, globKoord, {&n_lowerXi}, colors, displayOnMesh, 0,  false, frameSize, frameOffsets[2], padding/3);
 
     } else {
 
-        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, nodeSetsForDisplay, colors, 0, displayOnDeformedMesh, displayOnQuadraturePoints, winSize, frameOffset, padding);
+        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, nodeSetsForDisplay, colors, displayOnMesh, 0,  false, winSize, frameOffset, padding);
     }
 }

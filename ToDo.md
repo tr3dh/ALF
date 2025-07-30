@@ -7,12 +7,6 @@
 . inputExpression für strings implementieren
 
 # Prim
-. deltaTime und Zeitspanne aus mat file laden
-. Toleranz und entsprechende Dezimalstellen aus file Laden ??
-. unsicherheitsverechnung in nicht linearer Simulation ??
-. Auswahl der zu printenden Größe auf Netz
-. Auswahl des Netztes auf den Größe geprintet wird
-. Bestätigen des Ladens aus Cache
 . !! bei sampling der pdf im nicht lin model display wird assertion ausgelöst
 
 !! <ERROR> !! -> Assertion failed:
@@ -30,19 +24,12 @@
         . init window ohne display und auf render texture rendern
         -> png und als asci konvert im terminal printen
 
-. Abspieloptionen : 
-        . Frame schieber
-        . deltaTime anpassen (abspieltempo)
-        . pausieren
-
 . Precompiles verbessern includes in includes templs in defines
 
 . getprefabs nur an relevanter stelle
 
 . segfault beim mehrfachen reload (-> wenn cached B Mats im isomesh einkommentiert sind und serialisiert werden)
 . nur wenn innerhalb der ui der reload geschieht
-
-. frame counter in model auslagern ?? -> Tests mit dem nacheinander laden verschiedener framecounts sodass der framecounter einmal viel zu hoch ist und nicht gerendert werden kann --> was passiert ??
 
 . serialisierungen komplett auf to/from bs umstellen und in cpp auslagern, sodas weniger kompilieraufwand durch vorkompilierung in o file
 
@@ -55,9 +42,19 @@
 . Parser kopiert expression string ???
 . ref in parser übergabe
 
+. pwd auch im programm anpassen sodass nicht immer vollständige Navigatrion nötig ist
+--> management in main sodass der sich die pfade der jeweiligen Anwendungen speichert und setzt
 . bin für cwd des explorers
 
-. Ladebalken während synchroner Ladevorgänge
+. Menubalken und notebookck checken >> wird alles gebracuht ?? alle schaltflächen ??
+
+. plus minus xi ist irgendwie vertauscht
+
+. smoothed fps
+
+. mit hendrik reden / klären was strain xx strain yy und strain yz (ebenfalls für 3d ist)
+
+. bei file new kann man inp aus wählen und der wird kpiert und mit nem .model initialisiert ???
 
 # Releases
 . Release statt Debug build initialisieren
