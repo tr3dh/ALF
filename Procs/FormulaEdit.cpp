@@ -9,6 +9,8 @@ void createFormulaTexture(const std::string& formula, Texture2D& texture){
     tex << "\\documentclass[preview]{standalone}\n"
         "\\usepackage{amsmath}\n"
         "\\usepackage{xcolor}\n"
+        "\\usepackage{graphicx}\n"
+        "\\usepackage{bm}\n"
         "\\begin{document}\n"
         "\\color{red} $" << formula << "$\n"
         "\\end{document}\n";

@@ -79,10 +79,6 @@ typedef fs::file_time_type fileTime;
 #include "Drivers/Calculations/__EigenMatrix.h"
 #include "Drivers/Calculations/__MatrixConversions.h"
 
-#include "Drivers/SFML/__sfLine.h"
-#include "Drivers/SFML/__sfPolygon.h"
-#include "Drivers/SFML/__sfLog.h"
-
 #include "Drivers/Raylib/__rlLogging.h"
 #include "Drivers/Raylib/__rlProgressDisplay.h"
 

@@ -26,6 +26,13 @@ void RenderFileDialog(){
 
     // rendere falls konstruiert
     if(g_fileDialog){
+
+        static ImVec2 fileBrowserSize = ImVec2(700,450);
+        ImVec2 winSize((float)GetScreenWidth(), (float)GetScreenHeight());
+
+        g_fileDialog->SetWindowPos(winSize.x /2 - fileBrowserSize.x /2, winSize.y /2 - fileBrowserSize.y /2);
+        g_fileDialog->SetWindowSize(fileBrowserSize.x, fileBrowserSize.y);
+        
         g_fileDialog->Display();
     }
 }

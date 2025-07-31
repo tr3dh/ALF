@@ -2,6 +2,7 @@
 
 #include <imgui/imgui.h>
 #include <imgui-filebrowser/imfilebrowser.h>
+#include <raylib.h>
 
 #include <functional>
 

@@ -1,0 +1,69 @@
+{
+    "isLinear": false,
+    "nonLinearApproach": {
+        "evolutionEquation": "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+        "innerVariable": [
+            "epsilon_v",
+            1
+        ],
+        "innerVariableSize": [
+            3
+        ],
+        "params": {
+            "Identity2D": {
+                "cols": 3,
+                "data": [
+                    [
+                        "1",
+                        "0",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "1",
+                        "0"
+                    ],
+                    [
+                        "0",
+                        "0",
+                        "1"
+                    ]
+                ],
+                "rows": 3
+            },
+            "tetha": {
+                "cols": 1,
+                "data": [
+                    [
+                        "80000"
+                    ]
+                ],
+                "rows": 1
+            }
+        },
+        "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)"
+    },
+    "pdf": {
+        "borders": {
+            "xi_max": 0,
+            "xi_min": 0.001
+        },
+        "function": "xi^(k-1) * exp(-xi/theta) / (gamma(k) * theta^k)",
+        "params": {
+            "k": 1,
+            "theta": 1
+        },
+        "pdfPreprocessing": {
+            "segmentation": 0.1,
+            "tolerance": 0.01
+        },
+        "pdfSampling": {
+            "samples": 100000
+        }
+    },
+    "stdParams": {
+        "E": 20000.0,
+        "t": 0.10000000149011612,
+        "v": 0.30000001192092896
+    }
+}

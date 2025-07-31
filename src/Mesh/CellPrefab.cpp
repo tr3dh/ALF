@@ -98,11 +98,11 @@ CellPrefab::CellPrefab(const std::string& path) : CellPrefab(){
 
     LOG << LOG_GREEN << "** " << "Element " << label << " mit " << numFaces << " faces geladen" << endl;
 
-    ASSERT(isoParamData.contains("WIREFRAMEINDIDES"),
-        "Rendering Information WIREFRAMEINDIDES für 3D Element " + label + " fehlt, Rendering des Elements wird mit default Wireframe, basierend auf angegebenen Faces gerendert");
+    ASSERT(isoParamData.contains("WIREFRAMEINDICES"),
+        "Rendering Information WIREFRAMEINDICES für 3D Element " + label + " fehlt, Rendering des Elements wird mit default Wireframe, basierend auf angegebenen Faces gerendert");
 
-    if(isoParamData.contains("WIREFRAMEINDIDES")){
-        wireFrameIndices = isoParamData["WIREFRAMEINDIDES"].get<decltype(wireFrameIndices)>();
+    if(isoParamData.contains("WIREFRAMEINDICES")){
+        wireFrameIndices = isoParamData["WIREFRAMEINDICES"].get<decltype(wireFrameIndices)>();
     }
 
     LOG << LOG_GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen" << endl;

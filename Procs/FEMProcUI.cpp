@@ -32,7 +32,7 @@ int main(void)
     disableRLLogging();
 
     // SetConfigFlags(FLAG_WINDOW_UNDECORATED);
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIDDEN);
+    SetConfigFlags(FLAG_WINDOW_HIDDEN | FLAG_WINDOW_RESIZABLE);
     InitWindow(600,600, "<><FEMProc><>");
 
     //
@@ -337,7 +337,14 @@ int main(void)
                     if(ImGui::MenuItem("Model")){
 
                         OpenFileDialog("Open femModel", { ".model" }, false, true, "../Import", [&](const std::string& chosenFilePath) {
-                            
+
+                            // Wenn Plotkoord nicht resettet wird und zb auf zz in einem 3d Modell gesetzt ist dann ein 2d Modell geöffnet wird
+                            // versucht das Programm auf nicht vorhandene Einträge zuzugreifen
+
+                            // plotOnMesh = 0;
+                            // plotData = 0;
+                            plotKoord = 0;
+
                             model.loadFromFile(chosenFilePath);
                             model.storePathInCache();
 
@@ -599,7 +606,8 @@ int main(void)
                         if (ImGui::BeginPopup("DateiAuswahl")) {
 
                             for (int i = 0; i < pdfFiles.size(); ++i) {
-                                if (ImGui::Selectable(fs::path(pdfFiles[i]).filename().string().c_str(), i == currentFile)) {
+                                if (ImGui::Selectable(fs::path(pdfFiles[i]).filename().string().c_str(), i == currentFile) &&
+                                    model.getMesh().getMaterial().isLinear) {
 
                                     currentFile = i;
 
@@ -784,7 +792,7 @@ int main(void)
                 if (IsKeyPressed(KEY_SPACE)) {
 
                     // nur ausführen wenn kein imgui element gerade im fokus ist
-                    if (!ImGui::IsAnyItemActive() && !ImGui::IsAnyItemFocused()) {
+                    if (!ImGui::IsAnyItemActive() && !ImGui::IsAnyItemFocused() && mat.isLinear && mat.hasPdf) {
                         mat.substitutePdf();
                         model.sampling();
                     }
@@ -887,14 +895,18 @@ int main(void)
                                 indexLabels.push_back(indexStrings.back().c_str());
                             }
 
-                            std::map<int, std::vector<const char*>> koordLabels = {
-                                {0, {model.getMesh().nDimensions == 3 ?
-                                    "xx", "xy", "xz", "yy", "yz", "zz" : "xx", "xy", "yy"}},
-                                {1, {model.getMesh().nDimensions == 3 ?
-                                    "xx", "xy", "xz", "yy", "yz", "zz" : "xx", "xy", "yy"}},
-                                {2, {"default"}},
-                                {3, indexLabels}
-                            };
+                            std::map<int, std::vector<const char*>> koordLabels;
+
+                            if (model.getMesh().nDimensions == 3) {
+                                koordLabels[0] = {"xx", "xy", "xz", "yy", "yz", "zz"};
+                                koordLabels[1] = {"xx", "xy", "xz", "yy", "yz", "zz"};
+                            } else {
+                                koordLabels[0] = {"xx", "xy", "yy"};
+                                koordLabels[1] = {"xx", "xy", "yy"};
+                            }
+
+                            koordLabels[2] = {"default"};
+                            koordLabels[3] = indexLabels;
                             
                             if(plotKoord >= koordLabels[plotData].size()){
                                 plotKoord = 0;

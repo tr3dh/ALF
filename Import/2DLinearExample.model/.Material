@@ -1,0 +1,27 @@
+{
+    "isLinear": true,
+    "pdf": {
+        "borders": {
+            "xi_max": 0,
+            "xi_min": 0
+        },
+        "function": "b - a*(xi-mu)**2",
+        "params": {
+            "a": 1,
+            "b": 1,
+            "mu": 0.0
+        },
+        "pdfPreprocessing": {
+            "segmentation": 0.1,
+            "tolerance": 0.01
+        },
+        "pdfSampling": {
+            "samples": 100000
+        }
+    },
+    "stdParams": {
+        "E": 20000.0,
+        "t": 0.10000000149011612,
+        "v": 0.30000001192092896
+    }
+}

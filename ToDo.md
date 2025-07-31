@@ -1,28 +1,6 @@
 # ToDo
 
-# Änderungen
-. if abfrage multiline input text einfügen
-
-# neu
-. inputExpression für strings implementieren
-
 # Prim
-. !! bei sampling der pdf im nicht lin model display wird assertion ausgelöst
-
-!! <ERROR> !! -> Assertion failed:
-        \ Debug Instruction : ├╝bergebene Nodes und Displacement sind inkompatibel
-        \ File: src/Mesh/Mesh_Solve.cpp
-        \ Line: 9
-        \ Function: displaceNodes
-
-. API schreiben
-        . Befehle :
-        . do fem
-        . wich node -> pos node
-        . wich elem -> elem info
-        . info über spannungen im element
-        . init window ohne display und auf render texture rendern
-        -> png und als asci konvert im terminal printen
 
 . Precompiles verbessern includes in includes templs in defines
 
@@ -33,11 +11,11 @@
 
 . serialisierungen komplett auf to/from bs umstellen und in cpp auslagern, sodas weniger kompilieraufwand durch vorkompilierung in o file
 
-. weiteres 3d format testen und checken ob rendering switch klappt
-
 . hintergrund farbe anpassungs dialog
 
-. Falsche schreibweise ::: INDIDES in .ISOPARAM C3D8R und Ladelogik
+. smoothed fps
+
+. weiteres 3d format testen und checken ob rendering switch klappt
 
 . Parser kopiert expression string ???
 . ref in parser übergabe
@@ -50,11 +28,24 @@
 
 . plus minus xi ist irgendwie vertauscht
 
-. smoothed fps
-
 . mit hendrik reden / klären was strain xx strain yy und strain yz (ebenfalls für 3d ist)
 
 . bei file new kann man inp aus wählen und der wird kpiert und mit nem .model initialisiert ???
+
+. space für fps und resampling ???
+
+\(  \scalebox{2}{$\rlap{\rule[0.65ex]{1.4em}{0.1pt}}{\Omega \iota \kern-0.4em \int}$} \)
+
+\(  \rlap{\rule[0.65ex]{1.4em}{0.1pt}}{\Omega \iota \kern-0.4em \raisebox{0.2ex}{\(\scriptstyle\int\)}} \)
+
+\(  \rlap{\rule[0.65ex]{1.4em}{0.1pt}}{\Omega \iota \kern-0.1em \raisebox{0
+.4ex}{\(\scriptstyle\int\)}} \)
+
+\scalebox{2}{$\rlap{\rule[0.65ex]{1.2em}{0.1pt}}{\Omega \kern-0.08em \iota \kern-
+0.45em \int}$}
+
+\scalebox{2}{$\rlap{\rule[0.65ex]{1.2em}{0.1pt}}{\bm \Omega \kern-0.08em \iota \kern-
+0.45em \int}$}
 
 # Releases
 . Release statt Debug build initialisieren
