@@ -15,8 +15,8 @@ int main(void)
     //
     RECT workArea;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
-    int usableHeight = workArea.bottom - workArea.top; // verfügbare Höhe (ohne Taskleiste)
-    int usableWidth  = workArea.right - workArea.left; // verfügbare Breite
+    int usableHeight = workArea.bottom - workArea.top;          // nutzbare Höhe (ohne Taskleiste)
+    int usableWidth  = workArea.right - workArea.left;          // nutzbare Breite (in den meisten Fällen gleich der Fensterbreite)
 
     //
     LOG << std::fixed << std::setprecision(4);
@@ -143,7 +143,9 @@ int main(void)
             float wheelMove = GetMouseWheelMove();
             
             if(wheelMove != 0) {
-                // Skalierungsfaktor anpassen (min: 0.5, max: 3.0)
+
+                // Skalierungsfaktor anpassen, clamp zwischen 0.5 und 3, sodass UI nicht vollkommen aus
+                // dem Bereich einer sinnvollen Skalierung entweicht
                 imguiScale += wheelMove * 0.1f;
                 imguiScale = Clamp(imguiScale, 0.5f, 3.0f);
                 
@@ -153,7 +155,13 @@ int main(void)
 
         if(WindowShouldClose()){
 
-            // Kreuz gedrückt
+            // gibt true zurück wenn Schließen Icon des Fenster gedrückt wird
+            // kann bei Bedarf überschrieben werden, sodass das Fenster nicht mehr über den Klick auf den Icon Button von OS
+            // geschlossen werden kann
+            //
+            // Da progressbar ebenfalls ohne event verarbeitung ins Fenster schreibt bewirkt der Klick auf des Kreuz in der 
+            // Fensterecke dort nichts
+            //
             closeWindow = true;
         }
 
@@ -278,7 +286,7 @@ int main(void)
         }
 
         BeginDrawing();
-        ClearBackground(WHITE);//Color(30,30,30,255));
+        ClearBackground(g_backgroundColor); //Color(30,30,30,255));
 
         //
         rlImGuiBegin();
@@ -327,10 +335,6 @@ int main(void)
         {
             if (ImGui::BeginMenu("File"))
             {
-                if (ImGui::BeginMenu("New"))
-                {
-                    ImGui::EndMenu();
-                }
                 if (ImGui::BeginMenu("Open"))
                 {
 
@@ -364,6 +368,33 @@ int main(void)
             }
             if (ImGui::BeginMenu("Settings"))
             {
+                if (ImGui::BeginMenu("General"))
+                {
+
+                    RaylibColorEdit(g_backgroundColor,                  "Background");
+                    RaylibColorEdit(g_progressDisplayBackgroundColor,   "Progressbar Background");
+                    RaylibColorEdit(g_progressDisplayTextColor,         "Progressbar Text");
+
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("2D Rendering"))
+                {
+                    // ImGui::NewLine();
+                    InputSliderFloat("2D Wireframe Thickness", g_cellsWireFrameThickness2D, 0, 10, true, "_noId", true);
+                    InputSliderFloat("2D Node Radius        ", g_cellsNodeRadius2D, 0, 10, true, "_noId", true);
+
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("3D Rendering"))
+                {
+                    // ImGui::NewLine();
+                    InputSliderFloat("3D Wireframe Thickness", g_cellsWireFrameThickness3D, 0, 10, true, "_noId", true);
+
+                    ImGui::EndMenu();
+                }
+
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Credits"))
@@ -982,6 +1013,7 @@ int main(void)
 
                         wasActiveLastFrame = ImGui::IsItemActive();
 
+                        ImGui::NewLine();
                         InputSliderFloat("deltaTime", model.m_deltaTime, 0.001, 0.5);
 
                         break;

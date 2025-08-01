@@ -1,14 +1,18 @@
 #include "CellRenderer.h"
 
+float g_cellsWireFrameThickness3D = 0.2f; 
+
 void freeCellRendererMem(){
 
-    // Freigabe GPU Reccourcen
-    UnloadMesh(g_cellMesh);
+    // Freigabe GPU Ressourcen
+    // Freigabe CPU Ressourcen (Speicherplatz im Heap)
+    //
+    // UnloadModel übernimmt hier tatsächlich die Freigabe alles reservierten Netzressourcen,
+    // wie mesh.vertices, mesh.indices, etc. und entlädt zudem das Model und das Netz selbst
     UnloadModel(g_cellModel);
 
-    // Freigabe CPU Reccourcen
-    MemFree(g_cellMesh.vertices);
-    MemFree(g_cellMesh.indices);
+    //
+    LOG << "++ CellRenderer Unloaded Pref " << +g_cellMesh_pID << ", Memory freed" << endl;
 }
 
 void initCellRenderer(const CellPrefab& pref){
@@ -21,6 +25,7 @@ void initCellRenderer(const CellPrefab& pref){
 
     //
     LOG << "** Init CellRenderer for CellPref " << pref.label << endl;
+    LOG << "** Try to unload Pref " << +g_cellMesh_pID << " and free Memory" << endl;
 
     // Reccourcen nur freigeben falls sie schoneinmal belegt worden sind
     g_cellMesh_pID == 0 ? (void)0 : freeCellRendererMem();
@@ -41,6 +46,9 @@ void initCellRenderer(const CellPrefab& pref){
 
     UploadMesh(&g_cellMesh, false);
     g_cellModel = LoadModelFromMesh(g_cellMesh);
+
+    // Cachen der prefab ID
+    g_cellMesh_pID = pref.pID;
 }
 
 void renderCell(const Cell& cell, const NodeSet& nodes, const Color& color){
@@ -73,6 +81,6 @@ void renderCellsWireFrame(const Cell& cell, const NodeSet& nodes, const Color& c
         const auto& r_WireEndNode = nodes.at(cell[dir.y]);
 
         DrawCylinderEx((Vector3){r_WireStartNode[0],r_WireStartNode[2],r_WireStartNode[1]},
-                        (Vector3){r_WireEndNode[0],r_WireEndNode[2],r_WireEndNode[1]}, 0.2, 0.2, 8, color);
+                        (Vector3){r_WireEndNode[0],r_WireEndNode[2],r_WireEndNode[1]}, g_cellsWireFrameThickness3D, g_cellsWireFrameThickness3D, 8, color);
     }
 }

@@ -2,7 +2,7 @@
 
 #include <raylib.h>
 
-static Color g_progressDisplayBackgroundColor = GRAY;
-static Color g_progressDisplayTextColor = RED;
+extern Color g_progressDisplayBackgroundColor;
+extern Color g_progressDisplayTextColor;
 
 void displayProgress(float percentProgress, const char *message);

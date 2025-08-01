@@ -223,7 +223,7 @@ bool InputSliderFloatExpression(const std::string& label, Expression& source, co
 }
 
 bool InputSliderFloat(const std::string& label, float& source, const float& lowerBorder, const float& upperBorder,
-    bool oneLiner, const std::string& suffix){
+    bool oneLiner, const std::string& suffix, bool instantReaktion){
     
     static float valBuffer, tempBuffer;
     valBuffer = source;
@@ -236,6 +236,10 @@ bool InputSliderFloat(const std::string& label, float& source, const float& lowe
 
     if(ImGui::SliderFloat(("##"+label+suffix+"slider").c_str(), &valBuffer, lowerBorder,upperBorder)){
         tempBuffer = valBuffer;
+
+        if(instantReaktion){
+            source = tempBuffer;
+        }
     };
 
     if (ImGui::IsItemDeactivatedAfterEdit()) {

@@ -4,6 +4,9 @@
 #include "Material.h"
 #include "Rendering/CellRenderer.h"
 
+extern float g_cellsWireFrameThickness2D;
+extern float g_cellsNodeRadius2D;
+
 void acvanceDataSet(const DataSet& source, DataSet& target, const Coeffs& coeffs);
 
 class IsoMesh{

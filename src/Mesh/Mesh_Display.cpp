@@ -1,5 +1,8 @@
 #include "Mesh.h"
 
+float g_cellsWireFrameThickness2D = 2.0f;
+float g_cellsNodeRadius2D = 4.0f;
+
 void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, const int& globKoord, const std::vector<NodeSet*>& nodeSets,
     const std::vector<Color*> setColors, int displayOnNodeSet, bool displayOnDeformedMesh, bool displayOnQuadraturePoints,
     const Vector2& winSize, const Vector2& frameOffset, const Vector2& padding){
@@ -148,7 +151,7 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
 
                         DrawLineEx((Vector2){(prevNode[0] * scaling) - offset.x, winSize.y - ((prevNode[1] * scaling) - offset.y)},
                                     (Vector2){(nextNode[0] * scaling) - offset.x, winSize.y - ((nextNode[1] * scaling) - offset.y)},
-                                    2, *setColors[setIndex]);
+                                    g_cellsWireFrameThickness2D, *setColors[setIndex]);
                     }
                 }
             }
@@ -158,7 +161,7 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
 
                 for(const auto& [index, node] : *nodeSet){
 
-                    DrawCircle((node[0] * scaling) - offset.x, winSize.y - ((node[1] * scaling) - offset.y), 4, *setColors[setIndex]);
+                    DrawCircle((node[0] * scaling) - offset.x, winSize.y - ((node[1] * scaling) - offset.y), g_cellsNodeRadius2D, *setColors[setIndex]);
                 }
             }
 

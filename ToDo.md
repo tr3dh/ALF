@@ -47,6 +47,12 @@
 \scalebox{2}{$\rlap{\rule[0.65ex]{1.2em}{0.1pt}}{\bm \Omega \kern-0.08em \iota \kern-
 0.45em \int}$}
 
+abspeichern label im modell und dann abfrage bei idx ???
+
+koord system 
+
+wireframe dicke einstellen
+
 # Releases
 . Release statt Debug build initialisieren
 . in Software release beide anbiete

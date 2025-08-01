@@ -1,5 +1,9 @@
 #include "__rlProgressDisplay.h"
 
+//
+Color g_progressDisplayBackgroundColor = BLACK;
+Color g_progressDisplayTextColor = RED;
+
 // Funktion funktioniert nur wenn Fenster initialisiert worden ist
 void displayProgress(float percentProgress, const char *message)
 {

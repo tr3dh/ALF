@@ -3,6 +3,8 @@
 #include "defines.h"
 #include "Mesh/Cell.h"
 
+extern float g_cellsWireFrameThickness3D;
+
 static Mesh g_cellMesh;
 static Model g_cellModel;
 

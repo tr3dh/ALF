@@ -1,0 +1,91 @@
+{
+    /*
+
+                     ██████╗██████╗ ██████╗ ██╗  ██╗
+                    ██╔════╝╚════██╗██╔══██╗██║  ██║
+                    ██║      █████╔╝██║  ██║███████║
+                    ██║      ╚═══██╗██║  ██║╚════██║
+                    ╚██████╗██████╔╝██████╔╝     ██║
+                     ╚═════╝╚═════╝ ╚═════╝      ╚═╝
+
+    !! Nur Testelement, Bennenung und Knotenreihenfolge können in den von Abaqus generierten Netzen abweichen
+
+    ** isoparametrisches Element C3D4
+
+    ** lokale Nodebennenung (Orientiert an erzeugten Abaqus file für Netz dieses Elements ohne
+       konkrete Koordinatensystem Anpassung)
+
+
+               4                                  z
+              /|\                                 ↑
+             / | \                                |
+            /  |  \                               |
+           /   |   \                              +------> y
+          /    |    \                              \
+         /     |     \                              \
+        /      |      \                              x
+       1-------|-------3                              
+        \      |      /
+          \    |    /
+            \  |  /
+              \|/
+               2
+
+    ** bei anpassung der lokalen Nodereihenfolge muss auch das Rendering bzw Vernetzung der Vertices neu Angegeben werden
+       sonst sorgt das face Culling dafür dass die Flächen teilweise nur aus der falschen Blickrichtung gerendert werden
+
+    ** in isoparametrische Koordinaten
+
+                        s
+                       ↑
+                       |
+                       |
+                       +------> t
+                        \
+                         \ 
+                          r
+
+    ** lokale Knotenpunkte in isoparamterischen Koordinaten
+    
+                    +-------+-----+-----+-----+
+                    | Node  |  r  |  s  |  t  |
+                    +-------+-----+-----+-----+
+                    |   1   |  0  |  0  |  0  |
+                    |   2   |  1  |  0  |  0  |
+                    |   3   |  0  |  1  |  0  |
+                    |   4   |  0  |  0  |  1  |
+                    +-------+-----+-----+-----+
+
+    ** 3D Rendering
+
+    Die Fem Berechnung im Hintergrund geht von der z-Achse als Hochachse aus.
+    Fürs Rendering wird die y-Achse als Hochachse verwendet wird. Deshalb wird zum Rendern bei der
+    Modellerstellung/-anpassung die y und z der zu renderndern Koordinaten getauscht.
+      
+    */
+    "NDIMENSIONS":          3,
+    "NNODES":               4,
+    "SHAPEFUNCTIONS":       [                                               //          | Node  |  r  |  s  |  t  |
+                            "1 - r - s - t",                                //          |   1   |  0  |  0  |  0  |
+                            "r",                                            //          |   2   |  1  |  0  |  0  |
+                            "s",                                            //          |   3   |  0  |  1  |  0  |
+                            "t"                                             //          |   4   |  0  |  0  |  1  |
+                            ],
+    "QUADRATUREPOINTS":     [
+                            [{"r": "0.1666666"},{"s": "0.1666666"}, {"t": "0.1666666"}],
+                            [{"r": "0.6666666"},{"s": "0.1666666"}, {"t": "0.1666666"}],
+                            [{"r": "0.1666666"},{"s": "0.6666666"}, {"t": "0.1666666"}],
+                            [{"r": "0.1666666"},{"s": "0.1666666"}, {"t": "0.6666666"}]
+                            ],
+    "WEIGHTS":              [
+                                1.0,1.0,1.0,1.0
+                            ],
+    "FACEINDICES":          [
+                                0,3,1, 1,3,2,
+                                2,3,0, 0,1,2
+                            ],
+    "WIREFRAMEINDICES":     [
+                                [0,1],[1,2],[2,0],
+                                [0,3],[1,3],[2,3]
+                            ]
+}

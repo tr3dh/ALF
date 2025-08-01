@@ -141,7 +141,7 @@ Weitere Informationen zur Definition der Wahrscheinlicheitsdichten und des nicht
 
 # 🤝 Danksagung
 
-Mein besonderer Dank gilt Dr. Hendrik Geisler, der diese Studienarbeit sehr spontan und durch seine Unterstützung erst ermöglicht hat.
+Mein besonderer Dank gilt Dr. Hendrik Geisler, der diese Studienarbeit sehr spontan und durch seine Unterstützung erst ermöglicht hat und während der Entwicklung eine große Hilfe war.
 
 ## 📚 Verwendete Bibliotheken
 Bedanken möchte ich mich zudem bei den jeweiligen Entwicklern und Maintainern der im Rahmen des Projekts verwendeten Open-Source Bibliotheken.

@@ -29,7 +29,7 @@ bool InputSliderFloatExpression(const std::string& label, Expression& source, co
     bool oneLiner = false, const std::string& suffix = "_exprfloatInputSlider");
 
 bool InputSliderFloat(const std::string& label, float& source, const float& lowerBorder = -2, const float& upperBorder = 10,
-    bool oneLiner = false, const std::string& suffix = "_exprfloatInputSlider");
+    bool oneLiner = false, const std::string& suffix = "_exprfloatInputSlider", bool instantReaktion = false);
 
 // für alle int typen
 // . unsigned, signed, ...
