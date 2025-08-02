@@ -1,13 +1,13 @@
 #include "../Mesh/Node.h"
 
-extern template struct NodeXd<float, 1>;
-extern template struct NodeXd<float, 2>;
-extern template struct NodeXd<float, 3>;
+template struct NodeXd<float, 1>;
+template struct NodeXd<float, 2>;
+template struct NodeXd<float, 3>;
 
-extern template struct NodeXd<double, 1>;
-extern template struct NodeXd<double, 2>;
-extern template struct NodeXd<double, 3>;
+template struct NodeXd<double, 1>;
+template struct NodeXd<double, 2>;
+template struct NodeXd<double, 3>;
 
-extern template struct dynNodeXd<double>;
-extern template struct dynNodeXd<float>;
-extern template struct dynNodeXd<int>;
+template struct dynNodeXd<double>;
+template struct dynNodeXd<float>;
+template struct dynNodeXd<int>;

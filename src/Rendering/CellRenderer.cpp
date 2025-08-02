@@ -1,6 +1,7 @@
 #include "CellRenderer.h"
 
-float g_cellsWireFrameThickness3D = 0.2f; 
+float g_cellsWireFrameThickness3D = 0.2f;
+prefabIndex g_cellMesh_pID = 0;
 
 void freeCellRendererMem(){
 
@@ -17,15 +18,11 @@ void freeCellRendererMem(){
 
 void initCellRenderer(const CellPrefab& pref){
 
-    // Reccourcen freigeben falls belegt
-    if(g_cellMesh_pID == pref.pID){
-        
-        return;
-    }
-
     //
     LOG << "** Init CellRenderer for CellPref " << pref.label << endl;
     LOG << "** Try to unload Pref " << +g_cellMesh_pID << " and free Memory" << endl;
+    LOG << "** Try to load Pref " << +pref.pID << endl;
+    LOG << endl;
 
     // Reccourcen nur freigeben falls sie schoneinmal belegt worden sind
     g_cellMesh_pID == 0 ? (void)0 : freeCellRendererMem();

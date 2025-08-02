@@ -448,6 +448,17 @@ struct ByteSequence{
         (extract(members), ...);
     }
 
+    template <typename... Ts>
+    void extractMultipleReversed(Ts&... members) {
+        
+        auto args = std::forward_as_tuple(members...);
+        constexpr size_t size = sizeof...(members);
+
+        [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+            (extract(std::get<size - 1 - Is>(args)), ...);
+        }(std::make_index_sequence<sizeof...(members)>());
+    }
+
     // # Shiffre Encoder
     // Codierung über einfache shiffre, also Tokenverschiebung
     // da die höher wertigen bytes beim string convert teilweise

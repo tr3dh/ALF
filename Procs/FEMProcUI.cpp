@@ -2,16 +2,79 @@
 // deklariert main funktion für executable
 
 #include "defines.h"
-#include "femModel/Model.h"
-#include "GUI/ImGuiStyleDecls.h"
-#include "GUI/ImGuiCustomElements.h"
-#include "Rendering/CameraMovement.h"
-#include "Rendering/CellRenderer.h"
+#include "templateDecls.h"
+#include "Libaries/Libaries.h"
 
-#define MODELCACHE "../bin/.CACHE"
+const std::string g_programsConfigCache = "../bin/CONFIG.CACHE";
+std::string g_fileBrowserCWD = fs::current_path().string() + "/../Import/";
+
+std::string relPath(const std::string& str){
+    return fs::relative(str, fs::current_path()).string();
+}
+
+void cacheConfigs(){
+
+    if(!fs::exists(fs::path(g_programsConfigCache).parent_path())){
+        fs::create_directory(fs::path(g_programsConfigCache).parent_path());
+    }
+
+    //
+    ByteSequence bs;
+
+    bs.insertMultiple(
+        relPath(g_fileBrowserCWD),
+        g_backgroundColor,
+        g_progressDisplayBackgroundColor,
+        g_progressDisplayTextColor,
+        g_cellsNodeRadius2D,
+        g_cellsWireFrameThickness2D,
+        g_cellsWireFrameThickness3D,
+        undeformedFrame,
+        deformedFrame,
+        deformedFramePlusXi,
+        deformedFrameMinusXi
+    );
+
+    //
+    bs.encode(g_encoderKey);
+    bs.toFile(g_programsConfigCache);
+}
+
+void loadCachedConfigs(){
+
+    if(!fs::exists(fs::path(g_programsConfigCache))){
+        return;
+    }
+
+    //
+    ByteSequence bs;
+
+    bs.fromFile(g_programsConfigCache);
+    bs.decode(g_encoderKey);
+
+    bs.extractMultipleReversed(
+        g_fileBrowserCWD,
+        g_backgroundColor,
+        g_progressDisplayBackgroundColor,
+        g_progressDisplayTextColor,
+        g_cellsNodeRadius2D,
+        g_cellsWireFrameThickness2D,
+        g_cellsWireFrameThickness3D,
+        undeformedFrame,
+        deformedFrame,
+        deformedFramePlusXi,
+        deformedFrameMinusXi
+    );
+
+    // aus relativem Pfad global gültigen generieren
+    g_fileBrowserCWD = fs::current_path().string() + "/" + g_fileBrowserCWD;
+}
 
 int main(void)
 {
+    //
+    loadCachedConfigs();
+
     //
     RECT workArea;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
@@ -248,10 +311,11 @@ int main(void)
             camera.position = (Vector3){model.modelCenter.x - distance, model.modelCenter.y + distance, model.modelCenter.z - distance};
         }
 
-        size_t modelDimension = model.getMesh().getCells().begin()->second.getPrefab().nDimensions;
+        size_t modelDimension = model.getMesh().getCells().begin()->second.getPrefabIndex() > 0
+            ? model.getMesh().getCells().begin()->second.getPrefab().nDimensions : 0;
 
         // Camera handling überspringen wenn Netz nicht 3D
-        if(model.getMesh().getCells().begin()->second.getPrefab().nDimensions != 3){
+        if(modelDimension != 3){
 
         }
         // wenn die Maus in der UI steht soll keine Camerafahrt stattfinden
@@ -324,9 +388,9 @@ int main(void)
         static bool splitScreen = false;
         static bool splitScreenVertical = true;
 
-        model.getMesh().getCells().begin()->second.getPrefab().nDimensions == 3 ? BeginMode3D(camera) : (void)0;
+        modelDimension == 3 ? BeginMode3D(camera) : (void)0;
         model.display(static_cast<MeshData>(plotData), plotKoord, plotOnMesh, displayFrame, displayFrameCenter, {100,100}, splitScreen, splitScreenVertical);
-        model.getMesh().getCells().begin()->second.getPrefab().nDimensions == 3 ? EndMode3D() : (void)0;
+        modelDimension == 3 ? EndMode3D() : (void)0;
 
         static std::string modelSource;
         modelSource = fs::path(model.getSource()).filename().string();
@@ -340,7 +404,7 @@ int main(void)
 
                     if(ImGui::MenuItem("Model")){
 
-                        OpenFileDialog("Open femModel", { ".model" }, false, true, "../Import", [&](const std::string& chosenFilePath) {
+                        OpenFileDialog("Open femModel", { ".model" }, false, true, g_fileBrowserCWD, [&](const std::string& chosenFilePath) {
 
                             // Wenn Plotkoord nicht resettet wird und zb auf zz in einem 3d Modell gesetzt ist dann ein 2d Modell geöffnet wird
                             // versucht das Programm auf nicht vorhandene Einträge zuzugreifen
@@ -353,6 +417,7 @@ int main(void)
                             model.storePathInCache();
 
                             modelSource = fs::path(model.getSource()).filename().string();
+                            g_fileBrowserCWD = fs::path(model.getSource()).parent_path().string();
                         });
 
                         // Center camera
@@ -397,10 +462,6 @@ int main(void)
 
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Credits"))
-            {
-                ImGui::EndMenu();
-            }
             if (ImGui::BeginMenu("Hardware"))
             {
                 ImGui::Text("OpenGL Version : %f", g_glVersion);
@@ -414,6 +475,75 @@ int main(void)
                     system("powershell -Command \"Get-ChildItem -Path ../Import -Filter *.RESULTCACHE -Recurse | Remove-Item\"");
                 }
 
+                if(ImGui::MenuItem("Clear Program Bin")){
+                    system("powershell -Command \"rm -r ../bin\"");
+                }
+
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Libaries"))
+            {
+                if (ImGui::BeginTable("Overview", 3)) {
+
+                    ImGui::TableSetupColumn("Name");
+                    ImGui::TableSetupColumn("License");
+                    ImGui::TableSetupColumn("Link");
+                    ImGui::TableHeadersRow();
+
+                    for (int i = 0; i < libaryNames.size(); ++i) {
+
+                        ImGui::TableNextRow();
+
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("%s", libaryNames[i]);
+
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%s", libaryLicenses[i]);
+
+                        ImGui::TableSetColumnIndex(2);
+
+                        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 102, 204, 255));
+                        if (ImGui::SmallButton(libaryUrls[i])) {
+                            OpenLink(libaryUrls[i]);
+                        }
+                        ImGui::PopStyleColor();
+                    }
+
+                    ImGui::EndTable();
+                }
+
+                ImGui::EndMenu();
+            }
+
+            if(ImGui::BeginMenu("Github")){
+
+                if (ImGui::BeginTable("ProjectLinks", 2)) {
+
+                    ImGui::TableSetupColumn("Subject");
+                    ImGui::TableSetupColumn("Link");
+                    ImGui::TableHeadersRow();
+
+                    auto LinkRow = [](const char* label, const char* url) {
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted(label);
+
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 102, 204, 255)); // Linkfarbe
+                        if (ImGui::SmallButton(url)) {
+                            OpenLink(url);
+                        }
+                        ImGui::PopStyleColor();
+                    };
+
+                    LinkRow("GitHub Repository", githubRepositoryUrl.c_str());
+                    LinkRow("Releases", (githubRepositoryUrl + "/releases").c_str());
+                    LinkRow("Find out more", (githubRepositoryUrl+ "/blob/main/README.md").c_str());
+                    LinkRow("Find out even more (read Thetis)", (githubRepositoryUrl+"/blob/main/Recc/Thetis/Studienarbeit.pdf").c_str());
+
+                    ImGui::EndTable();
+                }
                 ImGui::EndMenu();
             }
 
@@ -504,13 +634,10 @@ int main(void)
             static int selectedTab = 0;
             static std::map<int, int> selectedSubTab; // selectedSubTab[tabID] = subTabID
 
-            const char* tabNames[] = { "Model", "Constraints", "Isomparam", "Material", "Rendering" };
+            const char* tabNames[] = { "Material", "Rendering" };
             std::map<int, std::vector<const char*>> subTabNames = {
-                {0, {"Import", "Export", "Settings"}},
-                {1, {}},
-                {2, {}},
-                {3, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}},
-                {4, {"MeshDisplay", "Animation", "pdf"}}
+                {0, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}},
+                {1, {"MeshDisplay", "Animation", "pdf"}}
             };
 
             maxWidth = 0.0f;
@@ -569,16 +696,7 @@ int main(void)
 
             switch (selectedTab)
             {
-            case 0:
-                ImGui::Text("Mesh Tab");
-                break;
-            case 1:
-                ImGui::Text("constraint Tab");
-                break;
-            case 2:
-                ImGui::Text("isoparam tab");
-                break;
-            case 3:{
+            case 0:{
 
                 //
                 IsoMeshMaterial& mat = model.getMesh().getMaterial();
@@ -820,7 +938,8 @@ int main(void)
                     }   
                 }
 
-                if (IsKeyPressed(KEY_SPACE)) {
+                // damit bei fps führung beim hochbewegen nicht jedes mal resampled wird
+                if (!fpsCam && IsKeyPressed(KEY_SPACE)) {
 
                     // nur ausführen wenn kein imgui element gerade im fokus ist
                     if (!ImGui::IsAnyItemActive() && !ImGui::IsAnyItemFocused() && mat.isLinear && mat.hasPdf) {
@@ -831,7 +950,7 @@ int main(void)
 
                 break;
             }
-            case 4:{
+            case 1:{
                 
                 switch (selectedSubTab[selectedTab]){
                     case 0:{
@@ -848,10 +967,10 @@ int main(void)
                         ImGui::Text("Edit MeshColors");
                         ImGui::Separator();
 
-                        RaylibColorEdit(model.undeformedFrame, "\tundeformed Mesh");
-                        RaylibColorEdit(model.deformedFrame, "\tdeformed Mesh");
-                        RaylibColorEdit(model.deformedFramePlusXi, "\tdeformed Mesh plus xi");
-                        RaylibColorEdit(model.deformedFrameMinusXi, "\tdeformed Mesh minus xi");
+                        RaylibColorEdit(undeformedFrame, "\tundeformed Mesh");
+                        RaylibColorEdit(deformedFrame, "\tdeformed Mesh");
+                        RaylibColorEdit(deformedFramePlusXi, "\tdeformed Mesh plus xi");
+                        RaylibColorEdit(deformedFrameMinusXi, "\tdeformed Mesh minus xi");
 
                         ImGui::Separator();
 
@@ -1064,6 +1183,8 @@ int main(void)
     ImPlot::DestroyContext();
     rlImGuiShutdown();
     CloseWindow();
+
+    cacheConfigs();
 
     return 0;
 }

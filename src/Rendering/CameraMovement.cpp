@@ -77,7 +77,21 @@ void calcNormalPlanarCamera(Camera& camera, const Vector3& movDelta, const Vecto
     camera.target   = Vector3Add(camera.target, movCamera);
 }
 
+// Globale Variablen für geglättete Rotation
+static Vector3 smoothRotDelta = {0,0,0};
+static const float smoothingFactor = 0.6f; // 1 keine glättung, gegen 0 maximale Glättung, für 0 eingefrorenes bild
+static float alpha;
+
+//
 void calcFirstPersonCamera(Camera& camera, const Vector3& movDelta, const Vector3& rotDelta, const Vector3& movSensitivity, const Vector3& rotSensitivity, float dt){
+
+    // gewichtete Glättung, abhängig von deltaTime
+    alpha = 1.0f - powf(smoothingFactor, dt * 60.0f);
+
+    // Interpolation smoothed = smoothed + alpha * (raw - smoothed)
+    smoothRotDelta.x += alpha * (rotDelta.x - smoothRotDelta.x);
+    smoothRotDelta.y += alpha * (rotDelta.y - smoothRotDelta.y);
+    smoothRotDelta.z += alpha * (rotDelta.z - smoothRotDelta.z);
 
     UpdateCameraPro(&camera,
         (Vector3){
@@ -86,12 +100,10 @@ void calcFirstPersonCamera(Camera& camera, const Vector3& movDelta, const Vector
             movDelta.z * movSensitivity.z * dt,
         },
         (Vector3){
-            rotDelta.x * rotSensitivity.x,
-            rotDelta.y * rotSensitivity.y,
+            smoothRotDelta.x * rotSensitivity.x,
+            smoothRotDelta.y * rotSensitivity.y,
             0.0f
         },
-        rotDelta.z * rotSensitivity.z * dt
+        smoothRotDelta.z * rotSensitivity.z * dt
     );
 }
-
-        

@@ -13,6 +13,7 @@
 #include <tuple>
 #include <random>
 #include <stdio.h>
+#include <utility>
 
 namespace fs = std::filesystem;
 typedef fs::file_time_type fileTime;
@@ -88,6 +89,8 @@ typedef fs::file_time_type fileTime;
 
 #include "Drivers/Vec/__Vec.h"
 
+#include "Drivers/Prompts/__Curl.h"
+
 // Decorators
 #include "decorators/timeFunction.h"
 
@@ -118,3 +121,7 @@ static std::string g_vendorCorp = NULLSTR;
 static bool g_CudaBackendEnabled = false;
 
 static Color g_backgroundColor = Color(30,30,30,255);
+
+static std::string githubRepositoryUrl = "https://github.com/tr3dh/FEMProc";
+
+static std::string g_encoderKey = "ALF";

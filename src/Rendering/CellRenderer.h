@@ -8,7 +8,7 @@ extern float g_cellsWireFrameThickness3D;
 static Mesh g_cellMesh;
 static Model g_cellModel;
 
-static prefabIndex g_cellMesh_pID = 0;
+extern prefabIndex g_cellMesh_pID;
 
 static std::vector<Vector2> g_cellWireFrameIndices = {};
 

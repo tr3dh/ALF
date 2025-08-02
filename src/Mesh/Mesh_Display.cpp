@@ -177,10 +177,8 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
             // wird auch beim ersten Durchlauf getriggert da die validen prefab IDs im prefab Cache mit 1 beginnen
             // Rendering funktion geht von einheitlichem Element typen im Netz aus also pID oder prefab der ersten Zelle gleich denen
             // jeder weiteren
-            static prefabIndex pID = 0;
-            if(pID != r_pref.pID){
+            if(g_cellMesh_pID != r_pref.pID){
 
-                pID = r_pref.pID;
                 initCellRenderer(r_pref);
             }
 

@@ -27,10 +27,13 @@ std::string FemModel::getPathFromCache(){
 
 void FemModel::cacheFilePath(const std::string& path){
 
-    std::string parentDir = fs::current_path().parent_path().string();
+    //
+    if(!fs::exists(fs::path(FemModel::cachePath).parent_path())){
+        fs::create_directory(fs::path(FemModel::cachePath).parent_path());
+    }
 
     nlohmann::json j;
-    j["FemModel"] = ".." + path.substr(string::findFirst(path, parentDir) + parentDir.size(), path.size());
+    j["FemModel"] = fs::relative(path, fs::current_path());
     std::ofstream file(cachePath);
     file << j.dump(4); // 4 für Einrücken
 }
@@ -91,6 +94,15 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     //
     m_isoMesh.loadFromFile(m_meshPath);
     m_isoMesh.loadIsoMeshMaterial();
+
+    //
+    if(m_isoMesh.nDimensions == 3){
+
+        initCellRenderer(m_isoMesh.m_Cells.begin()->second.getPrefab());
+
+        // Shader setup
+        // ...
+    }
 
     // aus Cache laden
     if(loadCachedResults()){

@@ -1,7 +1,14 @@
 #include "Model.h"
 
+Color undeformedFrame = BLACK, deformedFrame = RED, deformedFramePlusXi = YELLOW, deformedFrameMinusXi = GREEN;
+
 void FemModel::display(const MeshData& displayedData, const int& globKoord, int displayOnMesh,
     const Vector2& winSize, const Vector2& frameOffset, const Vector2& padding, bool splitScreen, bool splitScreenVertical){
+
+    if(!initialzed()){
+
+        return;
+    }
 
     static timePoint frameStart = chrono::now();
 

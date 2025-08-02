@@ -37,6 +37,8 @@ struct SimulationFrame{
     NodeSet deformedNodes;
 };
 
+extern Color undeformedFrame, deformedFrame, deformedFramePlusXi, deformedFrameMinusXi;
+
 class FemModel{
 
 public:
@@ -80,12 +82,11 @@ public:
     Vector3 modelCenter {0,0,0}, modelExtend = {0,0,0};
     float maxModelExtent = 0.0f, modelDistance = 0.0f;
 
-    Color undeformedFrame = BLACK, deformedFrame = RED, deformedFramePlusXi = YELLOW, deformedFrameMinusXi = GREEN;
     bool m_materialIsLinear = true;
 
 private:
 
-    std::string m_encoderKey = "Andromeda";
+    std::string m_encoderKey = g_encoderKey;
 
     std::string m_modelPath = NULLSTR;
     std::string m_meshPath = NULLSTR;
