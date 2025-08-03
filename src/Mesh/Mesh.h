@@ -107,4 +107,7 @@ public:
     const std::string& getMaterialPath();
     const IsoMeshMaterial& getMaterial() const;
     IsoMeshMaterial& getMaterial();
+
+    //
+    float minValue = 0, maxValue = 0;
 };

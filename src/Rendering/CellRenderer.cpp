@@ -3,7 +3,19 @@
 float g_cellsWireFrameThickness3D = 0.2f;
 prefabIndex g_cellMesh_pID = 0;
 
+Shader g_cellMeshShader = {0};
+bool g_useCellMeshShader = false;
+int g_locationMaterialColor = -1;
+
 void freeCellRendererMem(){
+
+    //
+    if(g_useCellMeshShader){
+        
+        UnloadShader(g_cellMeshShader);
+        g_useCellMeshShader = false;
+        g_locationMaterialColor = -1;
+    }
 
     // Freigabe GPU Ressourcen
     // Freigabe CPU Ressourcen (Speicherplatz im Heap)
@@ -31,14 +43,19 @@ void initCellRenderer(const CellPrefab& pref){
     g_cellMesh = {0};
 
     // Übergabe mesh stats
-    g_cellMesh.vertexCount = pref.nNodes;
+    g_cellMesh.vertexCount = pref.numFaces * 3;
     g_cellMesh.triangleCount = pref.numFaces;
 
     // Speicher Allokierung im Heap
     g_cellMesh.vertices = (float*)MemAlloc(g_cellMesh.vertexCount * 3 * sizeof(float));
+    g_cellMesh.normals = (float*)MemAlloc(g_cellMesh.vertexCount * 3 * sizeof(float));
     g_cellMesh.indices = (unsigned short*)MemAlloc(g_cellMesh.triangleCount * 3 * sizeof(unsigned short));
 
-    memcpy(g_cellMesh.indices, pref.faceIndices.data(), pref.faceIndices.size() * sizeof(pref.faceIndices[0]));
+    // Dummy Indizes
+    for (int i = 0; i < g_cellMesh.vertexCount; i++) {
+        g_cellMesh.indices[i] = i;
+    }
+
     g_cellWireFrameIndices = pref.wireFrameIndices;
 
     UploadMesh(&g_cellMesh, false);
@@ -48,22 +65,76 @@ void initCellRenderer(const CellPrefab& pref){
     g_cellMesh_pID = pref.pID;
 }
 
+void applyShader(const std::string& vsPath, const std::string& fsPath){
+
+    //
+    g_cellMeshShader = LoadShader(vsPath.c_str(), fsPath.c_str());
+
+    //
+    g_cellModel.materials[0].shader = g_cellMeshShader;
+    g_useCellMeshShader = true;
+    g_locationMaterialColor = GetShaderLocation(g_cellMeshShader, "materialColor");
+
+    //
+    LOG << "** Initialized Shader" << endl;
+    LOG << endl;
+}
+
 void renderCell(const Cell& cell, const NodeSet& nodes, const Color& color){
 
-    // loop durch Nodes und überschreiben der Mesh Vertices
-    for (size_t node = 0; node < cell.getPrefab().nNodes; node++) {
-        
-        //
-        const auto& r_Node = nodes.at(cell[node]);
+    const auto& pref = cell.getPrefab();
 
-        // Vertices vertauschen damit hochachse aus der Berechnung z als Hochachse y im Rendering erscheint
-        g_cellMesh.vertices[node*3 + 0] = r_Node[0];
-        g_cellMesh.vertices[node*3 + 1] = r_Node[2];
-        g_cellMesh.vertices[node*3 + 2] = r_Node[1];
+    int i0, i1, i2;
+    Vector3 v0, v1, v2;
+    Vector3 edge1, edge2, normal;
+    int baseIdx;
+
+    for (int face = 0; face < pref.numFaces; ++face) {
+
+        // Indices der Vertices des Dreiecks
+        i0 = pref.faceIndices[face * 3 + 0];
+        i1 = pref.faceIndices[face * 3 + 1];
+        i2 = pref.faceIndices[face * 3 + 2];
+
+        // Ortskoordinaten der Nodes mit getauschter y und z Koordinate
+        v0 = {nodes.at(cell[i0])[0], nodes.at(cell[i0])[2], nodes.at(cell[i0])[1]};
+        v1 = {nodes.at(cell[i1])[0], nodes.at(cell[i1])[2], nodes.at(cell[i1])[1]};
+        v2 = {nodes.at(cell[i2])[0], nodes.at(cell[i2])[2], nodes.at(cell[i2])[1]};
+
+        // Normale berechnen
+        edge1 = Vector3Subtract(v1, v0);
+        edge2 = Vector3Subtract(v2, v0);
+        normal = Vector3Normalize(Vector3CrossProduct(edge1, edge2));
+
+        // Position im Vertex Array [1 ... pref.numFaces * 3 * 3] (3 Punkte pro face, 3 Koordinaten pro Punkt)
+        baseIdx = face * 9;
+
+        // Vertices reinschreiben
+        float* verts = g_cellMesh.vertices;
+        verts[baseIdx + 0] = v0.x; verts[baseIdx + 1] = v0.y; verts[baseIdx + 2] = v0.z;
+        verts[baseIdx + 3] = v1.x; verts[baseIdx + 4] = v1.y; verts[baseIdx + 5] = v1.z;
+        verts[baseIdx + 6] = v2.x; verts[baseIdx + 7] = v2.y; verts[baseIdx + 8] = v2.z;
+
+        // Normale für alle 3 Vertices gleich
+        float* norms = g_cellMesh.normals;
+        for (int j = 0; j < 3; ++j) {
+            norms[baseIdx + j*3 + 0] = normal.x;
+            norms[baseIdx + j*3 + 1] = normal.y;
+            norms[baseIdx + j*3 + 2] = normal.z;
+        }
     }
 
-    // Vertices auf die GPU laden
+    // Vertices und Normalen auf GPU laden
     UpdateMeshBuffer(g_cellMesh, 0, g_cellMesh.vertices, sizeof(float)*g_cellMesh.vertexCount*3, 0);
+    UpdateMeshBuffer(g_cellMesh, 2, g_cellMesh.normals, sizeof(float)*g_cellMesh.vertexCount*3, 0);
+
+    //
+    if(g_useCellMeshShader && g_cellMeshShader.id > 0 && g_locationMaterialColor > -1){
+
+        //
+        SetShaderValue(g_cellMeshShader, g_locationMaterialColor, 
+            (Vector4[]){{ color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f }}, SHADER_UNIFORM_VEC4);
+    }
 
     // Rendern
     DrawModel(g_cellModel, (Vector3){0,0,0}, 1.0f, color);

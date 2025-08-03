@@ -187,7 +187,8 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
                 values.try_emplace(cellIndex, cellData.getData(displayedData, globKoord));
             }
 
-            float minValue = 0, maxValue = 0;
+            minValue = 0;
+            maxValue = 0;
 
             if (!values.empty()) {
                 // Über die Werte iterieren, nicht die Map-Paare!

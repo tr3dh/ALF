@@ -93,6 +93,8 @@ private:
     std::string m_matPath = NULLSTR;
     std::string m_constraintPath = NULLSTR;
     std::string m_resCachePath = NULLSTR;
+    std::string m_vertexShaderPath = NULLSTR;
+    std::string m_fragmentShaderPath = NULLSTR;
     std::vector<float> m_samples = {};
 
     IsoMesh m_isoMesh;
@@ -105,6 +107,9 @@ private:
     std::vector<SimulationFrame> m_simulationFrames = {};
 
 public:
+
+    //
+    bool useShader = false;
 
     // Zeitschrittintegration
     float m_simulationTime = 10.0f;

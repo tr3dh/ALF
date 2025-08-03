@@ -1,0 +1,40 @@
+#version 330 core
+
+in vec3 fragPosition;
+in vec3 fragNormal;
+
+uniform vec3 viewPos;
+uniform vec3 lightPos;
+uniform vec4 materialColor;
+
+const float specularExponent = 200;  // z.B. 16..128 (niedrig = rau, hoch = glatt)
+const float fresnelStrength = 0;   // z.B. 0.0..1.0 (0 = kein metallisch, 1 = voll metallisch)
+float ambientStrength = 0.1;
+
+out vec4 finalColor;
+
+void main()
+{
+    vec3 normal = normalize(fragNormal);
+    vec3 viewDir = normalize(viewPos - fragPosition);
+    vec3 lightDir = normalize(lightPos - fragPosition);
+    vec3 halfway = normalize(viewDir + lightDir);
+
+    // Ambientanteil, um alles etwas aufzuhellen
+    vec3 ambient = ambientStrength * materialColor.rgb;
+
+    // Diffuse Beleuchtung
+    float diff = max(dot(normal, lightDir), 0.0);
+
+    // Specular Highlight basierend auf specularExponent
+    float spec = pow(max(dot(normal, halfway), 0.0), specularExponent);
+
+    // Fresnel Effekt (für metallischen Randglanz)
+    float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 5.0);
+
+    // Zusammensetzen
+    vec3 baseColor = materialColor.rgb;
+    vec3 lighting = ambient + diff * baseColor + spec * vec3(1.0) + fresnel * baseColor * fresnelStrength;
+
+    finalColor = vec4(lighting, materialColor.a);
+}

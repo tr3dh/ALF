@@ -4,10 +4,12 @@ const std::string FemModel::fileSuffix = ".model";
 const std::string FemModel::cachePath = "../bin/MODEL.CACHE";
 
 void SimulationFrame::toByteSequence(ByteSequence& seq) const{
+
     seq.insertMultiple(cellDataSet, displacement, deformedNodes);
 }
 
 void SimulationFrame::fromByteSequence(ByteSequence& seq){
+
     seq.extractMultiple(deformedNodes, displacement, cellDataSet);
 }
 
@@ -82,6 +84,9 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     m_constraintPath = path + "/" + ".Constraints";
     m_matPath = path + "/" + ".Material";
 
+    m_vertexShaderPath = path + "/" + ".glsl.VertexShader";
+    m_fragmentShaderPath = path + "/" + ".glsl.FragmentShader";
+
     // Laden aller files damit gechachte Prefab Indices ihre Gültigkeit beibehalten
     for (const auto& entry : fs::directory_iterator("../Recc/Cells")) {
         if (entry.is_regular_file()) {
@@ -96,12 +101,18 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     m_isoMesh.loadIsoMeshMaterial();
 
     //
+    useShader = (m_isoMesh.nDimensions == 3) && fs::exists(m_vertexShaderPath) && fs::exists(m_fragmentShaderPath);
+
+    //
     if(m_isoMesh.nDimensions == 3){
 
         initCellRenderer(m_isoMesh.m_Cells.begin()->second.getPrefab());
+    }
 
-        // Shader setup
-        // ...
+    // Shader setup
+    if(useShader){
+        
+        applyShader(m_vertexShaderPath, m_fragmentShaderPath);
     }
 
     // aus Cache laden
@@ -113,8 +124,6 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
 }
 
 void FemModel::importPdf(const std::string& pdfPath){
-
-    
 
 }
 

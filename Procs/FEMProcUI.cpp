@@ -70,6 +70,29 @@ void loadCachedConfigs(){
     g_fileBrowserCWD = fs::current_path().string() + "/" + g_fileBrowserCWD;
 }
 
+//
+void DrawArrow3D(Vector3 start, Vector3 end, float shaftRadius, float headRadius, float headLength, Color color) {
+    Vector3 dir = Vector3Subtract(end, start);
+    float length = Vector3Length(dir);
+    Vector3 normDir = Vector3Normalize(dir);
+
+    Vector3 shaftEnd = Vector3Add(start, Vector3Scale(normDir, length - headLength));
+
+    // Schaft: gleichmäßiger Zylinder
+    DrawCylinderEx(start, shaftEnd, shaftRadius, shaftRadius, 8, color);
+
+    // Spitze: Kegel (Zylinder mit topRadius = 0)
+    DrawCylinderEx(shaftEnd, end, headRadius, 0.0f, 8, color);
+}
+
+// Hilfsfunktion: Beschriftung am Ende
+void DrawAxisLabel(Vector3 position, Camera3D camera, const char* label, Color color) {
+    Font font = GetFontDefault();
+    Vector2 textSize = MeasureTextEx(font, label, 20, 1);
+    Vector2 screenPos = GetWorldToScreen(position, camera);
+    DrawTextEx(font, label, (Vector2){ screenPos.x - textSize.x / 2, screenPos.y - textSize.y / 2 }, 20, 1, color);
+}
+
 int main(void)
 {
     //
@@ -185,6 +208,21 @@ int main(void)
     bool planarCam = false;
     bool orbitCam = false;
     bool fpsCam = false;
+
+    // Gizmo für Koordinatensystem
+    int gizmoSize = 100;
+    int margin = 20;
+
+    //
+    Camera3D gizmoCam = { 0 };
+    gizmoCam.fovy = 45.0f;
+    gizmoCam.projection = CAMERA_PERSPECTIVE;
+
+    // Maße für Achspfeile
+    float arrowLen = 1.0f;
+    float shaftRadius = 0.05f;
+    float headRadius = 0.12f;
+    float headLength = 0.25f;
 
     //
     bool closeWindow = false;
@@ -349,6 +387,20 @@ int main(void)
             calcOrbitCamera(camera, GetMouseDelta(), model.modelCenter, true, {0.01,0.005});
         }
 
+        // für Frame gültige Shadergrößen setzen
+        if(g_useCellMeshShader){
+
+            static Vector3 lightPos;
+
+            SetShaderValue(g_cellMeshShader, GetShaderLocation(g_cellMeshShader, "viewPos"),
+                &camera.position, SHADER_UNIFORM_VEC3);
+
+            lightPos = model.modelCenter + model.modelExtend;
+
+            SetShaderValue(g_cellMeshShader, GetShaderLocation(g_cellMeshShader, "lightPos"),
+                &camera.position, SHADER_UNIFORM_VEC3);
+        }
+
         BeginDrawing();
         ClearBackground(g_backgroundColor); //Color(30,30,30,255));
 
@@ -388,9 +440,45 @@ int main(void)
         static bool splitScreen = false;
         static bool splitScreenVertical = true;
 
-        modelDimension == 3 ? BeginMode3D(camera) : (void)0;
-        model.display(static_cast<MeshData>(plotData), plotKoord, plotOnMesh, displayFrame, displayFrameCenter, {100,100}, splitScreen, splitScreenVertical);
-        modelDimension == 3 ? EndMode3D() : (void)0;
+        if(modelDimension == 3){
+
+            BeginMode3D(camera);
+            model.display(static_cast<MeshData>(plotData), plotKoord, plotOnMesh, displayFrame, displayFrameCenter,
+                {100,100}, splitScreen, splitScreenVertical);
+            EndMode3D();
+
+            //
+            rlDrawRenderBatchActive();
+
+            //
+            rlViewport(0,0, gizmoSize, gizmoSize);
+
+            gizmoCam.position = Vector3Scale(Vector3Normalize(camera.position), 3.0f);
+            gizmoCam.target = (Vector3){ 0, 0, 0 };
+            gizmoCam.up = camera.up;
+
+            BeginMode3D(gizmoCam);
+            rlEnableDepthTest();
+
+            DrawArrow3D((Vector3){0,0,0}, (Vector3){arrowLen,0,0}, shaftRadius, headRadius, headLength, RED);   // X
+            DrawArrow3D((Vector3){0,0,0}, (Vector3){0,arrowLen,0}, shaftRadius, headRadius, headLength, GREEN); // Y
+            DrawArrow3D((Vector3){0,0,0}, (Vector3){0,0,arrowLen}, shaftRadius, headRadius, headLength, BLUE);  // Z
+
+            // Buchstaben an den Enden
+            DrawAxisLabel((Vector3){arrowLen + 0.2f, 0, 0}, gizmoCam, "X", RED);
+            DrawAxisLabel((Vector3){0, arrowLen + 0.2f, 0}, gizmoCam, "Y", GREEN);
+            DrawAxisLabel((Vector3){0, 0, arrowLen + 0.2f}, gizmoCam, "Z", BLUE);
+
+            EndMode3D();
+
+            // Viewport zurücksetzen
+            rlViewport(0, 0, winSize.x, winSize.y);
+            rlDrawRenderBatchActive();
+        }
+        else {
+            model.display(static_cast<MeshData>(plotData), plotKoord, plotOnMesh, displayFrame, displayFrameCenter,
+                {100,100}, splitScreen, splitScreenVertical);
+        }
 
         static std::string modelSource;
         modelSource = fs::path(model.getSource()).filename().string();
