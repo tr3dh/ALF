@@ -13,6 +13,7 @@
 
 # Caches
 *.RESULTCACHE
+*.RESULTS
 
 # Temp Dateien
 *.tmp

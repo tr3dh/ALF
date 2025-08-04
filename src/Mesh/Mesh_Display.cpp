@@ -82,7 +82,7 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
             Vector2 offset = {scaling * midOfMesh.x - (frameOffset.x == -1 ? midOfWin.x : frameOffset.x),
                                 scaling * midOfMesh.y + (frameOffset.y == -1 ? midOfWin.y : frameOffset.y) - winSize.y};
 
-            float fData = 0.0f, fmin = 0, fmax = 0;
+            float fData = 0.0f; minValue = 0; maxValue = 0;
             CellIndex maxInd,minInd;
 
             for(const auto& [cellIndex, cell] : m_Cells){
@@ -90,12 +90,12 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
                 const CellData& data = dataSet.at(cellIndex);
                 fData = data.getData(displayedData, globKoord);
 
-                if(fData < fmin){
-                    fmin = fData;
+                if(fData < minValue){
+                    minValue = fData;
                     minInd = cellIndex;
                 }
-                else if(fData > fmax){
-                    fmax = fData;
+                else if(fData > maxValue){
+                    maxValue = fData;
                     maxInd = cellIndex;
                 }
             }
@@ -130,7 +130,7 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
                     vertices[prevNum] = (Vector2){(prevNode[0] * scaling) - offset.x, winSize.y - ((prevNode[1] * scaling) - offset.y)};
                 }
                 
-                DrawTriangleFan(vertices, r_prefab.nNodes, getColorByValue(dataSet.at(index).getData(displayedData, globKoord), fmin, fmax));
+                DrawTriangleFan(vertices, r_prefab.nNodes, getColorByValue(dataSet.at(index).getData(displayedData, globKoord), minValue, maxValue));
             }
 
             // zeichne Linien
@@ -187,10 +187,11 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
                 values.try_emplace(cellIndex, cellData.getData(displayedData, globKoord));
             }
 
-            minValue = 0;
-            maxValue = 0;
-
             if (!values.empty()) {
+
+                minValue = 0;
+                maxValue = 0;
+
                 // Über die Werte iterieren, nicht die Map-Paare!
                 auto [minIt, maxIt] = std::minmax_element(
                     values.begin(), values.end(),

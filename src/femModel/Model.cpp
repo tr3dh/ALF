@@ -84,8 +84,10 @@ FemModel::FemModel(const std::string& path) : m_modelPath(path){
     m_constraintPath = path + "/" + ".Constraints";
     m_matPath = path + "/" + ".Material";
 
-    m_vertexShaderPath = path + "/" + ".glsl.VertexShader";
-    m_fragmentShaderPath = path + "/" + ".glsl.FragmentShader";
+    m_vertexShaderPath = path + "/" + ".VertexShader";
+    m_fragmentShaderPath = path + "/" + ".FragmentShader";
+
+    m_resultFilePath = path + "/" + ".RESULTS";
 
     // Laden aller files damit gechachte Prefab Indices ihre Gültigkeit beibehalten
     for (const auto& entry : fs::directory_iterator("../Recc/Cells")) {

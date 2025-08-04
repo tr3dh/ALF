@@ -21,8 +21,8 @@ void FemModel::sampling(){
     std::tie(m_mean, m_deviation) = processSamples(m_samples);
 
     // fÜr Werte von xi plotten und berechnen
-    float upperXi = m_deviation;
-    float lowerXi = -m_deviation;
+    upperXi = m_deviation;
+    lowerXi = -m_deviation;
 
     //
     u_upperXi = m_isoMesh.getDisplacement() * (1-upperXi);

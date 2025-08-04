@@ -1,6 +1,6 @@
 License (MIT) :
 
-Copyright (c) 2025 Tim Rother, Hendrik Geisler
+Copyright (c) 2025 Tim Rother, Dr. Hendrik Geisler
 
 All rights reserved.
 

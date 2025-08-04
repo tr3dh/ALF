@@ -114,17 +114,48 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, int 
 
     if(!m_isoMesh.getMaterial().isLinear){
 
+        //
         auto& r_currentFrame = m_simulationFrames[frameCounter];
         m_isoMesh.display(r_currentFrame.cellDataSet, displayedData, globKoord, nodeSetsForDisplay, colors, displayOnMesh, 0,  false, winSize, frameOffset, padding);
+
+        //
+        minValue = m_isoMesh.minValue;
+        maxValue = m_isoMesh.maxValue;
     }
     else if(splitScreen && m_isoMesh.getUndeformedNodes().begin()->second.getDimension() == 2 && m_isoMesh.getMaterial().hasPdf){
 
-        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, nodeSetsForDisplay, colors, displayOnMesh, 0,  false, frameSize, frameOffsets[0], padding/3);
+        m_isoMesh.display(getDataSet(displayOnMesh),
+            displayedData, globKoord, nodeSetsForDisplay, colors, displayOnMesh, 0,  false, frameSize, frameOffsets[0], padding/3);
+
+        //
+        minValue = m_isoMesh.minValue;
+        maxValue = m_isoMesh.maxValue;
+
         m_isoMesh.display(data_upperXi, displayedData, globKoord, {&n_upperXi}, colors, displayOnMesh, 0,  false, frameSize, frameOffsets[1], padding/3);
         m_isoMesh.display(data_lowerXi, displayedData, globKoord, {&n_lowerXi}, colors, displayOnMesh, 0,  false, frameSize, frameOffsets[2], padding/3);
 
     } else {
 
-        m_isoMesh.display(m_isoMesh.getCellData(), displayedData, globKoord, nodeSetsForDisplay, colors, displayOnMesh, 0,  false, winSize, frameOffset, padding);
+        m_isoMesh.display(getDataSet(displayOnMesh),
+            displayedData, globKoord, nodeSetsForDisplay, colors, displayOnMesh, 0,  false, winSize, frameOffset, padding);
+
+        //
+        minValue = m_isoMesh.minValue;
+        maxValue = m_isoMesh.maxValue;
     }
 }
+
+const DataSet& FemModel::getDataSet(int displayOnMesh) const {
+
+    ASSERT(m_isoMesh.getMaterial().isLinear, "Funktion erwartet lineares Modell");
+
+    if(displayOnMesh < 2 || !m_isoMesh.getMaterial().hasPdf){
+        return m_isoMesh.getCellData();
+    }
+    else if(displayOnMesh == 2){
+        return data_upperXi;
+    }
+    else if(displayOnMesh == 3){
+        return data_lowerXi;
+    }
+};

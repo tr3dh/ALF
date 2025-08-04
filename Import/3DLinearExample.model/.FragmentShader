@@ -6,6 +6,7 @@ in vec3 fragNormal;
 uniform vec3 viewPos;
 uniform vec3 lightPos;
 uniform vec4 materialColor;
+uniform float time;
 
 const float specularExponent = 200;  // z.B. 16..128 (niedrig = rau, hoch = glatt)
 const float fresnelStrength = 0;   // z.B. 0.0..1.0 (0 = kein metallisch, 1 = voll metallisch)

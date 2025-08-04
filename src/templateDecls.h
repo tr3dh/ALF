@@ -11,6 +11,8 @@
 #include "Rendering/CameraMovement.h"
 #include "Rendering/CellRenderer.h"
 
+#include "CleanUp/ClearCaches.h"
+
 #include "bin/EigenPrecompiles.h"
 #include "bin/StringProcessingPreCompiles.h"
 #include "bin/SymbolPrecompiles.h"

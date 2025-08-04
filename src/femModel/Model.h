@@ -4,6 +4,7 @@
 #include "UncertaintyCalculation/UncertantyCalculation.h"
 #include "symbolic/symbolicExpressionParser.h"
 #include "Solver/NewtonRaphsonSolver.h"
+#include "Serialization/JsonSerialization.h"
 
 // Container für die ErgebnisWerte eines Schritts der Zeitschrittintegration
 struct SimulationFrame{
@@ -37,6 +38,14 @@ struct SimulationFrame{
     NodeSet deformedNodes;
 };
 
+template<typename JSON>
+void to_json(JSON& j, const SimulationFrame& frame) {
+    
+    to_json(j["displacement"], frame.displacement);
+    to_json(j["dataSet"], frame.cellDataSet);
+    to_json(j["Deformed Nodes"], frame.deformedNodes);
+}
+
 extern Color undeformedFrame, deformedFrame, deformedFramePlusXi, deformedFrameMinusXi;
 
 class FemModel{
@@ -62,6 +71,8 @@ public:
     bool loadCachedResults();
     void cacheResults();
 
+    void storeResults();
+
     void sampling();
 
     const std::vector<float>& getSamples();
@@ -71,6 +82,8 @@ public:
 
     const IsoMesh& getMesh() const;
     IsoMesh& getMesh();
+
+    const DataSet& getDataSet(int displayOnMesh = 0) const;
 
     void display(const MeshData& displayedData = MeshData::NONE, const int& globKoord = 0, int displayOnMesh = 0,
         const Vector2& winSize = {100,100}, const Vector2& frameOffset = {-1,-1}, const Vector2& padding = {50,50}, bool splitScreen = false, bool splitScreenVertical = true);
@@ -84,7 +97,7 @@ public:
 
     bool m_materialIsLinear = true;
 
-private:
+public:
 
     std::string m_encoderKey = g_encoderKey;
 
@@ -95,6 +108,10 @@ private:
     std::string m_resCachePath = NULLSTR;
     std::string m_vertexShaderPath = NULLSTR;
     std::string m_fragmentShaderPath = NULLSTR;
+    std::string m_resultFilePath = NULLSTR;
+
+private:
+
     std::vector<float> m_samples = {};
 
     IsoMesh m_isoMesh;
@@ -118,5 +135,12 @@ public:
 
     //
     bool animationPaused = false;
-    int frameCounter = 0; 
+    int frameCounter = 0;
+
+    //
+    float minValue = 0, maxValue = 0;
+
+    // fÜr Werte von xi plotten und berechnen
+    float upperXi = 0;
+    float lowerXi = 0;
 };

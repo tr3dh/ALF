@@ -19,7 +19,7 @@ else
 	LDFLAGS += $(NATIVEWIN_FLAGS) -flto -fuse-linker-plugin -Wl,-O2 -Wl,--gc-sections -Wl,--as-needed
 endif
 
-#	-I./thirdParty/enet/include 
+# -Wno-missing-designated-field-initializers
 CXXFLAGS += -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-Wno-deprecated-literal-operator \
 	-Wno-cpp \
@@ -35,9 +35,6 @@ CXXFLAGS += -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I./thirdParty/implot \
 	-pthread
 
-# -lr3d vor lraylib einfügen falls nötig
-# -lbase nach -L...vulkan/build/base einfügen
-# -L./thirdParty/enet/build -lenet vor winsocks
 LDFLAGS += -L./src \
 	-L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
@@ -86,7 +83,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)
 	@mkdir -p $(@D)
 	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
 
-SRCLIB := build/libfemPROC$(SUFFIX).a
+SRCLIB := build/libalf$(SUFFIX).a
 $(SRCLIB): $(OBJ) $(PCH)
 	ar rcs $(SRCLIB) $^
 

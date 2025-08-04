@@ -1,15 +1,10 @@
-# <h1> <span style="font-size: 1.3em;">A</span>daptive <span style="font-size: 1.3em;">L</span>ightweight <span style="font-size: 1.3em;">F</span>inite Element Tool (ALF) </h1>
+# <h1> <span style="font-size: 1.3em;">A</span>daptive, <span style="font-size: 1.3em;">L</span>ightweight <span style="font-size: 1.3em;">F</span>inite Element Tool (ALF) </h1>
 
 <img align="left" style="width:140px" src="Recc/Compilation/iconStripped.png" width="288px">
 
 ALF ist ein leichtgewichtiges, adaptives FEM Programm, das im Rahmen einer [Studienarbeit](Recc/Thetis/Studienarbeit.pdf) für das Institut für Kontinuumsmechanik (IKM) der Leibniz Universität Hannover (LUH) entwickelt worden ist. Dabei liegt der Fokus auf der Erprobung verschiedener Wahrscheinlichkeitsdichten für die Unsicherheitsquantifizierung der linearen FEM und von simplen, nichtlinearen Materialmodellen für die nichtlineare FEM.
 
 <br>
-
-# 🌐 Download
-- Programm : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/FEMProc/releases) herunterladen
-- Bibliothek : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/FEMProc/releases) herunterladen
-- Source Code : Projekt mit git klonen, Umgebung mit `make prefab` einrichten und mit `make launch` kompilieren und ausführen 
 
 # 🧬 Entwicklung
 - Sprachstandard : C++23
@@ -28,6 +23,18 @@ ALF ist ein leichtgewichtiges, adaptives FEM Programm, das im Rahmen einer [Stud
 
 # 🛠️ Umsetzung
 Das Programm arbeitet mit einer rein dateigetriebenen Modelldefinition (Netz, Materialmodell, Randbedingungen, etc.) und Informationsbereitstellung (isoparametrisches Element, Vorlagen für Wahrscheinlicheitsdichten, etc.). Dabei werden die Informationen über gutverständliche JSON-Dateien bereitgestellt. So können schnell und ohne langwierige Einarbeitung Modelle implementiert, Programmfunktionen erweitert und Simulationen durchgeführt werden.
+
+# 🧩 Verwendung
+ALF kann auf drei verschiedene Arten und Weisen verwendet werden.
+- über UI (am ausgereiftesten)
+- über API
+- als C++ Bibliothek
+
+# 🚀 Download
+- Programm (UI) : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/FEMProc/releases) herunterladen
+- API : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/FEMProc/releases) herunterladen
+- Bibliothek : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/FEMProc/releases) herunterladen
+- Source Code : Projekt mit git klonen, Umgebung mit `make prefab` einrichten und Programm mit `make launch` kompilieren und ausführen
 
 # 🖥️ Benutzeroberfläche
 Die Benutzeroberfläche bietet die Möglichkeit Modelle zu laden und zu verwalten und die Steuerung der Ergebnisvisualisierung.
@@ -73,6 +80,14 @@ Arbeitsverzeichnis des Programms/
 |   |__ ...
 |__ ...
 ```
+
+Zudem gibt es weitere optionale Dateien die erzeugt oder beigelegt werden können.
+- `.RESULTS`-Datei : enthält alle Simulationsergebnisse im JSON-Format
+- `.VertexShader`-Datei : Vertex Shader im `GLSL`-Format
+- `.FragmentShader`-Datei : Fragment Shader im `GLSL`-Format
+
+Die `.RESULTS`-Datei kann über die UI mit `File->Export->*.RESULTS` oder über die API mit `simulate` erzeugt werden und enthält alle Ergebniswerte (Verschiebungen, Spannungen, Dehnungen, ...) der durchgeführten Simulation.
+Die Shader lassen sich für ein verbessertes Rendering hinzufügen. Aus den Beispielen in [Import](/Import/) gehen die von Programm übergebenen und erwarteten Uniforms, In- und Outputs hervor.
 
 ## 🕸️ Netzdefinition
 Datei `.Mesh`
@@ -138,6 +153,8 @@ Weitere Informationen zur Definition der Wahrscheinlicheitsdichten und des nicht
 | F11                   | toggle Fullscreen                 |
 | C                     | toggle Cursor                     |
 | Space                 | Resampling der pdf                |
+| Ctrl + E              | Berechnungs-Caches der Modelle löschen    |
+| Ctrl + R              | letztes geöffnetes Modell laden           |
 
 # 🤝 Danksagung
 

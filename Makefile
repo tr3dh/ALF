@@ -9,7 +9,7 @@ all:
 	@time $(MAKE) build -j
 	@echo "-------------------"
 
-TARGET = build/FEMProcUI
+TARGET = build/ALF
 exec:
 	@echo "Wechsel in: $(dir $(TARGET))"
 	cd $(dir $(TARGET)) && ./$(notdir $(TARGET)$(SUFFIX))
@@ -36,5 +36,8 @@ launch: all exec
 
 ping:
 	@echo "Pong"
+
+api:
+	@$(MAKE) launch TARGET=build/ALFAPI
 
 .DEFAULT_GOAL := all

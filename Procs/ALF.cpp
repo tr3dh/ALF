@@ -7,6 +7,7 @@
 
 const std::string g_programsConfigCache = "../bin/CONFIG.CACHE";
 std::string g_fileBrowserCWD = fs::current_path().string() + "/../Import/";
+bool g_bindStartUpToReloadRecent = false;
 
 std::string relPath(const std::string& str){
     return fs::relative(str, fs::current_path()).string();
@@ -32,7 +33,8 @@ void cacheConfigs(){
         undeformedFrame,
         deformedFrame,
         deformedFramePlusXi,
-        deformedFrameMinusXi
+        deformedFrameMinusXi,
+        g_bindStartUpToReloadRecent
     );
 
     //
@@ -63,7 +65,8 @@ void loadCachedConfigs(){
         undeformedFrame,
         deformedFrame,
         deformedFramePlusXi,
-        deformedFrameMinusXi
+        deformedFrameMinusXi,
+        g_bindStartUpToReloadRecent
     );
 
     // aus relativem Pfad global gültigen generieren
@@ -72,21 +75,23 @@ void loadCachedConfigs(){
 
 //
 void DrawArrow3D(Vector3 start, Vector3 end, float shaftRadius, float headRadius, float headLength, Color color) {
+
     Vector3 dir = Vector3Subtract(end, start);
     float length = Vector3Length(dir);
     Vector3 normDir = Vector3Normalize(dir);
 
     Vector3 shaftEnd = Vector3Add(start, Vector3Scale(normDir, length - headLength));
 
-    // Schaft: gleichmäßiger Zylinder
+    // Schaft : gleichmäßiger Zylinder
     DrawCylinderEx(start, shaftEnd, shaftRadius, shaftRadius, 8, color);
 
-    // Spitze: Kegel (Zylinder mit topRadius = 0)
+    // Spitze : Kegel (Zylinder mit topRadius 0)
     DrawCylinderEx(shaftEnd, end, headRadius, 0.0f, 8, color);
 }
 
-// Hilfsfunktion: Beschriftung am Ende
+//
 void DrawAxisLabel(Vector3 position, Camera3D camera, const char* label, Color color) {
+
     Font font = GetFontDefault();
     Vector2 textSize = MeasureTextEx(font, label, 20, 1);
     Vector2 screenPos = GetWorldToScreen(position, camera);
@@ -119,7 +124,8 @@ int main(void)
 
     // SetConfigFlags(FLAG_WINDOW_UNDECORATED);
     SetConfigFlags(FLAG_WINDOW_HIDDEN | FLAG_WINDOW_RESIZABLE);
-    InitWindow(600,600, "<><FEMProc><>");
+    InitWindow(600,600, "\t Adaptive, Lightweight Finite Element Tool (ALF)");
+    windowInitialized = true;
 
     //
     const char* glVersion = (const char*)glGetString(GL_VERSION);
@@ -149,7 +155,7 @@ int main(void)
     LOG << "** -----------------------------------------" << endl;
 
     // Raylib Fenster init
-    float winSizeFaktor = 0.5f;
+    float winSizeFaktor = 0.6f;
 
     int monitor = GetCurrentMonitor();
     int screenWidth = GetMonitorWidth(monitor);
@@ -191,8 +197,8 @@ int main(void)
 
     //
     FemModel model;
-    model.loadFromCache();
-
+    if(g_bindStartUpToReloadRecent){ model.loadFromCache(); }
+    
     float imguiScale = 1.0f;
 
     // Camera init
@@ -225,12 +231,18 @@ int main(void)
     float headLength = 0.25f;
 
     //
+    float time = 0;
+
+    //
     bool closeWindow = false;
     while (!closeWindow)
     {
         // deltaTime
         static float dt;
         dt = GetFrameTime();
+
+        //
+        time += dt;
 
         // Screen stats
         int monitor = GetCurrentMonitor();
@@ -399,6 +411,9 @@ int main(void)
 
             SetShaderValue(g_cellMeshShader, GetShaderLocation(g_cellMeshShader, "lightPos"),
                 &camera.position, SHADER_UNIFORM_VEC3);
+
+            SetShaderValue(g_cellMeshShader, GetShaderLocation(g_cellMeshShader, "time"),
+                &time, SHADER_UNIFORM_FLOAT);
         }
 
         BeginDrawing();
@@ -483,10 +498,35 @@ int main(void)
         static std::string modelSource;
         modelSource = fs::path(model.getSource()).filename().string();
 
+        if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_R)) {
+
+            model.loadFromCache();
+        }
+
+        if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_U)) {
+
+            model.unload();
+        }
+
+        if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_E)) {
+
+            clearCaches();
+        }
+
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
             {
+                if(ImGui::BeginMenu("Reload")){
+
+                    //
+                    if(ImGui::MenuItem("Recent Model")){
+                        model.loadFromCache();
+                    }
+
+                    ImGui::EndMenu();
+                }
+
                 if (ImGui::BeginMenu("Open"))
                 {
 
@@ -517,11 +557,28 @@ int main(void)
                     ImGui::EndMenu();
                 }
 
+                if(ImGui::BeginMenu("Export")){
+
+                    if(ImGui::MenuItem("*.RESULTS")){
+
+                        model.storeResults();
+                    }
+
+                    ImGui::EndMenu();
+                }
+
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Settings"))
             {
-                if (ImGui::BeginMenu("General"))
+                if(ImGui::BeginMenu("Startup")){
+
+                    //
+                    ImGui::Checkbox("Reload Recent on Startup", &g_bindStartUpToReloadRecent);
+
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("General Apperarance"))
                 {
 
                     RaylibColorEdit(g_backgroundColor,                  "Background");
@@ -560,11 +617,11 @@ int main(void)
             if(ImGui::BeginMenu("Temp")){
 
                 if(ImGui::MenuItem("Clear Caches")){
-                    system("powershell -Command \"Get-ChildItem -Path ../Import -Filter *.RESULTCACHE -Recurse | Remove-Item\"");
+                    clearCaches();
                 }
 
                 if(ImGui::MenuItem("Clear Program Bin")){
-                    system("powershell -Command \"rm -r ../bin\"");
+                    clearBin();
                 }
 
                 ImGui::EndMenu();
@@ -722,10 +779,10 @@ int main(void)
             static int selectedTab = 0;
             static std::map<int, int> selectedSubTab; // selectedSubTab[tabID] = subTabID
 
-            const char* tabNames[] = { "Material", "Rendering" };
+            const char* tabNames[] = { "Mesh", "Material", "Rendering" };
             std::map<int, std::vector<const char*>> subTabNames = {
-                {0, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}},
-                {1, {"MeshDisplay", "Animation", "pdf"}}
+                {1, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}},
+                {2, {"MeshDisplay", "Animation", "pdf"}}
             };
 
             maxWidth = 0.0f;
@@ -785,6 +842,29 @@ int main(void)
             switch (selectedTab)
             {
             case 0:{
+
+                if(model.initialzed()){
+
+                    ImGui::PushTextWrapPos();
+                    ImGui::Text("Model at : '%s'", relPath(model.m_modelPath).c_str());
+                    ImGui::PopTextWrapPos();
+
+                    ImGui::Separator();
+                    ImGui::Text("Dimension : %zuD", model.getMesh().nDimensions);
+                    ImGui::Text("Nodes : %zu", model.getMesh().getUndeformedNodes().size());
+                    ImGui::Text("Cells : %zu", model.getMesh().getCells().size());
+                    ImGui::Text("Dofs : %zu", model.getMesh().getUndeformedNodes().size() * model.getMesh().nDimensions);
+                    ImGui::Text("uncertainty Quantification : %s", model.getMesh().getMaterial().hasPdf ? "true" : "false");
+                    ImGui::Text("linear Simulation : %s", model.getMesh().getMaterial().isLinear ? "true" : "false");
+                    ImGui::Separator();
+                }
+                else{
+                    ImGui::Text("No Model loaded");
+                }
+
+                break;
+            }
+            case 1:{
 
                 //
                 IsoMeshMaterial& mat = model.getMesh().getMaterial();
@@ -1038,7 +1118,7 @@ int main(void)
 
                 break;
             }
-            case 1:{
+            case 2:{
                 
                 switch (selectedSubTab[selectedTab]){
                     case 0:{
@@ -1064,17 +1144,19 @@ int main(void)
 
                         ImGui::Text("Edit Datadisplay");
                         ImGui::Separator();
+
+                        static const char* meshItems[] = { "undeformed Mesh", "deformed Mesh", "deformed Mesh plus xi", "deformed Mesh minus xi" };
+
                         {
-                            static const char* items[] = { "undeformed Mesh", "deformed Mesh", "deformed Mesh plus xi", "deformed Mesh minus xi" };
                             static int selectedIndex = 0;
 
                             ImGui::PushItemWidth(200);
                             if (ImGui::BeginCombo("##DM", "Display on Mesh"))
                             {
-                                for (int i = 0; i < IM_ARRAYSIZE(items); i++)
+                                for (int i = 0; i < IM_ARRAYSIZE(meshItems); i++)
                                 {
                                     bool isSelected = (selectedIndex == i);
-                                    if (ImGui::Selectable(items[i], isSelected))
+                                    if (ImGui::Selectable(meshItems[i], isSelected))
                                     {
                                         selectedIndex = i;
                                         plotOnMesh = selectedIndex;
@@ -1087,16 +1169,19 @@ int main(void)
                             }
                         }
 
+                        static const char* plotItems[] = { "Strain", "Stress", "Van-Mises-Stress", "InnerVariable" };
+                        static const char* units[] = { "[]", "[N]", "[N]", "[...]" };
+
                         {
-                            static const char* items[] = { "Strain", "Stress", "Van-Mises-Stress", "InnerVariable" };
+                            
                             static int selectedIndex = 2;
                             
                             if (ImGui::BeginCombo("##DD", "Display Data"))
                             {
-                                for (int i = 0; i < IM_ARRAYSIZE(items); i++)
+                                for (int i = 0; i < IM_ARRAYSIZE(plotItems); i++)
                                 {
                                     bool isSelected = (selectedIndex == i);
-                                    if (ImGui::Selectable(items[i], isSelected))
+                                    if (ImGui::Selectable(plotItems[i], isSelected))
                                     {
                                         selectedIndex = i;
                                         plotData = selectedIndex;
@@ -1108,6 +1193,8 @@ int main(void)
                                 ImGui::EndCombo();
                             }
                         }
+
+                        std::map<int, std::vector<const char*>> koordLabels;
 
                         {
                             const auto& mat = model.getMesh().getMaterial();
@@ -1133,14 +1220,12 @@ int main(void)
                                 indexLabels.push_back(indexStrings.back().c_str());
                             }
 
-                            std::map<int, std::vector<const char*>> koordLabels;
-
                             if (model.getMesh().nDimensions == 3) {
-                                koordLabels[0] = {"xx", "xy", "xz", "yy", "yz", "zz"};
-                                koordLabels[1] = {"xx", "xy", "xz", "yy", "yz", "zz"};
+                                koordLabels[0] = {"xx", "yy", "zz", "yz", "xz", "xy"};
+                                koordLabels[1] = {"xx", "yy", "zz", "yz", "xz", "xy"};
                             } else {
-                                koordLabels[0] = {"xx", "xy", "yy"};
-                                koordLabels[1] = {"xx", "xy", "yy"};
+                                koordLabels[0] = {"xx", "yy", "xy"};
+                                koordLabels[1] = {"xx", "yy", "xy"};
                             }
 
                             koordLabels[2] = {"default"};
@@ -1170,6 +1255,25 @@ int main(void)
                                 ImGui::EndCombo();
                             }
                         }
+
+                        //
+                        ImGui::Separator();
+                        ImGui::Text("Min/Max Values");
+                        // ImGui::Separator();
+
+                        // // Anzeige der maximal Werte
+                        // ImGui::Text("Mesh : %s \nData : %s \nKoord : %s",
+                        //     meshItems[plotOnMesh], plotItems[plotData], koordLabels[plotData][plotKoord]);
+
+                        // ImGui::Text("Unit : %s", units[plotData]);
+
+                        ImGui::Separator();
+
+                        ImGui::Text("min %s [%s] : %.2f %s", plotItems[plotData], koordLabels[plotData][plotKoord], model.minValue, units[plotData]);
+                        ImGui::Text("max %s [%s] : %.2f %s", plotItems[plotData], koordLabels[plotData][plotKoord], model.maxValue, units[plotData]);
+
+                        //
+                        ImGui::Separator();
 
                         break;
                     }

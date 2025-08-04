@@ -1,12 +1,22 @@
 #include "__rlProgressDisplay.h"
 
 //
-Color g_progressDisplayBackgroundColor = BLACK;
+
+//
+Color g_progressDisplayBackgroundColor = Color(30,30,30,255);
 Color g_progressDisplayTextColor = RED;
+
+//
+bool windowInitialized = false;
 
 // Funktion funktioniert nur wenn Fenster initialisiert worden ist
 void displayProgress(float percentProgress, const char *message)
 {
+    //
+    if(!windowInitialized){
+        return;
+    }
+
     // Fenstergröße dynamisch holen
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();

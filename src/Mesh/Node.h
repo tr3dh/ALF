@@ -79,6 +79,10 @@ struct dynNodeXd {
         return m_Coordinates[koordIndex];
     }
 
+    const std::vector<T>& getCoordinates() const{
+        return m_Coordinates;
+    }
+
     // Logging
     friend std::ostream& operator<<(std::ostream& os, const dynNodeXd<T>& node) {
         os << "Node-" << node.m_dimension << "D {";
