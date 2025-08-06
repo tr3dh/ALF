@@ -8,11 +8,11 @@ uniform vec3 lightPos;
 uniform vec4 materialColor;
 uniform float time;
 
-const float specularExponent = 200;  // z.B. 16..128 (niedrig = rau, hoch = glatt)
-const float fresnelStrength = 0;   // z.B. 0.0..1.0 (0 = kein metallisch, 1 = voll metallisch)
-float ambientStrength = 0.1;
-
 out vec4 finalColor;
+
+float ambientStrength = 0.3;
+const float fresnelStrength = 0.8;
+const float specularExponent = 100;
 
 void main()
 {
@@ -21,21 +21,19 @@ void main()
     vec3 lightDir = normalize(lightPos - fragPosition);
     vec3 halfway = normalize(viewDir + lightDir);
 
-    // Ambientanteil, um alles etwas aufzuhellen
-    vec3 ambient = ambientStrength * materialColor.rgb;
+    vec3 ambient = ambientStrength * vec3(0.1, 0.3, 0.5); // lebendiges Blau ambient
 
-    // Diffuse Beleuchtung
-    float diff = max(dot(normal, lightDir), 0.0);
+    float diff = max(dot(normal, lightDir), 0.1);
 
-    // Specular Highlight basierend auf specularExponent
     float spec = pow(max(dot(normal, halfway), 0.0), specularExponent);
 
-    // Fresnel Effekt (für metallischen Randglanz)
     float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 5.0);
 
-    // Zusammensetzen
-    vec3 baseColor = materialColor.rgb;
+    vec3 baseColor = vec3(0.2, 0.4, 0.7); // deine eigene Blautonbasis
+
     vec3 lighting = ambient + diff * baseColor + spec * vec3(1.0) + fresnel * baseColor * fresnelStrength;
 
-    finalColor = vec4(lighting, materialColor.a);
+    lighting += vec3(0.05, 0.06, 0.08); // kleiner Glow
+
+    finalColor = vec4(lighting, 1);
 }

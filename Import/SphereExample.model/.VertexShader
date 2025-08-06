@@ -1,0 +1,36 @@
+#version 330 core
+
+in vec3 vertexPosition;
+in vec2 vertexTexCoord;
+in vec3 vertexNormal;
+in vec4 vertexColor;
+
+uniform mat4 mvp;
+uniform mat4 matModel;
+uniform mat4 matNormal;
+uniform float time;
+
+out vec3 fragPosition;
+out vec2 fragTexCoord;
+out vec4 fragColor;
+out vec3 fragNormal;
+
+void main()
+{
+    vec3 pos = vertexPosition;
+
+    // Schöne sichtbare Wellen (Sinusmodifikation) – keine neuen Uniforms!
+    float wave = sin(pos.x * 4.0 + time * 5.0) 
+               + cos(pos.z * 3.0 + time * 10.0);
+    pos.y += wave * 10; // Wellenhöhe (sichtbar, aber nicht übertrieben)
+
+    // Standard Transformation
+    fragPosition = vec3(matModel * vec4(pos, 1.0));
+    fragTexCoord = vertexTexCoord;
+    fragColor = vertexColor;
+
+    // Normale bleibt unverändert (könnte man später im Fragment Shader modifizieren)
+    fragNormal = normalize(vec3(matNormal * vec4(vertexNormal, 1.0)));
+
+    gl_Position = mvp * vec4(pos, 1.0);
+}
