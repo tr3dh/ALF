@@ -131,8 +131,8 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, int 
         minValue = m_isoMesh.minValue;
         maxValue = m_isoMesh.maxValue;
 
-        m_isoMesh.display(data_upperXi, displayedData, globKoord, {&n_upperXi}, colors, displayOnMesh, 0,  false, frameSize, frameOffsets[1], padding/3);
-        m_isoMesh.display(data_lowerXi, displayedData, globKoord, {&n_lowerXi}, colors, displayOnMesh, 0,  false, frameSize, frameOffsets[2], padding/3);
+        m_isoMesh.display(data_upperXi, displayedData, globKoord, {&n_upperXi}, colors, 0, 0,  false, frameSize, frameOffsets[1], padding/3);
+        m_isoMesh.display(data_lowerXi, displayedData, globKoord, {&n_lowerXi}, colors, 0, 0,  false, frameSize, frameOffsets[2], padding/3);
 
     } else {
 

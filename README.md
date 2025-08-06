@@ -144,21 +144,34 @@ Datei `.Material`
 Weitere Informationen zur Definition der Wahrscheinlicheitsdichten und des nichtlinearen Materialmodells werden über verschiedene Beispielmodelle in [Import](/Import/) und die beigelegte [Studienarbeit](Recc/Thetis/Studienarbeit.pdf) bereitgestellt. 
 
 # ⌨️ ShortCuts
+
+Die folgenden ShortCuts dienen der beschleunigten 
+
 | Shortcut              | Funktion                          |
 |-----------------------|-----------------------------------|
 | l hold                | Normal Planar Kamera              |
 | r hold                | Orbital Kamera                    |
 | l+r hold              | FPS Kamera                        |
 | w/a/s/d/shift/space   | Bewegung in fps Kamera            |
+| arrowKeys/shift/space | Bewegung in fps Kamera            |
 | F11                   | toggle Fullscreen                 |
 | C                     | toggle Cursor                     |
 | Space                 | Resampling der pdf                |
-| Ctrl + E              | Berechnungs-Caches der Modelle löschen    |
-| Ctrl + R              | letztes geöffnetes Modell laden           |
+| Ctrl + C              | Berechnungs-Cache des geladenen Modells löschen    |
+| Ctrl + R              | letztes geöffnetes Modell laden bzw. reload des aktuellen          |
+| Ctrl + U              | Modell entladen       |
+| Ctrl + O              | Dateiauswahldialog für Modelle öffnen     |
+| (Ctrl + Space) / left / right | Registeransicht toggeln   |
+| N                     | Mesh Tab öffnen       |
+| M                     | Material Tab öffnen   |
+| R                     | Rendering Tab öffnen  |
+| up/down               | Navigation in Subtabs |
 
 # 🤝 Danksagung
 
-Mein besonderer Dank gilt Dr. Hendrik Geisler, der diese Studienarbeit sehr spontan und durch seine Unterstützung erst ermöglicht hat und während der Entwicklung eine große Hilfe war.
+Mein besonderer Dank gilt meinem Betreuer Dr. Hendrik Geisler, der diese Studienarbeit sehr spontan und durch seine Unterstützung erst ermöglicht hat und während der Entwicklung eine große Hilfe war.
+
+Hendrik Geisler wurde während der Betreuungszeit von der Europäischen Union (ERC, Gen-TSM, project number 101124463) finanziert. Die geäußerten Ansichten und Meinungen sind jedoch ausschließlich die des Autors/der Autoren und spiegeln nicht unbedingt die der Europäischen Union oder der Exekutivagentur des Europäischen Forschungsrats wider. Weder die Europäische Union noch die Bewilligungsbehörde können für sie verantwortlich gemacht werden.
 
 ## 📚 Verwendete Bibliotheken
 Bedanken möchte ich mich zudem bei den jeweiligen Entwicklern und Maintainern der im Rahmen des Projekts verwendeten Open-Source Bibliotheken.

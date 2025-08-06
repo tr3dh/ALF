@@ -2,7 +2,6 @@
     "function": "exp(-0.5*(-mu + xi)**2/sigma**2)/(sqrt(2*pi)*sigma)",
     "params": {
         "mu": 0.0,
-        "pi": 3.1415,
         "sigma": 0.5
     },
     // Bei der Untersuchung wird die pdf in beide Richtungen +xi und -xi abgelaufen bis der wert pdf(xi) unter

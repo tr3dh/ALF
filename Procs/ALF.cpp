@@ -318,7 +318,7 @@ int main(void)
 
         // Toggle Cursor capture
         static bool hideCursor = false;
-        if (IsKeyPressed(KEY_C))
+        if (IsKeyPressed(KEY_C) && !IsKeyDown(KEY_LEFT_CONTROL))
         {
             if (IsCursorHidden())
             {
@@ -498,19 +498,52 @@ int main(void)
         static std::string modelSource;
         modelSource = fs::path(model.getSource()).filename().string();
 
-        if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_R)) {
+        //
+        auto modelFileDialog = [&](){
+
+            OpenFileDialog("Open femModel", { ".model" }, false, true, g_fileBrowserCWD, [&](const std::string& chosenFilePath) {
+
+            // Wenn Plotkoord nicht resettet wird und zb auf zz in einem 3d Modell gesetzt ist dann ein 2d Modell geöffnet wird
+            // versucht das Programm auf nicht vorhandene Einträge zuzugreifen
+
+            // plotOnMesh = 0;
+            // plotData = 0;
+            plotKoord = 0;
+
+            model.loadFromFile(chosenFilePath);
+            model.storePathInCache();
+
+            modelSource = fs::path(model.getSource()).filename().string();
+            g_fileBrowserCWD = fs::path(model.getSource()).parent_path().string();
+            });
+            
+            // Center camera
+            camera.target = model.modelCenter;
+            float distance = model.maxModelExtent / (2.0f * tanf(camera.fovy * 0.5f * (PI/180.0f)));
+            camera.position = (Vector3){model.modelCenter.x - distance, model.modelCenter.y + distance, model.modelCenter.z - distance};
+        };
+
+        // ShortCuts
+
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_R)) {
 
             model.loadFromCache();
         }
 
-        if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_U)) {
-
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_U)) {
             model.unload();
         }
 
-        if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_E)) {
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_C)) {
+            clearCache(model.getSource());
+        }
 
-            clearCaches();
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) {
+            modelFileDialog();
+        }
+
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_SPACE)) {
+            openVertTabWin = !openVertTabWin;
         }
 
         if (ImGui::BeginMainMenuBar())
@@ -520,7 +553,7 @@ int main(void)
                 if(ImGui::BeginMenu("Reload")){
 
                     //
-                    if(ImGui::MenuItem("Recent Model")){
+                    if(ImGui::MenuItem("Recent Model (Ctrl + R)")){
                         model.loadFromCache();
                     }
 
@@ -529,29 +562,9 @@ int main(void)
 
                 if (ImGui::BeginMenu("Open"))
                 {
-
                     if(ImGui::MenuItem("Model")){
 
-                        OpenFileDialog("Open femModel", { ".model" }, false, true, g_fileBrowserCWD, [&](const std::string& chosenFilePath) {
-
-                            // Wenn Plotkoord nicht resettet wird und zb auf zz in einem 3d Modell gesetzt ist dann ein 2d Modell geöffnet wird
-                            // versucht das Programm auf nicht vorhandene Einträge zuzugreifen
-
-                            // plotOnMesh = 0;
-                            // plotData = 0;
-                            plotKoord = 0;
-
-                            model.loadFromFile(chosenFilePath);
-                            model.storePathInCache();
-
-                            modelSource = fs::path(model.getSource()).filename().string();
-                            g_fileBrowserCWD = fs::path(model.getSource()).parent_path().string();
-                        });
-
-                        // Center camera
-                        camera.target = model.modelCenter;
-                        float distance = model.maxModelExtent / (2.0f * tanf(camera.fovy * 0.5f * (PI/180.0f)));
-                        camera.position = (Vector3){model.modelCenter.x - distance, model.modelCenter.y + distance, model.modelCenter.z - distance};
+                        modelFileDialog();
                     }
 
                     ImGui::EndMenu();
@@ -616,6 +629,10 @@ int main(void)
             }
             if(ImGui::BeginMenu("Temp")){
 
+                if(ImGui::MenuItem("Clear Cache (Strg + C)")){
+                    clearCache(model.getSource());
+                }
+
                 if(ImGui::MenuItem("Clear Caches")){
                     clearCaches();
                 }
@@ -626,7 +643,7 @@ int main(void)
 
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Libaries"))
+            if (ImGui::BeginMenu("Libraries"))
             {
                 if (ImGui::BeginTable("Overview", 3)) {
 
@@ -703,6 +720,86 @@ int main(void)
             ImGui::EndMainMenuBar();
         }
 
+        static int selectedTab = 0;
+        static std::map<int, int> selectedSubTab; // selectedSubTab[tabID] = subTabID
+
+        size_t tabNameSize = 3;
+        const char* tabNames[] = { "Mesh", "Material", "Rendering" };
+        std::map<int, std::vector<const char*>> subTabNames = {
+            {0, {"overview"}},
+            {1, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}},
+            {2, {"MeshDisplay", "Animation", "pdf"}}
+        };
+
+        // ShortCuts
+        if (IsKeyPressed(KEY_N) && !IsKeyDown(KEY_LEFT_CONTROL)) {
+
+            openVertTabWin = true;
+            selectedTab = 0;
+        }
+
+        if (IsKeyPressed(KEY_M) && !IsKeyDown(KEY_LEFT_CONTROL)) {
+
+            openVertTabWin = true;
+            selectedTab = 1;
+        }
+
+        if (IsKeyPressed(KEY_R) && !IsKeyDown(KEY_LEFT_CONTROL)) {
+
+            openVertTabWin = true;
+            selectedTab = 2;
+        }
+
+        if (IsKeyPressed(KEY_DOWN) && !fpsCam && !ImGui::IsAnyItemActive() && !ImGui::IsAnyItemFocused()) {
+
+            openVertTabWin = true;
+
+            if(selectedSubTab[selectedTab] >= subTabNames[selectedTab].size() - 1){
+                
+                if(selectedTab >= tabNameSize - 1){
+                    selectedTab = 0;
+                }
+                else{
+                    selectedTab += 1;
+                }
+                
+                selectedSubTab[selectedTab] = 0;
+
+                // Für Navgation in subtabs
+                // selectedSubTab[selectedTab] = 0;
+            }
+            else{
+                selectedSubTab[selectedTab] += 1;
+            }
+        }
+
+        if (IsKeyPressed(KEY_UP) && !fpsCam && !ImGui::IsAnyItemActive() && !ImGui::IsAnyItemFocused()) {
+
+            openVertTabWin = true;
+
+            if(selectedSubTab[selectedTab] <= 0){
+                
+                if(selectedTab <= 0){
+                    selectedTab = tabNameSize - 1;
+                }
+                else{
+                    selectedTab -= 1;
+                }
+
+                selectedSubTab[selectedTab] = subTabNames[selectedTab].size() - 1;
+                
+                // Für Navigation in subtabs
+                // selectedSubTab[selectedTab] = subTabNames[selectedTab].size() - 1;
+            }
+            else{
+                selectedSubTab[selectedTab] -= 1;
+            }
+        }
+
+        if((IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_LEFT)) && !ImGui::IsAnyItemActive() && !ImGui::IsAnyItemFocused() && !fpsCam){
+            openVertTabWin = !openVertTabWin;
+        }
+
         if(!openVertTabWin){
 
             // Fenster an rechter Seite über volle Höhe
@@ -776,15 +873,6 @@ int main(void)
                 ImGui::SetWindowCollapsed(openVertTabWin, ImGuiCond_Always);
             }
 
-            static int selectedTab = 0;
-            static std::map<int, int> selectedSubTab; // selectedSubTab[tabID] = subTabID
-
-            const char* tabNames[] = { "Mesh", "Material", "Rendering" };
-            std::map<int, std::vector<const char*>> subTabNames = {
-                {1, {"std_params", "sampling", "pdf", "pdf_params", "pdf_settings"}},
-                {2, {"MeshDisplay", "Animation", "pdf"}}
-            };
-
             maxWidth = 0.0f;
             float indentWidth = ImGui::GetStyle().IndentSpacing;
 
@@ -843,23 +931,30 @@ int main(void)
             {
             case 0:{
 
-                if(model.initialzed()){
+                switch (selectedSubTab[selectedTab]){
 
-                    ImGui::PushTextWrapPos();
-                    ImGui::Text("Model at : '%s'", relPath(model.m_modelPath).c_str());
-                    ImGui::PopTextWrapPos();
+                    case 0:{
+                        if(model.initialzed()){
 
-                    ImGui::Separator();
-                    ImGui::Text("Dimension : %zuD", model.getMesh().nDimensions);
-                    ImGui::Text("Nodes : %zu", model.getMesh().getUndeformedNodes().size());
-                    ImGui::Text("Cells : %zu", model.getMesh().getCells().size());
-                    ImGui::Text("Dofs : %zu", model.getMesh().getUndeformedNodes().size() * model.getMesh().nDimensions);
-                    ImGui::Text("uncertainty Quantification : %s", model.getMesh().getMaterial().hasPdf ? "true" : "false");
-                    ImGui::Text("linear Simulation : %s", model.getMesh().getMaterial().isLinear ? "true" : "false");
-                    ImGui::Separator();
-                }
-                else{
-                    ImGui::Text("No Model loaded");
+                            ImGui::PushTextWrapPos();
+                            ImGui::Text("Model at : '%s'", relPath(model.m_modelPath).c_str());
+                            ImGui::PopTextWrapPos();
+
+                            ImGui::Separator();
+                            ImGui::Text("Dimension : %zuD", model.getMesh().nDimensions);
+                            ImGui::Text("Nodes : %zu", model.getMesh().getUndeformedNodes().size());
+                            ImGui::Text("Cells : %zu", model.getMesh().getCells().size());
+                            ImGui::Text("Dofs : %zu", model.getMesh().getUndeformedNodes().size() * model.getMesh().nDimensions);
+                            ImGui::Text("uncertainty Quantification : %s", model.getMesh().getMaterial().hasPdf ? "true" : "false");
+                            ImGui::Text("linear Simulation : %s", model.getMesh().getMaterial().isLinear ? "true" : "false");
+                            ImGui::Separator();
+                        }
+                        else{
+
+                            ImGui::Text("No Model loaded");
+                        }
+                        break;
+                    }
                 }
 
                 break;
@@ -967,6 +1062,25 @@ int main(void)
                         }
 
                         InputExpression("pdf", mat.pdf);
+
+                        ImGui::SameLine();
+
+                        if(ImGui::Button("substitute") && mat.isLinear && mat.hasPdf){
+                            
+                            // Cachen amit man beim probieren nicht permanent zurückgesetzt wird
+                            Expression temp = mat.pdf;
+                            mat.substitutePdf();
+                            mat.pdf = temp;
+                        }
+
+                        ImGui::SameLine();
+
+                        if(ImGui::Button("sample") && mat.isLinear && mat.hasPdf){
+                            
+                            mat.substitutePdf();
+                            model.sampling();
+                        }
+
                         ImGui::Separator();
 
                         displayExpression("pdf(xi)", mat.pdf_xi);
@@ -1107,7 +1221,7 @@ int main(void)
                 }
 
                 // damit bei fps führung beim hochbewegen nicht jedes mal resampled wird
-                if (!fpsCam && IsKeyPressed(KEY_SPACE)) {
+                if (!fpsCam && IsKeyPressed(KEY_SPACE) && !IsKeyDown(KEY_LEFT_CONTROL)) {
 
                     // nur ausführen wenn kein imgui element gerade im fokus ist
                     if (!ImGui::IsAnyItemActive() && !ImGui::IsAnyItemFocused() && mat.isLinear && mat.hasPdf) {
