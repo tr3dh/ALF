@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
 
         LOG << "!! API wurde ohne Argumente angesprochen, invalider Aufruf" << endl;
         LOG << "   um mehr zu Erfahren die API mit dem Argument '--help' aufrufen" << endl;
-        LOG << "   zum Fortfahren beliebige Taste drücken..." << endl;
+        LOG << "   zum Fortfahren eine beliebige Taste drücken..." << endl;
 
         std::cin.get();
         return 1;
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]){
     std::unordered_map<std::string, std::string> options = {
         {"--license", "view license >> 0 args requiered"},
         {"--version", "view version >> 0 args requiered"},
-        {"simulate", "simulate FEM-Model >> 1 args requiered {Path/to/Model},\n\t\t\t\toptional third argument --absolut if the path is absolut"}
+        {"simulate", "simulate FEM-Model >> 1 args requiered {Path/to/Model},\n\t\t\t\toptional third argument --absolute if the path is absolute"}
     };
 
     if(std::string(argv[1]) == "--help"){
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]){
 
         std::string path;
 
-        if(argc > 3 && std::string(argv[3]) == "--absolut"){
+        if(argc > 3 && std::string(argv[3]) == "--absolute"){
             path = argv[2];
         }
         else{
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]){
         model.storeResults();
     }
 
-        // Programm ohne args gestartet
+    // Programm ohne args gestartet
     else {
 
         LOG << "!! API wurde ohne valide Argumente angesprochen, invalider Aufruf" << endl;

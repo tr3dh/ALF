@@ -109,7 +109,7 @@ int main(void)
     RECT workArea;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
     int usableHeight = workArea.bottom - workArea.top;          // nutzbare Höhe (ohne Taskleiste)
-    int usableWidth  = workArea.right - workArea.left;          // nutzbare Breite (in den meisten Fällen gleich der Fensterbreite)
+    int usableWidth  = workArea.right - workArea.left;          // nutzbare Breite (in den meisten Fällen gleich der Monitorbreite)
 
     //
     LOG << std::fixed << std::setprecision(4);

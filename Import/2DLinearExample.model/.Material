@@ -1,23 +1,5 @@
 {
     "isLinear": true,
-    "pdf": {
-        "borders": {
-            "xi_max": 0,
-            "xi_min": 0
-        },
-        "function": "exp(-0.5*(-mu + xi)**2/sigma**2)/(sqrt(2*pi)*sigma)",
-        "params": {
-            "mu": 0.0,
-            "sigma": 0.5
-        },
-        "pdfPreprocessing": {
-            "segmentation": 0.1,
-            "tolerance": 0.01
-        },
-        "pdfSampling": {
-            "samples": 100000
-        }
-    },
     "stdParams": {
         "E": 20000.0,
         "t": 0.10000000149011612,

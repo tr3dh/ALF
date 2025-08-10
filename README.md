@@ -2,16 +2,16 @@
 
 <img align="left" style="width:140px" src="Recc/Compilation/iconStripped.png" width="288px">
 
-ALF ist ein leichtgewichtiges, adaptives FEM Programm, das im Rahmen einer [Studienarbeit](Recc/Thetis/Studienarbeit.pdf) für das Institut für Kontinuumsmechanik (IKM) der Leibniz Universität Hannover (LUH) entwickelt worden ist. Dabei liegt der Fokus auf der Erprobung verschiedener Wahrscheinlichkeitsdichten für die Unsicherheitsquantifizierung der linearen FEM und von simplen, nichtlinearen Materialmodellen für die nichtlineare FEM.
+ALF ist ein leichtgewichtiges, adaptives FEM Programm, das im Rahmen einer [Studienarbeit](Recc/Thetis/Studienarbeit.pdf) für das Institut für Kontinuumsmechanik (IKM) der Leibniz Universität Hannover (LUH) entwickelt worden ist. Dabei liegt der Fokus auf der Erprobung verschiedener Wahrscheinlichkeitsdichtefunktionen für die Unsicherheitsquantifizierung der linearen FEM und von simplen, nichtlinearen Materialmodellen für die nichtlineare FEM.
 
 <br>
 
 # 🧬 Entwicklung
 - Sprachstandard : C++23
-- Kompiler : gcc/g++
+- Compiler : gcc/g++
 - Plattform : Windows 11
 - Subsystem : Msys MinGw64
-- BuildSystem : Make
+- Buildsystem : Make
 
 # 🔧 Funktionen
 - Durchführen von linearen Finite Elemente Analysen (FEAs)
@@ -22,7 +22,7 @@ ALF ist ein leichtgewichtiges, adaptives FEM Programm, das im Rahmen einer [Stud
 - Steuerung der Ergebnisvisualisierung über die Benutzeroberfläche
 
 # 🛠️ Umsetzung
-Das Programm arbeitet mit einer rein dateigetriebenen Modelldefinition (Netz, Materialmodell, Randbedingungen, etc.) und Informationsbereitstellung (isoparametrisches Element, Vorlagen für Wahrscheinlicheitsdichten, etc.). Dabei werden die Informationen über gutverständliche JSON-Dateien bereitgestellt. So können schnell und ohne langwierige Einarbeitung Modelle implementiert, Programmfunktionen erweitert und Simulationen durchgeführt werden.
+Das Programm arbeitet mit einer rein dateigetriebenen Modelldefinition (Netz, Materialmodell, Randbedingungen, etc.) und Informationsbereitstellung (isoparametrisches Element, Vorlagen für Wahrscheinlicheitsdichten, etc.). Dabei werden die Informationen über Dateien in gutverständlichen Dateiformaten (meistens JSON) bereitgestellt. So können schnell und ohne langwierige Einarbeitung Modelle implementiert, Programmfunktionen erweitert und Simulationen durchgeführt werden.
 
 # 🧩 Verwendung
 ALF kann auf drei verschiedene Arten und Weisen verwendet werden.
@@ -57,9 +57,11 @@ Eine Übersicht über die Kameraführungen und die Steurung ist in [ShortCuts](#
 
 # 📊 Beispielmodell
 
-Im Folgenden ist exemplarisch die Modelldefinition für eine lineare FEM gezeigt. Weitere Beispielmodelle, die direkt importiert werden können liegen im [Import](/Import/)-Ordner. Die Definition des isoparametrischen Elements ist für mehrere Standardfälle wie einfache Dreiecks-/Vierecks- und Würfelelemente bereits hinterlegt. Verwendet das Netz ein nicht implementiertes isoparametrisches Element, muss dieses in den [Recc/Cells]-Ordner implementiert werden. Imformationen dazu können aus den Implementierungsdateien der vorhandenen Elemente unter [Recc/Cells](/Recc/Cells/) und der [Studienarbeit](/Recc/Cells/Thetis/Studienarbeit.pdf) entnommen werden. 
+Im Folgenden ist exemplarisch die Modelldefinition für eine lineare FEM gezeigt. Weitere Beispielmodelle, die direkt importiert werden können liegen im [Import](/Import/)-Ordner. Die Definition des isoparametrischen Elements ist für mehrere Standardfälle wie einfache Dreiecks-/Vierecks- und Würfelelemente bereits hinterlegt. Verwendet das Netz ein nicht implementiertes isoparametrisches Element muss dieses in den [Recc/Cells]-Ordner implementiert werden. Imformationen dazu können aus den Implementierungsdateien der vorhandenen Elemente unter [Recc/Cells](/Recc/Cells/) und der [Studienarbeit](/Recc/Cells/Thetis/Studienarbeit.pdf) entnommen werden.
 
 ## 🏗️ Aufbau
+Ein Modell wird über einen Dateisatz definiert. Die einzelnen Dateien der Definition werden dazu in einen Ordner mit der Endung `.model` gelegt. Aus diesem Ordner werden automatisch alle erforderlichen Dateien gelesen.
+
 ```txt
 Arbeitsverzeichnis des Programms/
 |__ build/
@@ -90,7 +92,7 @@ Die `.RESULTS`-Datei kann über die UI mit `File->Export->*.RESULTS` oder über 
 Die Shader lassen sich für ein verbessertes Rendering hinzufügen. Aus den Beispielen in [Import](/Import/) gehen die von Programm übergebenen und erwarteten Uniforms, In- und Outputs hervor.
 
 ## 🕸️ Netzdefinition
-Datei `.Mesh`
+Die Datei `.Mesh` definiert die Geometrie und Vernetzung des Modells. Sie liegt im `INP`-Format vor.
 ```txt
 *Heading
 ...
@@ -111,7 +113,7 @@ Datei `.Mesh`
 ```
 
 ## 📐 Definition Randbedingungen
-Datei `.Constraints`
+Die Datei `.Constraints` definiert die Randbedingungen, also die fixierten Freiheitsgrade und die beaufschlagten Kräfte.
 ```js
 {
     //
@@ -126,7 +128,7 @@ Datei `.Constraints`
 ```
 
 ## 🧱 Definition Material
-Datei `.Material`
+Die Datei `.Material` definiert das Materialmodell und steuert die ablaufende Simulation. 
 ```js
 {
     "isLinear": true,
@@ -142,6 +144,15 @@ Datei `.Material`
 ```
 
 Weitere Informationen zur Definition der Wahrscheinlicheitsdichten und des nichtlinearen Materialmodells werden über verschiedene Beispielmodelle in [Import](/Import/) und die beigelegte [Studienarbeit](Recc/Thetis/Studienarbeit.pdf) bereitgestellt. 
+
+# 🔌 API
+Über die API können Modelle ohne Benutzeroberfläche simuliert werden. Die API erzeugt automatisch die `.RESULTS` Ergebnisdatei im JSON-Format. Damit kann das Programm aus anderen Projekten, Programmen oder Skripten aufgerufen werden. FEM-Simulationen können im Hintergrund durchgeführt und die Ergebnisse über einen JSON-Parser ins externe Projekt/Programm geladen werden. Dazu muss die API mit dem Argument `simulate` und dem Pfad des FEM-Modells aufgerufen werden. Ist der Pfad nicht relativ sondern absolut zum aktuellen Arbeitsverzeichnis wird das über die Flag `--absolute` angegeben.
+
+```bash
+# Simulation über Release (ALFAPI) ohne Logging oder Debug (ALFAPI_d) mit Logging
+.\path\to\build\ALFAPI simulate Import/2DLinearExample.model                    # Pfadangabe relativer Pfad
+.\path\to\build\ALFAPI simulate C:/.../Import/2DLinearExample.model --absolute  # Pfadangabe absoluter Pfad
+```
 
 # ⌨️ ShortCuts
 
@@ -175,7 +186,7 @@ Hendrik Geisler wurde während der Betreuungszeit von der Europäischen Union (E
 
 ## 📚 Verwendete Bibliotheken
 Bedanken möchte ich mich zudem bei den jeweiligen Entwicklern und Maintainern der im Rahmen des Projekts verwendeten Open-Source Bibliotheken.
-Diese sind im folgenden aufgeführt. Die zugehörigen Lizenztexte sind im Ordner [thirdPartyLicenses](/thirdPartyLicenses/) hinterlegt.
+Diese sind im Folgenden aufgeführt. Die zugehörigen Lizenztexte sind im Ordner [thirdPartyLicenses](/thirdPartyLicenses/) hinterlegt.
 
 | Bibliothek        | Lizenz                          |
 |-------------------|----------------------------------|
