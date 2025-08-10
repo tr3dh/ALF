@@ -1,4 +1,4 @@
-# <h1> <span style="font-size: 1.3em;">A</span>daptive, <span style="font-size: 1.3em;">L</span>ightweight <span style="font-size: 1.3em;">F</span>inite Element Tool (ALF) </h1>
+# Adaptive, Lightweight Finite Element Tool (ALF)
 
 <img align="left" style="width:140px" src="Recc/Compilation/iconStripped.png" width="288px">
 
@@ -9,7 +9,7 @@ ALF ist ein leichtgewichtiges, adaptives FEM Programm, das im Rahmen einer [Stud
 # 🧬 Entwicklung
 - Sprachstandard : C++23
 - Kompiler : gcc/g++
-- Plattform : Windows
+- Plattform : Windows 11
 - Subsystem : Msys MinGw64
 - BuildSystem : Make
 
@@ -31,9 +31,9 @@ ALF kann auf drei verschiedene Arten und Weisen verwendet werden.
 - als C++ Bibliothek
 
 # 🚀 Download
-- Programm (UI) : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/FEMProc/releases) herunterladen
-- API : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/FEMProc/releases) herunterladen
-- Bibliothek : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/FEMProc/releases) herunterladen
+- Programm (UI) : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/ALF/releases) herunterladen
+- API : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/ALF/releases) herunterladen
+- Bibliothek : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/ALF/releases) herunterladen
 - Source Code : Projekt mit git klonen, Umgebung mit `make prefab` einrichten und Programm mit `make launch` kompilieren und ausführen
 
 # 🖥️ Benutzeroberfläche

@@ -71,6 +71,10 @@ void applyShader(const std::string& vsPath, const std::string& fsPath){
     g_cellMeshShader = LoadShader(vsPath.c_str(), fsPath.c_str());
 
     //
+    RETURNING_ASSERT(g_cellMeshShader.id > 0, 
+        "Shader konnte nicht kompiliert werden, aktiviere im Debug mode das Rayliblogging um mehr zu erfahren",);
+
+    //
     g_cellModel.materials[0].shader = g_cellMeshShader;
     g_useCellMeshShader = true;
     g_locationMaterialColor = GetShaderLocation(g_cellMeshShader, "materialColor");

@@ -10,9 +10,9 @@ uniform float time;
 
 out vec4 finalColor;
 
-float ambientStrength = 0.3;
-const float fresnelStrength = 0.8;
-const float specularExponent = 100;
+float ambientStrength = 0.2;
+const float fresnelStrength = 1.2;
+const float specularExponent = 200;
 
 void main()
 {
@@ -21,7 +21,7 @@ void main()
     vec3 lightDir = normalize(lightPos - fragPosition);
     vec3 halfway = normalize(viewDir + lightDir);
 
-    vec3 ambient = ambientStrength * vec3(0.1, 0.3, 0.5); // lebendiges Blau ambient
+    vec3 ambient = ambientStrength * materialColor.rgb; // vec3(0.1, 0.3, 0.5); // Blau
 
     float diff = max(dot(normal, lightDir), 0.1);
 
@@ -29,11 +29,11 @@ void main()
 
     float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 5.0);
 
-    vec3 baseColor = vec3(0.2, 0.4, 0.7); // deine eigene Blautonbasis
+    vec3 baseColor = vec3(0.2, 0.4, 0.7);
 
     vec3 lighting = ambient + diff * baseColor + spec * vec3(1.0) + fresnel * baseColor * fresnelStrength;
 
-    lighting += vec3(0.05, 0.06, 0.08); // kleiner Glow
+    lighting += vec3(0.05, 0.06, 0.08);
 
     finalColor = vec4(lighting, 1);
 }

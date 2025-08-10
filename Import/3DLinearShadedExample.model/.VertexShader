@@ -1,5 +1,18 @@
 #version 330
 
+// Bei der Verwendung der Shader können nur die vorhandenen In-/Outputs und Uniforms verwendet werden
+// werden weitere Größen benötigt können sie nicht aus dem Programm übergeben werden sondern müssen als const
+// im Shader deklariert werden
+
+// Die uniforms die übergeben werden sind
+//
+// uniform vec3 viewPos;
+// uniform vec3 lightPos;
+// uniform vec4 materialColor;
+// uniform float time;
+// 
+// Die Zeit wird dabei in Sekunden übergeben
+
 // input vertex attribute die die pipeline an den vertex shader übergibt
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;

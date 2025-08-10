@@ -7,7 +7,12 @@
 
 const std::string g_programsConfigCache = "../bin/CONFIG.CACHE";
 std::string g_fileBrowserCWD = fs::current_path().string() + "/../Import/";
+
 bool g_bindStartUpToReloadRecent = false;
+
+bool g_logRaylibMessages = false;
+int g_targetFPS = 60;
+bool g_vsyncEnabled = false;
 
 std::string relPath(const std::string& str){
     return fs::relative(str, fs::current_path()).string();
@@ -34,7 +39,10 @@ void cacheConfigs(){
         deformedFrame,
         deformedFramePlusXi,
         deformedFrameMinusXi,
-        g_bindStartUpToReloadRecent
+        g_bindStartUpToReloadRecent,
+        g_logRaylibMessages,
+        g_vsyncEnabled,
+        g_targetFPS
     );
 
     //
@@ -66,7 +74,10 @@ void loadCachedConfigs(){
         deformedFrame,
         deformedFramePlusXi,
         deformedFrameMinusXi,
-        g_bindStartUpToReloadRecent
+        g_bindStartUpToReloadRecent,
+        g_logRaylibMessages,
+        g_vsyncEnabled,
+        g_targetFPS
     );
 
     // aus relativem Pfad global gültigen generieren
@@ -89,15 +100,6 @@ void DrawArrow3D(Vector3 start, Vector3 end, float shaftRadius, float headRadius
     DrawCylinderEx(shaftEnd, end, headRadius, 0.0f, 8, color);
 }
 
-//
-void DrawAxisLabel(Vector3 position, Camera3D camera, const char* label, Color color) {
-
-    Font font = GetFontDefault();
-    Vector2 textSize = MeasureTextEx(font, label, 20, 1);
-    Vector2 screenPos = GetWorldToScreen(position, camera);
-    DrawTextEx(font, label, (Vector2){ screenPos.x - textSize.x / 2, screenPos.y - textSize.y / 2 }, 20, 1, color);
-}
-
 int main(void)
 {
     //
@@ -118,14 +120,17 @@ int main(void)
     LOG << endl;
 
     //
-    enableRLLogging();
     SetTraceLogCallback(RaylibLogCallback);
-    disableRLLogging();
 
-    // SetConfigFlags(FLAG_WINDOW_UNDECORATED);
+    //
+    g_logRaylibMessages ? enableRLLogging() : disableRLLogging();
+
+    //
     SetConfigFlags(FLAG_WINDOW_HIDDEN | FLAG_WINDOW_RESIZABLE);
     InitWindow(600,600, "\t Adaptive, Lightweight Finite Element Tool (ALF)");
-    windowInitialized = true;
+
+    // für Progressbar >> rendern wenn fenster als initialisiert vermerkt sonst return
+    windowInitialized = true;                   
 
     //
     const char* glVersion = (const char*)glGetString(GL_VERSION);
@@ -158,6 +163,15 @@ int main(void)
     float winSizeFaktor = 0.6f;
 
     int monitor = GetCurrentMonitor();
+    int vsyncFPS = GetMonitorRefreshRate(monitor);
+
+    LOG << endl;
+    LOG << "++ Monitor VSYNC FPS für Bildschirm " << monitor << " mit " << vsyncFPS << " geladen" << endl;
+    LOG << endl;
+
+    // vsync aktivieren über Übergabe von 0 als ziel fps oder ziel fps übergeben
+    SetTargetFPS(g_vsyncEnabled ? vsyncFPS : g_targetFPS);
+
     int screenWidth = GetMonitorWidth(monitor);
     int screenHeight = GetMonitorHeight(monitor);
 
@@ -479,11 +493,6 @@ int main(void)
             DrawArrow3D((Vector3){0,0,0}, (Vector3){0,arrowLen,0}, shaftRadius, headRadius, headLength, GREEN); // Y
             DrawArrow3D((Vector3){0,0,0}, (Vector3){0,0,arrowLen}, shaftRadius, headRadius, headLength, BLUE);  // Z
 
-            // Buchstaben an den Enden
-            DrawAxisLabel((Vector3){arrowLen + 0.2f, 0, 0}, gizmoCam, "X", RED);
-            DrawAxisLabel((Vector3){0, arrowLen + 0.2f, 0}, gizmoCam, "Y", GREEN);
-            DrawAxisLabel((Vector3){0, 0, arrowLen + 0.2f}, gizmoCam, "Z", BLUE);
-
             EndMode3D();
 
             // Viewport zurücksetzen
@@ -562,7 +571,7 @@ int main(void)
 
                 if (ImGui::BeginMenu("Open"))
                 {
-                    if(ImGui::MenuItem("Model")){
+                    if(ImGui::MenuItem("Model (Ctrl + O)")){
 
                         modelFileDialog();
                     }
@@ -591,6 +600,15 @@ int main(void)
 
                     ImGui::EndMenu();
                 }
+                if(ImGui::BeginMenu("Logging")){
+
+                    //
+                    if(ImGui::Checkbox("Display Raylib Logs", &g_logRaylibMessages)){
+                        g_logRaylibMessages ? enableRLLogging() : disableRLLogging();
+                    }
+
+                    ImGui::EndMenu();
+                }
                 if (ImGui::BeginMenu("General Apperarance"))
                 {
 
@@ -598,6 +616,27 @@ int main(void)
                     RaylibColorEdit(g_progressDisplayBackgroundColor,   "Progressbar Background");
                     RaylibColorEdit(g_progressDisplayTextColor,         "Progressbar Text");
 
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("Monitor"))
+                {
+                    //
+                    ImGui::Text("FPS : %.2f", 1/dt);
+
+                    //
+                    if(ImGui::Checkbox("VSYNC", &g_vsyncEnabled)){
+
+                        SetTargetFPS(g_vsyncEnabled ? vsyncFPS : g_targetFPS);
+                    }
+
+                    //
+                    if(InputSliderInt("Target FPS", g_targetFPS, 30, 320, true)){
+                        
+                        SetTargetFPS(g_vsyncEnabled ? vsyncFPS : g_targetFPS);
+                    }
+
+                    //
                     ImGui::EndMenu();
                 }
 
@@ -622,7 +661,7 @@ int main(void)
             }
             if (ImGui::BeginMenu("Hardware"))
             {
-                ImGui::Text("OpenGL Version : %f", g_glVersion);
+                ImGui::Text("OpenGL Version : %.2f", g_glVersion);
                 ImGui::Text("GPU Vendor : %s", vendor);
 
                 ImGui::EndMenu();
@@ -1488,6 +1527,11 @@ int main(void)
     //
     ImPlot::DestroyContext();
     rlImGuiShutdown();
+
+    //
+    disableRLLogging();
+
+    //
     CloseWindow();
 
     cacheConfigs();

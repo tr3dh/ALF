@@ -1,21 +1,27 @@
 {
     "isLinear": false,
     "nonLinearApproach": {
+        // Bennenung innere Variable und Angabe Tensorstufe          
         "innerVariable": [ "epsilon_v", 1],
+        // Angabe der Größe der inneren Variable : [] für Skalar, [rows] für Vektor, ...          
         "innerVariableSize": [3],
+        // Selbstgewählter Parametersatz                       
         "params": {
             "Identity2D":   { "rows": 3, "cols": 3, "data":    [["1", "0", "0"],
                                                                 ["0", "1", "0"],
                                                                 ["0", "0", "1"]]},
             "tetha":        { "rows": 1, "cols": 1, "data":    [["50000"]]}
         },
+        // Spannungsansatz und Evolutionsgleichung unter Verwendung Innerevariable, gewählte Parameter,
+        // Substitutionen durch das Programm >> Übersicht in Dokumentation und Studienarbeit
         "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)",
         "evolutionEquation": "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
-        "normTolerance" : 0.5,
-        "breakNRAfterNumIterations" : 4,
-        "precissionDigits" : 6,
-        "simulationDuration" : 4,
-        "simulationTimeStep" : 0.05
+        // Steuerung der Zeitschrittsimulation
+        "normTolerance" : 0.5,              // Residuums Norm Toleranz fürs Abbruchkriterium für Newton Raphson
+        "breakNRAfterNumIterations" : 4,    // Abbruch der NR Iteration nach Schrittanzahl
+        "precissionDigits" : 6,             // Rundung der symbolischen Ausdrücke auf Nachkommastellen
+        "simulationDuration" : 4,           // Simulationsdauer in Sekunden
+        "simulationTimeStep" : 0.05         // Schrittweite der Simulation in Sekunden >> duration/deltaTime Zeitschritte 
     },
     "stdParams": {
         "E": 20000.0,

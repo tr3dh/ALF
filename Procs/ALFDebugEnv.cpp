@@ -1,0 +1,42 @@
+// Minimale Umgebung die Terminal öffnet, die AlfUI in der Debug Config aufruft
+// den Rückgabestatus entgegennimmt und das Terminal offenhält bis der Nutzer es schließt
+// die Debug Version schließt das Terminal beim Absturz, die Umgebung hält ein Terminal auch bei Abstürzen offen
+// sodass Debug Nachrichten angezeigt werden können
+// kann auch händisch gemacht werden aber so geht es etwas scheller
+
+#include <cstdlib>
+#include <iostream>
+
+#ifdef LOG
+#undef LOG
+#endif
+
+#ifdef _ERROR
+#undef _ERROR
+#endif
+
+#ifdef endl
+#undef endl
+#endif
+
+#define LOG std::cout
+#define _ERROR std::cerr
+#define endl "\n"
+
+int main(){
+
+    LOG << "-------------------------------------------------------------------\n";
+    LOG << "\tStarte Debug Env für die ALF UI\n";
+    LOG << "-------------------------------------------------------------------\n";
+
+    int result = system("powershell -Command \"./ALF_d\"");
+
+    LOG << endl;
+    LOG << "-------------------------------------------------------------------\n";
+    LOG << "\tALF UI mit Status " << result << " beendet" << endl; 
+
+    LOG << "\tZum fortfahren beliebige Taste drücken\n";
+    std::cin.get();
+
+    return result;
+}

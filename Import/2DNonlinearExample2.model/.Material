@@ -1,51 +1,25 @@
 {
     "isLinear": false,
     "nonLinearApproach": {
-        "evolutionEquation": "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
-        "innerVariable": [
-            "epsilon_v",
-            1
-        ],
-        "innerVariableSize": [
-            3
-        ],
+        "innerVariable": [ "epsilon_v", 1],
+        "innerVariableSize": [3],
         "params": {
-            "Identity2D": {
-                "cols": 3,
-                "data": [
-                    [
-                        "1",
-                        "0",
-                        "0"
-                    ],
-                    [
-                        "0",
-                        "1",
-                        "0"
-                    ],
-                    [
-                        "0",
-                        "0",
-                        "1"
-                    ]
-                ],
-                "rows": 3
-            },
-            "tetha": {
-                "cols": 1,
-                "data": [
-                    [
-                        "80000"
-                    ]
-                ],
-                "rows": 1
-            }
+            "Identity2D":   { "rows": 3, "cols": 3, "data":    [["1", "0", "0"],
+                                                                ["0", "1", "0"],
+                                                                ["0", "0", "1"]]},
+            "tetha":        { "rows": 1, "cols": 1, "data":    [["50000"]]}
         },
-        "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)"
+        "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)",
+        "evolutionEquation": "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+        "normTolerance" : 0.5,
+        "breakNRAfterNumIterations" : 4,
+        "precissionDigits" : 6,
+        "simulationDuration" : 4,
+        "simulationTimeStep" : 0.05
     },
     "stdParams": {
         "E": 20000.0,
-        "t": 0.10000000149011612,
-        "v": 0.30000001192092896
+        "t": 0.1,
+        "v": 0.3
     }
 }
