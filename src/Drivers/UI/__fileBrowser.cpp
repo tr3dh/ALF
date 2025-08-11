@@ -45,10 +45,10 @@ void HandleFileDialog(){
 
         const std::string chosenFilePath = g_fileDialog->GetSelected().string();
 
-        //
-        g_filebrowserCallback(chosenFilePath);
-
         // Dekonstruktion des filebrowsers über reset des unique pointers
         g_fileDialog.reset();
+
+        //
+        g_filebrowserCallback(chosenFilePath);
     }
 }

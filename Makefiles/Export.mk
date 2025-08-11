@@ -14,8 +14,8 @@ fullRelease:
 
 	$(MAKE) dllCopy
 
-exportRelease:# fullRelease
-
+copyTmp:
+		
 	@echo "CWD: $(CURDIR)"
 	rm -rf tmp
 	mkdir tmp
@@ -29,6 +29,17 @@ exportRelease:# fullRelease
 	cp -f License.txt tmp/
 	cp -f README.md tmp/
 
-# 	rm -f ALF.zip
-# 	zip -r ALF.zip tmp/*
-# 	rm -rf tmp
+exportRelease:# fullRelease
+
+	rm -f ALF.zip
+	rm -f ALFLib.zip
+
+	@make copyTmp
+	rm -f tmp/build/*.a
+	zip -r ALF.zip tmp/.VERSION tmp/*
+
+	@make copyTmp
+	rm -f tmp/build/*.exe
+	zip -r ALFLib.zip tmp/.VERSION tmp/*
+
+	rm -rf tmp

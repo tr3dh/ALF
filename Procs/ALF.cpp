@@ -14,6 +14,11 @@ bool g_logRaylibMessages = false;
 int g_targetFPS = 60;
 bool g_vsyncEnabled = false;
 
+int g_pauseFrames = 10;
+
+bool g_loadModel = false;
+std::string g_modelPath = "";
+
 std::string relPath(const std::string& str){
     return fs::relative(str, fs::current_path()).string();
 }
@@ -42,7 +47,8 @@ void cacheConfigs(){
         g_bindStartUpToReloadRecent,
         g_logRaylibMessages,
         g_vsyncEnabled,
-        g_targetFPS
+        g_targetFPS,
+        g_pauseFrames
     );
 
     //
@@ -77,7 +83,8 @@ void loadCachedConfigs(){
         g_bindStartUpToReloadRecent,
         g_logRaylibMessages,
         g_vsyncEnabled,
-        g_targetFPS
+        g_targetFPS,
+        g_pauseFrames
     );
 
     // aus relativem Pfad global gültigen generieren
@@ -109,7 +116,7 @@ int main(void)
     RECT workArea;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
     int usableHeight = workArea.bottom - workArea.top;          // nutzbare Höhe (ohne Taskleiste)
-    int usableWidth  = workArea.right - workArea.left;          // nutzbare Breite (in den meisten Fällen gleich der Monitorbreite)
+    int usableWidth  = workArea.right - workArea.left;          // nutzbare Breite (in den meisten Fällen gleich der Fensterbreite)
 
     //
     LOG << std::fixed << std::setprecision(4);
@@ -510,6 +517,13 @@ int main(void)
         //
         auto modelFileDialog = [&](){
 
+            // Sicherstellen, dass der Dialog nicht in dem kurzen Zeitfenster der Verzögerung
+            // zwischen Callback und synchronem Ladevorgang wieder geäffnet werden kann
+            // ~10 Frames bzw. je nach Einstellung des Nutzers
+            if(g_fileDialog || g_loadModel){
+                return;
+            }
+
             OpenFileDialog("Open femModel", { ".model" }, false, true, g_fileBrowserCWD, [&](const std::string& chosenFilePath) {
 
             // Wenn Plotkoord nicht resettet wird und zb auf zz in einem 3d Modell gesetzt ist dann ein 2d Modell geöffnet wird
@@ -519,17 +533,15 @@ int main(void)
             // plotData = 0;
             plotKoord = 0;
 
-            model.loadFromFile(chosenFilePath);
-            model.storePathInCache();
+            g_loadModel = true;
+            g_modelPath = chosenFilePath;
 
-            modelSource = fs::path(model.getSource()).filename().string();
-            g_fileBrowserCWD = fs::path(model.getSource()).parent_path().string();
+            if(fs::is_directory(chosenFilePath) && !string::endsWith(chosenFilePath, ".model")){
+                return;
+            }
+
+            g_fileBrowserCWD = fs::path(chosenFilePath).parent_path().string();
             });
-            
-            // Center camera
-            camera.target = model.modelCenter;
-            float distance = model.maxModelExtent / (2.0f * tanf(camera.fovy * 0.5f * (PI/180.0f)));
-            camera.position = (Vector3){model.modelCenter.x - distance, model.modelCenter.y + distance, model.modelCenter.z - distance};
         };
 
         // ShortCuts
@@ -597,7 +609,6 @@ int main(void)
 
                     //
                     ImGui::Checkbox("Reload Recent on Startup", &g_bindStartUpToReloadRecent);
-
                     ImGui::EndMenu();
                 }
                 if(ImGui::BeginMenu("Logging")){
@@ -609,7 +620,13 @@ int main(void)
 
                     ImGui::EndMenu();
                 }
-                if (ImGui::BeginMenu("General Apperarance"))
+                if(ImGui::BeginMenu("Filebrowser")){
+
+                    InputSliderInt("Framedelay after Browsercallback", g_pauseFrames, 0, 25);
+
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("General Appearance"))
                 {
 
                     RaylibColorEdit(g_backgroundColor,                  "Background");
@@ -1014,7 +1031,7 @@ int main(void)
                     case 1:{
 
                         ImPlot::SetNextAxesToFit();
-                        if (ImPlot::BeginPlot("Sample Histogramm", ImVec2(-1,0))) {
+                        if (ImPlot::BeginPlot("Sample Histogram", ImVec2(-1,0))) {
                             ImPlot::PlotHistogram("Samples", model.getSamples().data(), model.getSamples().size(), 50, (1.0), ImPlotRange(), ImPlotHistogramFlags_Density);
                             ImPlot::EndPlot();
                         }
@@ -1391,7 +1408,7 @@ int main(void)
                             const auto& items = koordLabels[plotData];
                             static int selectedIndex = 0;
 
-                            if (ImGui::BeginCombo("##DK", "Display for Koord"))
+                            if (ImGui::BeginCombo("##DK", "Display for Coordinate"))
                             {
                                 for (int i = 0; i < items.size(); ++i)
                                 {
@@ -1484,7 +1501,7 @@ int main(void)
                     }
                     case 2:{
 
-                        ImGui::Text("Apperance 2D Models with pdf");
+                        ImGui::Text("Appearance 2D Models with pdf");
                         ImGui::Separator();
 
                         ImGui::Checkbox("SplitScreen", &splitScreen);
@@ -1522,6 +1539,48 @@ int main(void)
         EndDrawing();
 
         HandleFileDialog();
+
+        // Leider eine sehr unschöne Lösung
+        // Da der Browser Zustände in ImGui speichert, kollidieren Öffnungen in zu dicht hintereinander liegenden frames
+        // anscheinend, der Browser wurde noch nicht als gecleart vermerkt, die Reccourcen noch nicht freigegeben und das CWD
+        // des filebrowsers wird als auswahl pfad zurückgegeben. Deshalb wird hier provisorisch um n Frames verzögert,
+        // damit der Filebrowser Zeit hat sauber geschlossen zu werden, bevor die synchrone Ladeoperation den nächsten ImGui Frame
+        // verzögert. Es hat nicht gereicht einen oder zwei frames zu verzögern und mit 5 bekommt man teilweise immer noch nen
+        // CWD Error. Der Wert lässt sich allerdings auch über einen Schieber einstellen.
+        // Die Verzögerung der Ladeoperation hat nur zur Folge, dass es eine gewisse Verzögerung gibt
+        // bevor das im Filebrowser ausgewählte Modell durchgerechnet wird
+        // eine langfristige Alternative wäre die Benutzung des ImGuiFileBrowsers von aiekick
+        static int frameCounter = g_pauseFrames;
+
+        if(g_loadModel){
+
+            if(frameCounter == g_pauseFrames){
+
+                // Ein letzter verzweifelter Versuch die temporäre Lösung auf Tempo zu bringen
+                // SetTargetFPS(0);
+            }
+
+            //
+            frameCounter--;
+
+            if(frameCounter == 0){
+
+                model.loadFromFile(g_modelPath);
+                model.storePathInCache();
+
+                modelSource = fs::path(model.getSource()).filename().string();
+
+                // Center camera
+                camera.target = model.modelCenter;
+                float distance = model.maxModelExtent / (2.0f * tanf(camera.fovy * 0.5f * (PI/180.0f)));
+                camera.position = (Vector3){model.modelCenter.x - distance, model.modelCenter.y + distance, model.modelCenter.z - distance};
+
+                g_loadModel = false;
+                frameCounter = g_pauseFrames;
+
+                // SetTargetFPS(g_vsyncEnabled ? vsyncFPS : g_targetFPS);
+            }
+        }
     }
 
     //

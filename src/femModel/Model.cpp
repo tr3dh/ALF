@@ -134,7 +134,7 @@ bool FemModel::loadFromFile(const std::string& path){
     //
     RETURNING_ASSERT(path != NULLSTR, "angegebener Pfadstring ist nicht initialisiert",false);
     RETURNING_ASSERT(fs::is_directory(path), "angegebener Pfad " + path + " ist kein Ordner", false);
-    RETURNING_ASSERT(string::endsWith(path, fileSuffix), "invalide Pfadendung",false);
+    RETURNING_ASSERT(string::endsWith(path, fileSuffix), "invalide Pfadendung : " + path,false);
 
     // reset
     *this = FemModel(path);

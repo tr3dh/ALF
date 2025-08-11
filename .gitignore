@@ -14,6 +14,7 @@
 # Caches
 *.RESULTCACHE
 *.RESULTS
+*.CACHE
 
 # Temp Dateien
 *.tmp
@@ -31,6 +32,7 @@ build/
 thirdparty/
 temp/
 tmp/
+bin/
 
 # Os Dateien
 .DS_Store

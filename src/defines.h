@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <ctime>
 #include <chrono>
+#include <thread>
 
 namespace fs = std::filesystem;
 typedef fs::file_time_type fileTime;

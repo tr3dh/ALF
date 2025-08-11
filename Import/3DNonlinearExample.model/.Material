@@ -18,7 +18,12 @@
                 "cols": 1,
                 "data": [["10000"]]
             }
-        }
+        },
+        "normTolerance" : 6,              
+        "breakNRAfterNumIterations" : 3,    
+        "precissionDigits" : 6,            
+        "simulationDuration" : 4,           
+        "simulationTimeStep" : 0.05         
     },
     "stdParams": {
         "E": 20000.0,
