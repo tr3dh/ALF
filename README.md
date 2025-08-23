@@ -1,110 +1,116 @@
+<!-- Sprachumschalter -->
+<p align="right">
+🌐 <a href="./README.md">English</a> | <a href="./README.de.md">Deutsch</a>
+</p>
+
 # Adaptive, Lightweight Finite Element Tool (ALF)
 
 <img align="left" style="width:140px" src="Recc/Compilation/iconStripped.png" width="288px">
 
-ALF ist ein leichtgewichtiges, adaptives FEM Programm, das im Rahmen einer [Studienarbeit](Recc/Thetis/Studienarbeit.pdf) für das Institut für Kontinuumsmechanik (IKM) der Leibniz Universität Hannover (LUH) entwickelt worden ist. Dabei liegt der Fokus auf der Erprobung verschiedener Wahrscheinlichkeitsdichtefunktionen für die Unsicherheitsquantifizierung der linearen FEM und von simplen, nichtlinearen Materialmodellen für die nichtlineare FEM.
+ALF is a lightweight, adaptive FEM program that was developed as part of a [thetis](Recc/Thetis/Studienarbeit.pdf) for the Institute of Continuum Mechanics (IKM) at Leibniz University Hannover (LUH). The focus is on testing various probability density functions for the uncertainty quantification of linear FEM and simple, nonlinear material models for nonlinear FEM.
 
 <br>
 
-# 🧬 Entwicklung
-- Sprachstandard : C++23
-- Compiler : gcc/g++
-- Plattform : Windows 11
-- Subsystem : Msys MinGw64
-- Buildsystem : Make
+# 🧬 Development
+- Language standard: C++23
+- Compiler: gcc/g++
+- Platform: Windows 11
+- Subsystem: Msys MinGw64
+- Buildsystem: Make
 
-# 🔧 Funktionen
-- Durchführen von linearen Finite Elemente Analysen (FEAs)
-- Durchführen von linearen FEAs mit Unsicherheitsquantifizierung
-- Durchführen von nichtlinearen FEAs für simple nicht lineare Materialmodelle
-- Ergebnisvisualisierung über 2D/3D-Renderer
-- Variation und Erprobung der Wahrscheinlichkeitsdichten über die Benutzeroberfläche
-- Steuerung der Ergebnisvisualisierung über die Benutzeroberfläche
+# 🔧 Features
+- Performing linear finite element analyses (FEAs)
+- Performing linear FEAs with uncertainty quantification
+- Performing nonlinear FEAs for simple nonlinear material models
+- Visualize results using 2D/3D Rendering
+- Vary and test probability densities over the user interface
+- Control result visualization over the user interface
 
-# 🛠️ Umsetzung
-Das Programm arbeitet mit einer rein dateigetriebenen Modelldefinition (Netz, Materialmodell, Randbedingungen, etc.) und Informationsbereitstellung (isoparametrisches Element, Vorlagen für Wahrscheinlicheitsdichten, etc.). Dabei werden die Informationen über Dateien in gutverständlichen Dateiformaten (meistens JSON) bereitgestellt. So können schnell und ohne langwierige Einarbeitung Modelle implementiert, Programmfunktionen erweitert und Simulationen durchgeführt werden.
+# 🛠️ Implementation
+The program works with a purely file-driven model definition (mesh, material model, boundary conditions, etc.) and information provision (isoparametric element, templates for probability densities, etc.). The information is provided using files in easily understandable file formats (mostly JSON).
+This allows models to be implemented quickly, program functions to be expanded dynamicly, and simulations to be performed without the need for lengthy preparation.
 
-# 🧩 Verwendung
-ALF kann auf drei verschiedene Arten und Weisen verwendet werden.
-- über UI (am ausgereiftesten)
-- über API
-- als C++ Bibliothek
+# 🧩 Usage
+ALF can be used in three different ways.
+- via UI (most mature)
+- via API
+- as a C++ library
 
 # 🚀 Download
-- Programm (UI) : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/ALF/releases) herunterladen
-- API : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/ALF/releases) herunterladen
-- Bibliothek : Vorkompilierte Binarys über den letzten [Release](https://github.com/tr3dh/ALF/releases) herunterladen
-- Source Code : Projekt mit git klonen, Umgebung mit `make prefab` einrichten und Programm mit `make launch` kompilieren und ausführen
+- Program (UI): Download precompiled binaries from the latest [release](https://github.com/tr3dh/ALF/releases)
+- API: Download precompiled binaries from the latest [release](https://github.com/tr3dh/ALF/releases)
+- Library: Download precompiled binaries from the latest [release](https://github.com/tr3dh/ALF/releases)
+- Source code: Clone the project with git, set up the environment with `make prefab`, and compile and run the program with `make launch`
 
-# 🖥️ Benutzeroberfläche
-Die Benutzeroberfläche bietet die Möglichkeit Modelle zu laden und zu verwalten und die Steuerung der Ergebnisvisualisierung.
-Sie ist in eine Menüleiste (oberer Fensterrand) und eine aus-/einklappbare Registeransicht (rechte Fensterhälfte) unterteilt. Die Menüleiste bietet dabei Import-/ Einstellungs- und Verwaltungsoptionen. Über die Registeransicht kann die beschleunigte Erprobung der Wahrscheinlichkeitsdichten und die Steuerung der Visualisierung angestellt werden. In dem Hauptkompartment findet das Rendering statt. 
+# 🖥️ User interface
+The user interface allows you to load and manage models and control the visualization of results.
+It is divided into a menu bar (top of the window) and an expandable/collapsible tab view (right half of the window). The menu bar offers import, settings, and management options. The tab view can be used to accelerate the testing of probability densities and control the visualization. Rendering takes place in the main compartment.
 
 <div style="text-align: center;">
 <img src="Recc/textures/UI.png" alt="Übersicht über Benutzeroberfläche" style="border: 2px solid black; border-radius: 4px;width: 800px;" />
 </div>
 
-# 🗂️ Modellimport
+# 🗂️ Model import
 
 <!-- <img align="left" style="width:250px" src="Recc/textures/2DRendering.png" width="288px"> -->
 
 <img align="left" style="width:300px; margin-right: 15px;" src="Recc/visuals/Animation.gif">
 
-Über `File->Open->Model` wird ein Dateiauswahldialog gestartet, der die Auswahl des Modellordners ermöglicht. Beim Import des Modells werden die Dateien gelesen, geparst in programminterne Strukturen übersetzt und die Simulation durchgeführt.
-Diese wird im mittigen Hauptkompartement des Fensters gerendert. Die Navigation innerhalb dieser Ansicht ist für zweidimensionale Systeme nicht möglich. Für dreidimensionale Systeme kann über mehrere Kamerafahrten die Ansicht verändert werden.
-Eine Übersicht über die Kameraführungen und die Steurung ist in [ShortCuts](#⌨️-shortcuts) aufgeführt.
-Über die Registeransicht in der rechten Fensterhilfe können unter `Rendering` das Netz auf dem die Visualisierung erfolgt, die visualisierte Größe, etc. eingestellt werden. Unter `Rendering->Animation` gibt es einen Abspieldialog für die Navigation in den Simulationsergebnissen der nichtlinearen FEA (Animation).
+Selecting `File->Open->Model` opens a file selection dialog that allows you to select the model folder. When the model is imported, the files are read, parsed, translated into internal program structures, and the simulation is performed.
+The Results are rendered in the central compartment of the window. The Navigation within this view is not possible for two-dimensional systems. For three-dimensional systems, the view can be changed using several camera movements.
+An overview over the camera movements and controls is listed in [Shortcuts](#⌨️-shortcuts).
+The tab view in the right side of the window allows you to set the mesh on which the visualization is performed, the visualized magnitude, and more. Under `Rendering->Animation` a playback dialog can be found, wich allows you to navigating within the simulation results for the nonlinear FEA (animation).
 
-# 📊 Beispielmodell
+# 📊 Example model
 
-Im Folgenden ist exemplarisch die Modelldefinition für eine lineare FEM gezeigt. Weitere Beispielmodelle, die direkt importiert werden können liegen im [Import](/Import/)-Ordner. Die Definition des isoparametrischen Elements ist für mehrere Standardfälle wie einfache Dreiecks-/Vierecks- und Würfelelemente bereits hinterlegt. Verwendet das Netz ein nicht implementiertes isoparametrisches Element muss dieses in den [Recc/Cells]-Ordner implementiert werden. Imformationen dazu können aus den Implementierungsdateien der vorhandenen Elemente unter [Recc/Cells](/Recc/Cells/) und der [Studienarbeit](/Recc/Cells/Thetis/Studienarbeit.pdf) entnommen werden.
+The following shows an example of the model definition for a linear FEM. Further example models that can be imported directly are located in the [Import](/Import/) folder. The definition of the isoparametric element is already stored for several standard cases such as simple triangular/quadrangular and cube elements. If the mesh uses an isoparametric element that has not been implemented, it must be implemented in the [Recc/Cells] folder. Information on this can be found in the implementation files of the existing elements under [Recc/Cells](/Recc/Cells/) and the [thetis](/Recc/Cells/Thetis/Studienarbeit.pdf).
 
-## 🏗️ Aufbau
-Ein Modell wird über einen Dateisatz definiert. Die einzelnen Dateien der Definition werden dazu in einen Ordner mit der Endung `.model` gelegt. Aus diesem Ordner werden automatisch alle erforderlichen Dateien gelesen.
+## 🏗️ Structure
+A model is defined by a set of files. The individual files of the definition are placed in a folder with the extension `.model`. All necessary files are automatically read from this folder.
 
 ```txt
-Arbeitsverzeichnis des Programms/
+Workdirectory of the pogram/
 |__ build/
 |__ Recc/
 |   |__ Cells/
-|   |   |__ CPS4R.ISOPARAM                    // JSON-Datei
-|   |   |__ CPS3.ISOPARAM                     // JSON-Datei
-|   |   |__ für Modell relevantes Element     // JSON-Datei
+|   |   |__ CPS4R.ISOPARAM                    // JSON file
+|   |   |__ CPS3.ISOPARAM                     // JSON file
+|   |   |__ für Modell relevantes Element     // JSON file
 |   |   |__ ...
 |   |__ ...
 |
 |__ Import/
 |   |__ ModelName.model/
-|   |   |__ .Mesh             // INP-Datei        über Abaqus oder manuell anlegen und bearbeiten
-|   |   |__ .Material         // JSON-Datei       manuell anlegen und bearbeiten
-|   |   |__ .Constraints      // JSON-Datei       manuell anlegen und bearbeiten
-|   |   |__ .RESULTCACHE      // Bytecode-Datei   wird vom Programm erzeugt und verwaltet
+|   |   |__ .Mesh             // INP file        create and manage with Abaqus or by hand
+|   |   |__ .Material         // JSON file       create and manage by hand
+|   |   |__ .Constraints      // JSON file       create and manage by hand
+|   |   |__ .RESULTCACHE      // Bytecode file   gets created and managed by the program
 |   |__ ...
 |__ ...
 ```
 
-Zudem gibt es weitere optionale Dateien die erzeugt oder beigelegt werden können.
-- `.RESULTS`-Datei : enthält alle Simulationsergebnisse im JSON-Format
-- `.VertexShader`-Datei : Vertex Shader im `GLSL`-Format
-- `.FragmentShader`-Datei : Fragment Shader im `GLSL`-Format
+There are also other optional files that can be generated or included.
+- `.RESULTS` file: contains all simulation results in JSON format
+- `.VertexShader` file: vertex shader in `GLSL` format
+- `.FragmentShader` file: fragment shader in `GLSL` format
 
-Die `.RESULTS`-Datei kann über die UI mit `File->Export->*.RESULTS` oder über die API mit `simulate` erzeugt werden und enthält alle Ergebniswerte (Verschiebungen, Spannungen, Dehnungen, ...) der durchgeführten Simulation.
-Die Shader lassen sich für ein verbessertes Rendering hinzufügen. Aus den Beispielen in [Import](/Import/) gehen die von Programm übergebenen und erwarteten Uniforms, In- und Outputs hervor.
+The `.RESULTS` file can be generated using the UI with `File->Export->*.RESULTS` or via the API with `simulate` and contains all result values (displacements, stresses, strains, etc.) of the simulation performed.
+Shaders can be added for improved rendering. The examples in [Import](/Import/) show the uniforms, inputs, and outputs passed and expected by the program.
 
-## 🕸️ Netzdefinition
-Die Datei `.Mesh` definiert die Geometrie und Vernetzung des Modells. Sie liegt im `INP`-Format vor.
+## 🕸️ Mesh definition
+The `.Mesh` file defines the geometry and meshing of the model. It is in `INP` format.
 ```txt
 *Heading
 ...
-*Node                                   // Definition der Knoten über Index und Koordinaten
+*Node                                   // Definition of the Nodes
     1,           0.,           0.
     ...
     121,        0.12,        0.12
 
-*Element, type=CPS4R                    // Definition der Elemente
-    1,   1,   2,  13,  12               // hier auftauchende Bennenung des isoparametrischen Elements muss bei Definition
-                                        // des isoparametrischen Elements angegeben werden
-    ...                                 // >> Definition über CPS4R.ISOPARAM (liegt als Standardtyp bereits vor)
+*Element, type=CPS4R                    // Definition of the Cells
+    1,   1,   2,  13,  12               // The name of the isoparametric element appearing here must be stated when defining
+                                        // the isoparametric element
+    ...                                 // >> Definition by CPS4R.ISOPARAM (already available as a standard type)
     100, 109, 110, 121, 120
 
 *End Part
@@ -112,8 +118,8 @@ Die Datei `.Mesh` definiert die Geometrie und Vernetzung des Modells. Sie liegt 
 *End Assembly
 ```
 
-## 📐 Definition Randbedingungen
-Die Datei `.Constraints` definiert die Randbedingungen, also die fixierten Freiheitsgrade und die beaufschlagten Kräfte.
+## 📐 Definition of boundary conditions
+The `.Constraints` file defines the boundary conditions, i.e., the fixed degrees of freedom and the applied forces.
 ```js
 {
     //
@@ -128,11 +134,11 @@ Die Datei `.Constraints` definiert die Randbedingungen, also die fixierten Freih
 ```
 
 ## 🧱 Definition Material
-Die Datei `.Material` definiert das Materialmodell und steuert die ablaufende Simulation. 
+The `.Material` file defines the material model and controls the simulation process.
 ```js
 {
     "isLinear": true,
-    // Für Unsicherheitsquantifizierung oder nichtlineare Materialmodelle
+    // For uncertainty quantification or nonlinear Materials
     // "nonLinearApproach": {...},
     // "pdf" : {...}
     "stdParams": {
@@ -143,52 +149,52 @@ Die Datei `.Material` definiert das Materialmodell und steuert die ablaufende Si
 }
 ```
 
-Weitere Informationen zur Definition der Wahrscheinlicheitsdichten und des nichtlinearen Materialmodells werden über verschiedene Beispielmodelle in [Import](/Import/) und die beigelegte [Studienarbeit](Recc/Thetis/Studienarbeit.pdf) bereitgestellt. 
+Further information on the definition of probability densities and the nonlinear material model is provided via various example models in [Import](/Import/) and the accompanying [student thetis](Recc/Thetis/Studienarbeit.pdf).
 
 # 🔌 API
-Über die API können Modelle ohne Benutzeroberfläche simuliert werden. Die API erzeugt automatisch die `.RESULTS` Ergebnisdatei im JSON-Format. Damit kann das Programm aus anderen Projekten, Programmen oder Skripten aufgerufen werden. FEM-Simulationen können im Hintergrund durchgeführt und die Ergebnisse über einen JSON-Parser ins externe Projekt/Programm geladen werden. Dazu muss die API mit dem Argument `simulate` und dem Pfad des FEM-Modells aufgerufen werden. Ist der Pfad nicht relativ sondern absolut zum aktuellen Arbeitsverzeichnis wird das über die Flag `--absolute` angegeben.
+The API can be used to simulate models without a user interface. The API automatically generates the `.RESULTS` file in JSON format. This allows the program to be called from other projects, programs, or scripts. FEM simulations can be performed in the background and the results can be loaded into the external project/program using a JSON parser. To do this, the API must be called with the `simulate` argument and the path to the FEM model. If the path is absolute rather than relative to the current working directory, this is specified using the `--absolute` flag.
 
 ```bash
-# Simulation über Release (ALFAPI) ohne Logging oder Debug (ALFAPI_d) mit Logging
-.\path\to\build\ALFAPI simulate Import/2DLinearExample.model                    # Pfadangabe relativer Pfad
-.\path\to\build\ALFAPI simulate C:/.../Import/2DLinearExample.model --absolute  # Pfadangabe absoluter Pfad
+# Simulation via release (ALFAPI) without logging or debugging (ALFAPI_d) with logging
+.\path\to\build\ALFAPI simulate Import/2DLinearExample.model                    # Path specification relative path
+.\path\to\build\ALFAPI simulate C:/.../Import/2DLinearExample.model --absolute  # Path specification absolute path
 ```
 
-# ⌨️ ShortCuts
+# ⌨️ Shortcuts
 
-Die folgenden ShortCuts dienen der beschleunigten 
+The following shortcuts are used to speed up 
 
-| Shortcut              | Funktion                          |
+| Shortcut              | Function                          |
 |-----------------------|-----------------------------------|
-| l hold                | Normal Planar Kamera              |
-| r hold                | Orbital Kamera                    |
-| l+r hold              | FPS Kamera                        |
-| w/a/s/d/shift/space   | Bewegung in fps Kamera            |
-| arrowKeys/shift/space | Bewegung in fps Kamera            |
+| l hold                | Normal Planar Camera              |
+| r hold                | Orbital Camera                    |
+| l+r hold              | FPS Camera                        |
+| w/a/s/d/shift/space   | Movement in fps Camera            |
+| arrowKeys/shift/space | Movement in fps Camera            |
 | F11                   | toggle Fullscreen                 |
-| C                     | toggle Cursor                     |
-| Space                 | Resampling der pdf                |
-| Ctrl + C              | Berechnungs-Cache des geladenen Modells löschen    |
-| Ctrl + R              | letztes geöffnetes Modell laden bzw. reload des aktuellen          |
-| Ctrl + U              | Modell entladen       |
-| Ctrl + O              | Dateiauswahldialog für Modelle öffnen     |
-| (Ctrl + Space) / left / right | Registeransicht toggeln   |
-| N                     | Mesh Tab öffnen       |
-| M                     | Material Tab öffnen   |
-| R                     | Rendering Tab öffnen  |
-| up/down               | Navigation in Subtabs |
+| C                     | toggle cursor                     |
+| Space                 | resample pdf                |
+| Ctrl + C              | clear calculation cache of loaded model    |
+| Ctrl + R              | load last opened model or reload current model          |
+| Ctrl + U              | unload model       |
+| Ctrl + O              | open file selection dialog for models     |
+| (Ctrl + Space) / left / right | Toggle tab view   |
+| N                     | Open Mesh tab       |
+| M                     | Open Material tab   |
+| R                     | Open Rendering tab  |
+| up/down               | Navigation in subtabs |
 
-# 🤝 Danksagung
+# 🤝 Many thanks
 
-Mein besonderer Dank gilt meinem Betreuer Dr. Hendrik Geisler, der diese Studienarbeit sehr spontan und durch seine Unterstützung erst ermöglicht hat und während der Entwicklung eine große Hilfe war.
+I would like to express my special thanks to my supervisor Dr. Hendrik Geisler, who made this thetis possible spontaneously and through his support and was a great help during its development.
 
-Hendrik Geisler wurde während der Betreuungszeit von der Europäischen Union (ERC, Gen-TSM, project number 101124463) finanziert. Die geäußerten Ansichten und Meinungen sind jedoch ausschließlich die des Autors/der Autoren und spiegeln nicht unbedingt die der Europäischen Union oder der Exekutivagentur des Europäischen Forschungsrats wider. Weder die Europäische Union noch die Bewilligungsbehörde können für sie verantwortlich gemacht werden.
+Hendrik Geisler was funded by the European Union (ERC, Gen-TSM, project number 101124463) during the supervision period. However, the views and opinions expressed are solely those of the author(s) and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the funding authority can be held responsible for them.
 
-## 📚 Verwendete Bibliotheken
-Bedanken möchte ich mich zudem bei den jeweiligen Entwicklern und Maintainern der im Rahmen des Projekts verwendeten Open-Source Bibliotheken.
-Diese sind im Folgenden aufgeführt. Die zugehörigen Lizenztexte sind im Ordner [thirdPartyLicenses](/thirdPartyLicenses/) hinterlegt.
+## 📚 Libraries used
+I would also like to thank the respective developers and maintainers of the open-source libraries used in the project.
+These are listed below. The corresponding license texts are stored in the [thirdPartyLicenses](/thirdPartyLicenses/) folder.
 
-| Bibliothek        | Lizenz                          |
+| Library        | License                          |
 |-------------------|----------------------------------|
 | [raylib](https://www.raylib.com/)             | zlib/libpng                      |
 | [Eigen](https://eigen.tuxfamily.org/)         | MPL2 (Mozilla Public License 2.0) |
