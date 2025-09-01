@@ -1,5 +1,8 @@
 #include "ClearCaches.h"
 
+// Wrap damit windows befehle auch unter msys laufen >> Powershell aufmachen und darin aufrufen
+// powershell -Command \" command \"
+
 void clearCache(const std::string& modelPath){
 
     if(!fs::exists(modelPath)){
@@ -26,4 +29,5 @@ void clearCaches(){
 void clearBin(){
     
     system("powershell -Command \"rm -r ../bin\"");
+    system("powershell -Command \"mkdir ../bin\"");
 }

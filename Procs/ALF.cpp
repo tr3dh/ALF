@@ -23,6 +23,22 @@ std::string relPath(const std::string& str){
     return fs::relative(str, fs::current_path()).string();
 }
 
+void mkdir(const std::string& path){
+    // Prüfen, ob das Verzeichnis existiert
+    if (fs::exists(path)) {
+        
+        // Löscht das Verzeichnis
+        return;
+    }
+
+    // Verzeichnis neu erstellen
+    if (fs::create_directory(path)) {
+        
+    } else {
+        ASSERT(TRIGGER_ASSERT, "mkdir fehlgeschlagen");
+    }
+}
+
 void cacheConfigs(){
 
     if(!fs::exists(fs::path(g_programsConfigCache).parent_path())){
@@ -107,8 +123,20 @@ void DrawArrow3D(Vector3 start, Vector3 end, float shaftRadius, float headRadius
     DrawCylinderEx(shaftEnd, end, headRadius, 0.0f, 8, color);
 }
 
+void getEnv(){
+
+    const char* msys = std::getenv("MSYSTEM");
+    if (msys) g_env = "MSYS"; return;
+
+    const char* ps = std::getenv("PSModulePath");
+    if (ps) g_env = "POWERSHELL";
+}
+
 int main(void)
 {
+    //
+    getEnv();
+
     //
     loadCachedConfigs();
 
@@ -133,7 +161,7 @@ int main(void)
     g_logRaylibMessages ? enableRLLogging() : disableRLLogging();
 
     //
-    SetConfigFlags(FLAG_WINDOW_HIDDEN | FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_HIDDEN | FLAG_WINDOW_RESIZABLE);
     InitWindow(600,600, "\t Adaptive, Lightweight Finite Element Tool (ALF)");
 
     // für Progressbar >> rendern wenn fenster als initialisiert vermerkt sonst return
@@ -157,6 +185,9 @@ int main(void)
 
     //
     g_CudaBackendEnabled = string::contains(g_vendorCorp, "NVIDIA");
+
+    //
+    LOG << "** Init in GENV " << g_env << endl;
 
     LOG << (g_ComputeShaderBackendEnabled ? "** Computeshader Backend freigeschaltet" :
         "** Computeshader Backend gesperrt, opengl version " + std::to_string(g_glVersion).substr(0,3) + " ist nicht mit comp shadern kompatibel, erforderliche Version : OpenGL 4.3") << endl;
@@ -189,6 +220,9 @@ int main(void)
 
     SetWindowSize(windowWidth, windowHeight);
     SetWindowPosition((screenWidth - windowWidth)/2, (screenHeight - windowHeight)/2);
+
+    // RenderTexture2D renderTexture = LoadRenderTexture(windowWidth, windowHeight);
+    // SetTextureFilter(renderTexture.texture, TEXTURE_FILTER_POINT);
 
     LOG << "-- init auf Bildsirm mit Screensize [" << screenWidth << "|" << screenHeight << "]" << endl
 
@@ -437,7 +471,16 @@ int main(void)
                 &time, SHADER_UNIFORM_FLOAT);
         }
 
+        //
+        // if(winSize.x != renderTexture.texture.width || winSize.y != renderTexture.texture.height){
+        //     renderTexture = LoadRenderTexture(winSize.x, winSize.y);
+        //     SetTextureFilter(renderTexture.texture, TEXTURE_FILTER_POINT);
+        // }
+
         BeginDrawing();
+        // BeginTextureMode(renderTexture);
+
+        //
         ClearBackground(g_backgroundColor); //Color(30,30,30,255));
 
         //
@@ -511,6 +554,24 @@ int main(void)
                 {100,100}, splitScreen, splitScreenVertical);
         }
 
+        // //
+        // EndTextureMode();
+
+        // //
+        // BeginDrawing();
+        
+
+        // ClearBackground(g_backgroundColor);
+
+        // DrawTexturePro(
+        //     renderTexture.texture,
+        //     (Rectangle){ 0, 0, (float)renderTexture.texture.width, -(float)renderTexture.texture.height }, // gesamte Textur
+        //     (Rectangle){ 0, 0, winSize.x, winSize.y},                                // auf Fenstergröße skalieren
+        //     (Vector2){ 0, 0 },
+        //     0.0f,
+        //     WHITE
+        // );
+
         static std::string modelSource;
         modelSource = fs::path(model.getSource()).filename().string();
 
@@ -561,6 +622,188 @@ int main(void)
 
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_O)) {
             modelFileDialog();
+        }
+
+        if (IsKeyPressed(KEY_F1)) {
+        
+            //
+            RenderTexture2D rt = LoadRenderTexture(winSize.x, winSize.y);
+            SetTextureFilter(rt.texture, TEXTURE_FILTER_POINT);
+
+            BeginTextureMode(rt);
+
+            //
+            ClearBackground(g_backgroundColor); //Color(30,30,30,255));
+
+            Vector2 frameCenter = {winSize.x/2, winSize.y/2};
+
+            if(modelDimension == 3){
+
+                BeginMode3D(camera);
+                model.display(static_cast<MeshData>(plotData), plotKoord, plotOnMesh, winSize, frameCenter,
+                    {100,100}, splitScreen, splitScreenVertical);
+                EndMode3D();
+
+                //
+                rlDrawRenderBatchActive();
+
+                //
+                rlViewport(0,0, gizmoSize, gizmoSize);
+
+                gizmoCam.position = Vector3Scale(Vector3Normalize(camera.position), 3.0f);
+                gizmoCam.target = (Vector3){ 0, 0, 0 };
+                gizmoCam.up = camera.up;
+
+                BeginMode3D(gizmoCam);
+                rlEnableDepthTest();
+
+                DrawArrow3D((Vector3){0,0,0}, (Vector3){arrowLen,0,0}, shaftRadius, headRadius, headLength, RED);   // X
+                DrawArrow3D((Vector3){0,0,0}, (Vector3){0,arrowLen,0}, shaftRadius, headRadius, headLength, GREEN); // Y
+                DrawArrow3D((Vector3){0,0,0}, (Vector3){0,0,arrowLen}, shaftRadius, headRadius, headLength, BLUE);  // Z
+
+                EndMode3D();
+
+                // Viewport zurücksetzen
+                rlViewport(0, 0, winSize.x, winSize.y);
+                rlDrawRenderBatchActive();
+            }
+            else {
+                model.display(static_cast<MeshData>(plotData), plotKoord, plotOnMesh, winSize, frameCenter,
+                    {100,100}, splitScreen, splitScreenVertical);
+            }
+
+            EndTextureMode();
+
+            //
+            mkdir("../bin");
+
+            // RenderTexture/Screen in Image konvertieren
+            Image img = LoadImageFromTexture(rt.texture);
+            ImageFlipVertical(&img);
+
+            ExportImage(img, ("../bin/strippedScreenshot_" + getTimestamp() + ".png").c_str());
+            UnloadImage(img);
+        }
+
+        static bool recordingStripped = false;
+        static bool recordingFull = false;
+
+        const static std::string mp4Cache = "../bin/mp4Cache";
+        static std::vector<Image> pngs = {};
+
+        // Start Record
+        if(IsKeyPressed(KEY_F3) && !recordingStripped && !recordingFull){
+
+            mkdir("../bin");
+
+            //
+            recordingStripped = true;
+
+            for(auto& png : pngs){
+                UnloadImage(png);
+            }
+
+            pngs.clear();
+
+            // Prüfen, ob das Verzeichnis existiert
+            if (fs::exists(mp4Cache)) {
+                
+                // Löscht das Verzeichnis
+                fs::remove_all(mp4Cache);
+            }
+
+            // Verzeichnis neu erstellen
+            if (fs::create_directory(mp4Cache)) {
+                
+            } else {
+                ASSERT(TRIGGER_ASSERT, "mkdir fehlgeschlagen");
+            }
+        }
+        // end record
+        else if(IsKeyPressed(KEY_F3) && recordingStripped && !recordingFull){
+
+            mkdir("../bin");
+
+            recordingStripped = false;
+
+            for(size_t pngCounter = 0; pngCounter < pngs.size(); pngCounter++){
+                
+                char filename[256];
+                snprintf(filename, sizeof(filename), "%s/frame%04d.png", mp4Cache.c_str(), pngCounter);
+
+                char progressLine[256];
+                snprintf(progressLine, sizeof(progressLine), "Exportiere Video, Frame [%d, %d]", pngCounter, pngs.size());
+
+                displayProgress((float)pngCounter/pngs.size(), progressLine);
+                ExportImage(pngs[pngCounter], filename);
+            }
+
+            char cmd[256];
+            snprintf(cmd, sizeof(cmd),
+                "ffmpeg -framerate %f -i ../bin/%s/%s.png -c:v libx264 -pix_fmt yuv420p ../bin/strippedScreenRecord_%s.mp4",
+                1/dt, mp4Cache.c_str(), "frame%04d", getTimestamp().c_str());
+
+            std::system(cmd);
+
+            for(auto& png : pngs){
+                UnloadImage(png);
+            }
+
+            pngs.clear();
+        }
+        else if(recordingStripped && !recordingFull){
+
+            //
+            RenderTexture2D rt = LoadRenderTexture(winSize.x, winSize.y);
+            SetTextureFilter(rt.texture, TEXTURE_FILTER_POINT);
+
+            BeginTextureMode(rt);
+
+            //
+            ClearBackground(g_backgroundColor); //Color(30,30,30,255));
+
+            Vector2 frameCenter = {winSize.x/2, winSize.y/2};
+
+            if(modelDimension == 3){
+
+                BeginMode3D(camera);
+                model.display(static_cast<MeshData>(plotData), plotKoord, plotOnMesh, winSize, frameCenter,
+                    {100,100}, splitScreen, splitScreenVertical);
+                EndMode3D();
+
+                //
+                rlDrawRenderBatchActive();
+
+                //
+                rlViewport(0,0, gizmoSize, gizmoSize);
+
+                gizmoCam.position = Vector3Scale(Vector3Normalize(camera.position), 3.0f);
+                gizmoCam.target = (Vector3){ 0, 0, 0 };
+                gizmoCam.up = camera.up;
+
+                BeginMode3D(gizmoCam);
+                rlEnableDepthTest();
+
+                DrawArrow3D((Vector3){0,0,0}, (Vector3){arrowLen,0,0}, shaftRadius, headRadius, headLength, RED);   // X
+                DrawArrow3D((Vector3){0,0,0}, (Vector3){0,arrowLen,0}, shaftRadius, headRadius, headLength, GREEN); // Y
+                DrawArrow3D((Vector3){0,0,0}, (Vector3){0,0,arrowLen}, shaftRadius, headRadius, headLength, BLUE);  // Z
+
+                EndMode3D();
+
+                // Viewport zurücksetzen
+                rlViewport(0, 0, winSize.x, winSize.y);
+                rlDrawRenderBatchActive();
+            }
+            else {
+                model.display(static_cast<MeshData>(plotData), plotKoord, plotOnMesh, winSize, frameCenter,
+                    {100,100}, splitScreen, splitScreenVertical);
+            }
+
+            EndTextureMode();
+
+            // RenderTexture/Screen in Image konvertieren
+            pngs.emplace_back(LoadImageFromTexture(rt.texture));
+            ImageFlipVertical(&pngs.back());
         }
 
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_SPACE)) {
@@ -680,6 +923,7 @@ int main(void)
             {
                 ImGui::Text("OpenGL Version : %.2f", g_glVersion);
                 ImGui::Text("GPU Vendor : %s", vendor);
+                ImGui::Text("Env : %s", g_env.c_str());
 
                 ImGui::EndMenu();
             }
@@ -1537,6 +1781,93 @@ int main(void)
         rlImGuiEnd();
 
         EndDrawing();
+
+        //
+        if (IsKeyPressed(KEY_F2)) {
+        
+            //
+            mkdir("../bin");
+
+            // RenderTexture/Screen in Image konvertieren
+            Image img = LoadImageFromScreen();
+            // ImageFlipVertical(&img);
+
+            ExportImage(img, ("../bin/fullScreenshot_" + getTimestamp() + ".png").c_str());
+            UnloadImage(img);
+        }
+
+        // static bool recordingStripped = false;
+        // static bool recordingFull = false;
+
+        // const static std::string mp4Cache = "../bin/mp4Cache";
+        // static std::vector<Image> pngs = {};
+
+        // Start Record
+        if(IsKeyPressed(KEY_F4) && !recordingStripped && !recordingFull){
+
+            //
+            mkdir("../bin");
+
+            //
+            recordingFull = true;
+
+            for(auto& png : pngs){
+                UnloadImage(png);
+            }
+
+            pngs.clear();
+
+            // Prüfen, ob das Verzeichnis existiert
+            if (fs::exists(mp4Cache)) {
+                
+                // Löscht das Verzeichnis
+                fs::remove_all(mp4Cache);
+            }
+
+            // Verzeichnis neu erstellen
+            if (fs::create_directory(mp4Cache)) {
+                
+            } else {
+                ASSERT(TRIGGER_ASSERT, "mkdir fehlgeschlagen");
+            }
+        }
+        // end record
+        else if(IsKeyPressed(KEY_F4) && !recordingStripped && recordingFull){
+
+            mkdir("../bin");
+
+            recordingFull = false;
+
+            for(size_t pngCounter = 0; pngCounter < pngs.size(); pngCounter++){
+                
+                char filename[256];
+                snprintf(filename, sizeof(filename), "%s/frame%04d.png", mp4Cache.c_str(), pngCounter);
+
+                char progressLine[256];
+                snprintf(progressLine, sizeof(progressLine), "Exportiere Video, Frame [%d, %d]", pngCounter, pngs.size());
+
+                displayProgress((float)pngCounter/pngs.size(), progressLine);
+                ExportImage(pngs[pngCounter], filename);
+            }
+
+            char cmd[256];
+            snprintf(cmd, sizeof(cmd),
+                "ffmpeg -framerate %f -i ../bin/%s/%s.png -c:v libx264 -pix_fmt yuv420p ../bin/fullScreenRecord_%s.mp4",
+                1/dt, mp4Cache.c_str(), "frame%04d", getTimestamp().c_str());
+
+            std::system(cmd);
+
+            for(auto& png : pngs){
+                UnloadImage(png);
+            }
+
+            pngs.clear();
+        }
+        else if(!recordingStripped && recordingFull){
+
+            // RenderTexture/Screen in Image konvertieren
+            pngs.emplace_back(LoadImageFromScreen());
+        }
 
         HandleFileDialog();
 

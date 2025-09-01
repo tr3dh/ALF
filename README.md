@@ -183,6 +183,10 @@ The following shortcuts are used to speed up
 | M                     | Open Material tab   |
 | R                     | Open Rendering tab  |
 | up/down               | Navigation in subtabs |
+| F1                    | Screenshot FEM system |
+| F2                    | Screenshot FEM system + UI |
+| F3                    | Screenrecord FEM system |
+| F4                    | Screenrecord FEM system + UI |
 
 # 🤝 Many thanks
 

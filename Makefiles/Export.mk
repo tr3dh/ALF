@@ -26,8 +26,10 @@ copyTmp:
 	cp -r Recc tmp/
 	cp -r Import tmp/
 	cp -f .VERSION tmp/
-	cp -f License.txt tmp/
+	cp -f LICENSE tmp/
 	cp -f README.md tmp/
+	cp -f README.de.md tmp/
+	cp -f MAINTAINING.md tmp/
 
 exportRelease:# fullRelease
 

@@ -1,0 +1,3 @@
+# Maintaining
+
+Please note that active development of this project has been completed. On the one hand, this means that the existing features are stable and finished, on the other hand, there is no guarantee that maintenance and regular content updates will be carried out. If you have any questions, please do not hesitate to contact me. Further development is also permitted for everyone under the license terms.

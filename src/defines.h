@@ -77,6 +77,7 @@ typedef fs::file_time_type fileTime;
 #include "Drivers/ReccHandling/__StringProcessing.h"
 #include "Drivers/ReccHandling/__jsonSerialize.h"
 #include "Drivers/ReccHandling/__lineCounter.h"
+#include "Drivers/ReccHandling/__timeStamp.h"
 
 #include "Drivers/Calculations/__SymbolicExpressions.h"
 #include "Drivers/Calculations/__SymEngineMatrix.h"
@@ -129,3 +130,5 @@ static Color g_backgroundColor = Color(30,30,30,255);
 static std::string githubRepositoryUrl = "https://github.com/tr3dh/ALF";
 
 static std::string g_encoderKey = "ALF";
+
+static std::string g_env = "UNKNOWN"; // std::getenv("MSYSTEM");

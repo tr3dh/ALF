@@ -111,7 +111,8 @@
         "print": "cpp",
         "scoped_allocator": "cpp",
         "spanstream": "cpp",
-        "syncstream": "cpp"
+        "syncstream": "cpp",
+        "stack": "cpp"
     },
 
     // Makefile Configs

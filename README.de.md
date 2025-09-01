@@ -182,6 +182,10 @@ Die folgenden ShortCuts dienen der beschleunigten
 | M                     | Material Tab öffnen   |
 | R                     | Rendering Tab öffnen  |
 | up/down               | Navigation in Subtabs |
+| F1                    | Bildschirmaufnahme vom System |
+| F2                    | Bildschirmaufnahme vom System + UI |
+| F3                    | Bildschirmaufnahmevideo vom System |
+| F4                    | Bildschirmaufnahmevideo vom System + UI |
 
 # 🤝 Danksagung
 
