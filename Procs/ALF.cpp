@@ -23,22 +23,6 @@ std::string relPath(const std::string& str){
     return fs::relative(str, fs::current_path()).string();
 }
 
-void mkdir(const std::string& path){
-    // Prüfen, ob das Verzeichnis existiert
-    if (fs::exists(path)) {
-        
-        // Löscht das Verzeichnis
-        return;
-    }
-
-    // Verzeichnis neu erstellen
-    if (fs::create_directory(path)) {
-        
-    } else {
-        ASSERT(TRIGGER_ASSERT, "mkdir fehlgeschlagen");
-    }
-}
-
 void cacheConfigs(){
 
     if(!fs::exists(fs::path(g_programsConfigCache).parent_path())){
@@ -134,6 +118,16 @@ void getEnv(){
 
 int main(void)
 {
+    mkdir("../bin");
+
+    #ifdef NDEBUG
+
+    //
+    g_logFile = std::ofstream("../bin/.LOG");
+    std::cout.rdbuf(g_logFile.rdbuf());
+
+    #endif
+
     //
     getEnv();
 
@@ -147,7 +141,7 @@ int main(void)
     int usableWidth  = workArea.right - workArea.left;          // nutzbare Breite (in den meisten Fällen gleich der Fensterbreite)
 
     //
-    LOG << std::fixed << std::setprecision(4);
+    LOG << std::fixed << std::setprecision(4) << endl;
     LOG << endl;
 
     LOG << "** Source Code " << countLinesInDirectory("../src") << " lines" << endl;
@@ -683,6 +677,8 @@ int main(void)
 
             ExportImage(img, ("../bin/strippedScreenshot_" + getTimestamp() + ".png").c_str());
             UnloadImage(img);
+
+            UnloadRenderTexture(rt);
         }
 
         static bool recordingStripped = false;
@@ -804,6 +800,8 @@ int main(void)
             // RenderTexture/Screen in Image konvertieren
             pngs.emplace_back(LoadImageFromTexture(rt.texture));
             ImageFlipVertical(&pngs.back());
+
+            UnloadRenderTexture(rt);
         }
 
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_SPACE)) {
@@ -1925,6 +1923,13 @@ int main(void)
     CloseWindow();
 
     cacheConfigs();
+
+    #ifdef NDEBUG
+
+    // Release build
+    g_logFile.close();
+
+    #endif
 
     return 0;
 }

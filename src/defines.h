@@ -57,6 +57,28 @@ typedef fs::file_time_type fileTime;
 #error "Logging Direktiven können nicht definiert werden, Makros bereits deklariert"
 #endif
 
+#ifdef NDEBUG
+
+// Release build
+
+extern std::ofstream g_logFile;
+
+#define LOG_RED     ""
+#define LOG_GREEN   ""
+#define LOG_YELLOW  ""
+#define LOG_BLUE    ""
+#define LOG_ORANGE  ""
+#define LOG_RESET   ""
+
+#define LOG std::cout << "[" << getTimestamp() << "] : "
+#define _ERROR std::cerr << "[" << getTimestamp() << "] : " << "!! <ERROR> !! -> "
+
+#define endl LOG_RESET << "\n" << std::flush;
+
+#else
+
+// Debug build und alles andere
+
 #define LOG_RED     "\033[31m"
 #define LOG_GREEN   "\033[32m"
 #define LOG_YELLOW  "\033[93m"
@@ -65,9 +87,11 @@ typedef fs::file_time_type fileTime;
 #define LOG_RESET   "\033[0m"
 
 #define LOG std::cout << LOG_ORANGE
-#define _ERROR std::cerr << LOG_RED << "!! <ERROR> !! -> " 
+#define _ERROR std::cerr << LOG_RED << "!! <ERROR> !! -> "
 
 #define endl LOG_RESET << "\n";
+
+#endif
 
 #define mbug(message) LOG << LOG_YELLOW << "___Passed : " << #message << endl;
 #define ibug(objekt) LOG << LOG_YELLOW << "___Objekt : " << #objekt << " " << objekt << endl;
@@ -132,3 +156,20 @@ static std::string githubRepositoryUrl = "https://github.com/tr3dh/ALF";
 static std::string g_encoderKey = "ALF";
 
 static std::string g_env = "UNKNOWN"; // std::getenv("MSYSTEM");
+
+inline void mkdir(const std::string& path){
+    
+    // Prüfen, ob das Verzeichnis existiert
+    if (fs::exists(path)) {
+        
+        // Löscht das Verzeichnis
+        return;
+    }
+
+    // Verzeichnis neu erstellen
+    if (fs::create_directory(path)) {
+        
+    } else {
+        ASSERT(TRIGGER_ASSERT, "mkdir fehlgeschlagen");
+    }
+}

@@ -30,6 +30,16 @@ int main(int argc, char* argv[]){
     // argv dann das array der größe argc die die übergebene Argumente aus char Ptrs enthält
     // um auf n-tes übergebenes argument zu kommen argv[n] abfragen -> Indizierung ab 1 nicht ab Null
 
+    mkdir("../bin");
+
+    #ifdef NDEBUG
+
+    //
+    g_logFile = std::ofstream("../bin/.LOG");
+    std::cout.rdbuf(g_logFile.rdbuf());
+
+    #endif
+
     // Programm ohne args gestartet
     if(argc < 2){
 
@@ -121,9 +131,19 @@ int main(int argc, char* argv[]){
         LOG << "   um mehr zu Erfahren die API mit dem Argument '--help' aufrufen" << endl;
         LOG << "   zum Fortfahren beliebige Taste drücken..." << endl;
 
+        #ifdef DEBUG
         std::cin.get();
+        #endif
+
         return 1;
     }
+
+    #ifdef NDEBUG
+
+    // Release build
+    g_logFile.close();
+
+    #endif
 
     return 0;
 }

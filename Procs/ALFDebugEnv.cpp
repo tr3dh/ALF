@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include "defines.h"
 
 #ifdef LOG
 #undef LOG
@@ -25,6 +26,16 @@
 
 int main(){
 
+    mkdir("../bin");
+
+    #ifdef NDEBUG
+
+    //
+    g_logFile = std::ofstream("../bin/.LOG");
+    std::cout.rdbuf(g_logFile.rdbuf());
+
+    #endif
+
     LOG << "-------------------------------------------------------------------\n";
     LOG << "\tStarte Debug Env für die ALF UI\n";
     LOG << "-------------------------------------------------------------------\n";
@@ -36,7 +47,18 @@ int main(){
     LOG << "\tALF UI mit Status " << result << " beendet" << endl; 
 
     LOG << "\tZum fortfahren beliebige Taste drücken\n";
+    LOG << "-------------------------------------------------------------------\n" << endl;
+
+    #ifdef DEBUG
     std::cin.get();
+    #endif
+
+    #ifdef NDEBUG
+
+    // Release build
+    g_logFile.close();
+
+    #endif
 
     return result;
 }
