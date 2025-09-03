@@ -14,6 +14,15 @@ exec:
 	@echo "Wechsel in: $(dir $(TARGET))"
 	cd $(dir $(TARGET)) && ./$(notdir $(TARGET)$(SUFFIX))
 
+execr:
+	@make exec SUFFIX=
+
+winExec:
+	powershell.exe -NoProfile -Command "Set-Location './build'; Start-Process -FilePath './$(notdir $(TARGET)$(SUFFIX))'"
+
+winExecr:
+	@make winExec SUFFIX=
+
 demo:
 	@$(MAKE) launch TARGET=build/3dRenderingDemo
 
