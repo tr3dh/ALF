@@ -20,11 +20,13 @@ else
 endif
 
 # -Wno-missing-designated-field-initializers
-CXXFLAGS += -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
+CXXFLAGS += -Wextra -MMD -MP -std=c++23 -fuse-ld=lld -fexceptions \
 	-Wno-deprecated-literal-operator \
+	-Wno-missing-field-initializers -Wno-sign-compare \
 	-Wno-cpp \
 	-I./src \
 	-I./thirdParty \
+	-I./thirdParty/raylib/src \
 	-I/mingw64/include \
 	-I./thirdparty/symengine -I./thirdparty/symengine/build \
 	-I./thirdparty/magic_enum/include \
@@ -35,18 +37,30 @@ CXXFLAGS += -Wextra -MMD -MP -std=c++23 -fuse-ld=lld \
 	-I./thirdParty/implot \
 	-pthread
 
+LINKING ?= STATIC
+
+ifeq ($(LINKING), STATIC)
+	CXXFLAGS += -static-libgcc -static-libstdc++
+endif
+
 LDFLAGS += -L./src \
+	-L./thirdParty/raylib/build/raylib -L./thirdParty/raylib/dynamicBuild/raylib -lraylib \
 	-L/mingw64/lib \
 	-L./thirdparty/symengine/build/symengine -lsymengine \
 	-L./thirdParty/rlImGui/bin -lrlimgui \
 	-L./thirdParty/implot/bin -limplot \
 	-L./thirdParty/imgui/bin -limgui \
-	-L./thirdParty/r3d/build \
-	-lr3d -lraylib \
-	-lopengl32 -lgdi32 -lwinmm -lws2_32\
+	-lgdi32 -lopengl32 -ld3d11 -ld3d9 -ldxgi \
+	-lwinmm -lws2_32\
+	-lglfw3 \
 	-lgmp -lmpfr \
-	-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network -lsfml-audio\
 	-lpthread\
+
+# CXXFLAGS += $(shell llvm-config --cxxflags)
+# LDFLAGS  += -lLLVM-20 $(shell llvm-config --system-libs)
+
+# notwendig da llvm-config --cxxflags den sprachstandard auf c++17 setzt und -fno-exeptions
+CXXFLAGS += -std=c++23 -fexceptions
 
 SRCDIR := src
 OBJDIR := build
@@ -56,8 +70,6 @@ OBJ = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
 # Größen für precompiled Header
 PCH = build/precompiledDefines.h.gch
 PCH_SRC = src/defines.h
-
-#TARGET := build/FEMProcUI__
 
 # Erzeugen der Dependency files
 -include $(OBJ:.o=.d)
@@ -118,7 +130,7 @@ $(PCH): $(PCH_SRC)
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 header:
-	@$(MAKE) $(PCH) -j
+	@$(MAKE) V=1 $(PCH) -j CXXFLAGS="$(CXXFLAGS)"
 
 ICON ?= Recc/Compilation/icon
 icon:

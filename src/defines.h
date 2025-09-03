@@ -2,6 +2,30 @@
 
 // Dieser Header wird in einen precompiled header (*.h.gch) umgewandelt
 // Dementsprechend sollte er nur thirdParty oder Skripte einbinden die nicht mehr verändert werden
+// Dieser Header wird in einen precompiled header (*.h.gch) umgewandelt
+// Dementsprechend sollte er nur thirdParty oder Skripte einbinden die nicht mehr verändert werden
+
+#include <memory>
+#include <ranges>
+#include <string>
+#include <vector>
+#include <iostream>
+
+// Lib inkludes die Std Lib Makros nutzen die raylib bzw. die für raylib geschaffene Umgebung überschreibt müssen vorher
+// eingebunden werden
+
+// #include <llvm/IR/IRBuilder.h>
+// #include <llvm/IR/LLVMContext.h>
+// #include <llvm/IR/Module.h>
+// #include <llvm/IR/Verifier.h>
+// #include <llvm/Support/TargetSelect.h>
+// #include <llvm/MC/TargetRegistry.h>
+// #include <llvm/Target/TargetMachine.h>
+// #include <llvm/Support/FileSystem.h>
+// #include <llvm/Support/raw_ostream.h>
+// #include <llvm/IR/LegacyPassManager.h>
+// #include <llvm/IR/Constants.h>
+// #include <llvm/Bitcode/BitcodeWriter.h>
 
 // std includes
 #include <iostream>
@@ -32,24 +56,107 @@ typedef fs::file_time_type fileTime;
 #include <eigen3/Eigen/SparseLU>
 
 //
-#include <SFML/Graphics.hpp>
-
-//
 #include <raylib.h>
 #include <raymath.h>
-#include <r3d.h>
 
 #include <rlImGui/rlImGui.h>
 
 #include <imgui/imgui.h>
-#include <imgui/imgui_internal.h> 
+#include <imgui/imgui_internal.h>
 
-// aufgrund von Konflikten mit der WinAPI
-#define NOGDI
-#define NOUSER
+#if defined(_WIN32)
+
+// To avoid conflicting windows.h symbols with raylib, some flags are defined
+// WARNING: Those flags avoid inclusion of some Win32 headers that could be required
+// by user at some point and won't be included...
+//-------------------------------------------------------------------------------------
+
+// If defined, the following flags inhibit definition of the indicated items.
+#define NOGDICAPMASKS     // CC_*, LC_*, PC_*, CP_*, TC_*, RC_
+#define NOVIRTUALKEYCODES // VK_*
+#define NOWINMESSAGES     // WM_*, EM_*, LB_*, CB_*
+#define NOWINSTYLES       // WS_*, CS_*, ES_*, LBS_*, SBS_*, CBS_*
+#define NOSYSMETRICS      // SM_*
+#define NOMENUS           // MF_*
+#define NOICONS           // IDI_*
+#define NOKEYSTATES       // MK_*
+#define NOSYSCOMMANDS     // SC_*
+#define NORASTEROPS       // Binary and Tertiary raster ops
+#define NOSHOWWINDOW      // SW_*
+#define OEMRESOURCE       // OEM Resource values
+#define NOATOM            // Atom Manager routines
+#define NOCLIPBOARD       // Clipboard routines
+#define NOCOLOR           // Screen colors
+#define NOCTLMGR          // Control and Dialog routines
+#define NODRAWTEXT        // DrawText() and DT_*
+#define NOGDI             // All GDI defines and routines
+#define NOKERNEL          // All KERNEL defines and routines
+#define NOUSER            // All USER defines and routines
+//#define NONLS             // All NLS defines and routines
+#define NOMB              // MB_* and MessageBox()
+#define NOMEMMGR          // GMEM_*, LMEM_*, GHND, LHND, associated routines
+#define NOMETAFILE        // typedef METAFILEPICT
+//#define NOMINMAX          // Macros min(a,b) and max(a,b)
+
+#ifndef NOMINMAX
+#define NOMINMAX          // Verhindert Konflikte mit min/max Makros von Windows
+#endif
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN // Reduziert Windows-Header, schnelleres Kompilieren
+#endif
+
+#define NOMSG             // typedef MSG and associated routines
+#define NOOPENFILE        // OpenFile(), OemToAnsi, AnsiToOem, and OF_*
+#define NOSCROLL          // SB_* and scrolling routines
+#define NOSERVICE         // All Service Controller routines, SERVICE_ equates, etc.
+#define NOSOUND           // Sound driver routines
+#define NOTEXTMETRIC      // typedef TEXTMETRIC and associated routines
+#define NOWH              // SetWindowsHook and WH_*
+#define NOWINOFFSETS      // GWL_*, GCL_*, associated routines
+#define NOCOMM            // COMM driver routines
+#define NOKANJI           // Kanji support stuff.
+#define NOHELP            // Help engine interface.
+#define NOPROFILER        // Profiler interface.
+#define NODEFERWINDOWPOS  // DeferWindowPos routines
+#define NOMCX             // Modem Configuration Extensions
+
+// Type required before windows.h inclusion
+typedef struct tagMSG *LPMSG;
+
+#include <windows.h>
+
+// Type required by some unused function...
+typedef struct tagBITMAPINFOHEADER {
+  DWORD biSize;
+  LONG  biWidth;
+  LONG  biHeight;
+  WORD  biPlanes;
+  WORD  biBitCount;
+  DWORD biCompression;
+  DWORD biSizeImage;
+  LONG  biXPelsPerMeter;
+  LONG  biYPelsPerMeter;
+  DWORD biClrUsed;
+  DWORD biClrImportant;
+} BITMAPINFOHEADER, *PBITMAPINFOHEADER;
+
+#include <objbase.h>
+#include <mmreg.h>
+#include <mmsystem.h>
+
+// Some required types defined for MSVC/TinyC compiler
+#if defined(_MSC_VER) || defined(__TINYC__)
+    #include "propidl.h"
+#endif
+#endif
+
+#define IMGUI_FILEBROWSER_NO_EXCEPTIONS
 #include <imgui-filebrowser/imfilebrowser.h>
+
 #include <implot.h>
 
+#include <rlgl.h>
 #include <GL/gl.h>
 
 //
@@ -93,6 +200,7 @@ extern std::ofstream g_logFile;
 
 #endif
 
+// Debugging über message ausgabe und instance debugging, dass direkt überladung für string stream mit << aufruft
 #define mbug(message) LOG << LOG_YELLOW << "___Passed : " << #message << endl;
 #define ibug(objekt) LOG << LOG_YELLOW << "___Objekt : " << #objekt << " " << objekt << endl;
 

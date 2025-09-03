@@ -34,6 +34,8 @@ clearCaches:
 
 launch: all exec
 
+relaunch: clear launch
+
 ping:
 	@echo "Pong"
 
