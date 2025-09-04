@@ -10,6 +10,10 @@
 #include "GUI/ImGuiCustomElements.h"
 #include "Rendering/CameraMovement.h"
 #include "Rendering/CellRenderer.h"
+#include "Rendering/RenderingStandardShapes.h"
+#include "WinHandle/GetEnv.h"
+#include "WinHandle/WinCmd.h"
+#include "Prompts/Curl.h"
 
 #include "CleanUp/ClearCaches.h"
 

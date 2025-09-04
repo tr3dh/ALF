@@ -226,8 +226,6 @@ extern std::ofstream g_logFile;
 
 #include "Drivers/Vec/__Vec.h"
 
-#include "Drivers/Prompts/__Curl.h"
-
 // Decorators
 #include "decorators/timeFunction.h"
 
@@ -264,20 +262,3 @@ static std::string githubRepositoryUrl = "https://github.com/tr3dh/ALF";
 static std::string g_encoderKey = "ALF";
 
 static std::string g_env = "UNKNOWN"; // std::getenv("MSYSTEM");
-
-inline void mkdir(const std::string& path){
-    
-    // Prüfen, ob das Verzeichnis existiert
-    if (fs::exists(path)) {
-        
-        // Löscht das Verzeichnis
-        return;
-    }
-
-    // Verzeichnis neu erstellen
-    if (fs::create_directory(path)) {
-        
-    } else {
-        ASSERT(TRIGGER_ASSERT, "mkdir fehlgeschlagen");
-    }
-}

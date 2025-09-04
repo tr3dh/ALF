@@ -19,10 +19,6 @@ int g_pauseFrames = 10;
 bool g_loadModel = false;
 std::string g_modelPath = "";
 
-std::string relPath(const std::string& str){
-    return fs::relative(str, fs::current_path()).string();
-}
-
 void cacheConfigs(){
 
     if(!fs::exists(fs::path(g_programsConfigCache).parent_path())){
@@ -33,7 +29,7 @@ void cacheConfigs(){
     ByteSequence bs;
 
     bs.insertMultiple(
-        relPath(g_fileBrowserCWD),
+        string::relPath(g_fileBrowserCWD),
         g_backgroundColor,
         g_progressDisplayBackgroundColor,
         g_progressDisplayTextColor,
@@ -91,38 +87,13 @@ void loadCachedConfigs(){
     g_fileBrowserCWD = fs::current_path().string() + "/" + g_fileBrowserCWD;
 }
 
-//
-void DrawArrow3D(Vector3 start, Vector3 end, float shaftRadius, float headRadius, float headLength, Color color) {
-
-    Vector3 dir = Vector3Subtract(end, start);
-    float length = Vector3Length(dir);
-    Vector3 normDir = Vector3Normalize(dir);
-
-    Vector3 shaftEnd = Vector3Add(start, Vector3Scale(normDir, length - headLength));
-
-    // Schaft : gleichmäßiger Zylinder
-    DrawCylinderEx(start, shaftEnd, shaftRadius, shaftRadius, 8, color);
-
-    // Spitze : Kegel (Zylinder mit topRadius 0)
-    DrawCylinderEx(shaftEnd, end, headRadius, 0.0f, 8, color);
-}
-
-void getEnv(){
-
-    const char* msys = std::getenv("MSYSTEM");
-    if (msys) g_env = "MSYS"; return;
-
-    const char* ps = std::getenv("PSModulePath");
-    if (ps) g_env = "POWERSHELL";
-}
-
 int main(void)
 {
+    //
     mkdir("../bin");
 
     #ifdef NDEBUG
 
-    //
     g_logFile = std::ofstream("../bin/.LOG");
     std::cout.rdbuf(g_logFile.rdbuf());
 
@@ -327,7 +298,7 @@ int main(void)
             closeWindow = true;
         }
 
-        if(IsKeyPressed(KEY_ESCAPE)){
+        if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_ESCAPE)){
 
             // cleanUp
             closeWindow = true;
@@ -739,7 +710,7 @@ int main(void)
                 "ffmpeg -framerate %f -i ../bin/%s/%s.png -c:v libx264 -pix_fmt yuv420p ../bin/strippedScreenRecord_%s.mp4",
                 1/dt, mp4Cache.c_str(), "frame%04d", getTimestamp().c_str());
 
-            std::system(cmd);
+            runWinCommand("cmd.exe /C \"" + std::string(cmd) + "\"");
 
             for(auto& png : pngs){
                 UnloadImage(png);
@@ -937,6 +908,28 @@ int main(void)
 
                 if(ImGui::MenuItem("Clear Program Bin")){
                     clearBin();
+                }
+
+                ImGui::EndMenu();
+            }
+            if(ImGui::BeginMenu("Dependencies")){
+
+                if(ImGui::MenuItem("Install/Update")){
+
+                    std::string command = "cmd.exe /C \"..\\Batch\\installDependenciesAsUser.bat\"";
+                    streamWinCommand(command, [](const char* input){
+                        LOG << input;
+                        displayProgress(0.5, std::strlen(input) > 24 ? "Führe batchskript aus" : input);
+                    });
+                }
+
+                if(ImGui::MenuItem("Install/Update as Admin")){
+
+                    std::string command = "cmd.exe /C \"..\\Batch\\installDependenciesAsAdmin.bat\"";
+                    streamWinCommand(command, [](const char* input){
+                        LOG << input;
+                        displayProgress(0.5, std::strlen(input) > 24 ? "Führe batchskript aus" : input);
+                    });
                 }
 
                 ImGui::EndMenu();
@@ -1235,7 +1228,7 @@ int main(void)
                         if(model.initialzed()){
 
                             ImGui::PushTextWrapPos();
-                            ImGui::Text("Model at : '%s'", relPath(model.m_modelPath).c_str());
+                            ImGui::Text("Model at : '%s'", string::relPath(model.m_modelPath).c_str());
                             ImGui::PopTextWrapPos();
 
                             ImGui::Separator();
@@ -1853,7 +1846,7 @@ int main(void)
                 "ffmpeg -framerate %f -i ../bin/%s/%s.png -c:v libx264 -pix_fmt yuv420p ../bin/fullScreenRecord_%s.mp4",
                 1/dt, mp4Cache.c_str(), "frame%04d", getTimestamp().c_str());
 
-            std::system(cmd);
+            runWinCommand("cmd.exe /C \"" + std::string(cmd) + "\"");
 
             for(auto& png : pngs){
                 UnloadImage(png);

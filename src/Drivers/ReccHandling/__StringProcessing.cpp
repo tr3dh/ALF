@@ -56,4 +56,8 @@ namespace string{
     void fullStrip(std::string& str, const char token) {
         str.erase(std::remove(str.begin(), str.end(), token),str.end());
     }
+
+    std::string relPath(const std::string& str){
+        return std::filesystem::relative(str, std::filesystem::current_path()).string();
+    }
 }

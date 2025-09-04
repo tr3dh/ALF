@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "defines.h"
+#include "templateDecls.h"
 
 #ifdef LOG
 #undef LOG

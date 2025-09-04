@@ -30,7 +30,6 @@ CXXFLAGS += -Wextra -MMD -MP -std=c++23 -fuse-ld=lld -fexceptions \
 	-I/mingw64/include \
 	-I./thirdparty/symengine -I./thirdparty/symengine/build \
 	-I./thirdparty/magic_enum/include \
-	-I./thirdParty/r3d/include \
 	-I./thirdParty/imgui \
 	-I./thirdParty/raylibImgui \
 	-I./thirdParty/imgui-filebrowser \

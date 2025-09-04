@@ -6,6 +6,7 @@
 #include <charconv>
 #include <vector>
 #include <algorithm>
+#include <filesystem>
 
 constexpr const std::string NULLSTR = "__INVALID__";
 
@@ -49,4 +50,6 @@ namespace string{
     bool startsWith(const std::string& str, const std::string& seq);
 
     void fullStrip(std::string& str, const char token = ' ');
+
+    std::string relPath(const std::string& str);
 }

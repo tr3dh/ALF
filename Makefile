@@ -45,6 +45,10 @@ launch: all exec
 
 relaunch: clear launch
 
+rlaunch:
+	make release
+	make execr
+
 ping:
 	@echo "Pong"
 

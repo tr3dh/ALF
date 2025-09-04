@@ -25,6 +25,7 @@ copyTmp:
 
 	cp -r Recc tmp/
 	cp -r Import tmp/
+	cp -r Batch tmp/
 	cp -f .VERSION tmp/
 	cp -f LICENSE tmp/
 	cp -f README.md tmp/

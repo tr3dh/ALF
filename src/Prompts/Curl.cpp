@@ -1,4 +1,4 @@
-#include "__Curl.h"
+#include "Curl.h"
 
 void OpenLink(const char* url) {
     
@@ -9,5 +9,8 @@ void OpenLink(const char* url) {
 #else // Linux
     std::string cmd = "xdg-open " + std::string(url);
 #endif
-    std::system(cmd.c_str());
+
+    cmd = "cmd.exe /C \"" + cmd + "\"";
+
+    runWinCommand(cmd);
 }
