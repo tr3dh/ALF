@@ -177,3 +177,7 @@ extern std::ofstream g_logFile;
 
 //
 #include "Drivers/ReccHandling/__Asserts.h"
+
+// Grade gibts nen multiple definition error aber issue im magic_enum ist schon aufgemacht worden
+// Kann in paar Tagen einfach wieder einkommentiert werden
+// #include <magic_enum/magic_enum.hpp>

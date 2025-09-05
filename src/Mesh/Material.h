@@ -4,30 +4,6 @@
 
 inline SYMBOL(xi);
 
-enum class StateVariable{
-
-    STRAIN,
-    STRESS,
-    DISPLACEMENT,
-    NONE
-};
-
-inline void to_json(nlohmann::json& j, const StateVariable& type) {
-    if (auto name = magic_enum::enum_name(type); !name.empty()) {
-        j = std::string{name};
-    } else {
-        j = nullptr; // oder j = "unknown";
-    }
-}
-
-inline void from_json(const nlohmann::json& j, StateVariable& type) {
-    if (auto opt = magic_enum::enum_cast<StateVariable>(j.get<std::string>())) {
-        type = *opt;
-    } else {
-        type = StateVariable::NONE;
-    }
-}
-
 struct IsoMeshMaterial{
 
     const static std::string fileSuffix;

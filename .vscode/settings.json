@@ -114,7 +114,9 @@
         "syncstream": "cpp",
         "stack": "cpp",
         "sparsecholesky": "cpp",
-        "sparse": "cpp"
+        "sparse": "cpp",
+        "json.hpp": "c",
+        "sequenceserializations.h": "c"
     },
 
     // Makefile Configs
@@ -158,6 +160,5 @@
         "<C-v>": false,
         "<C-z>": false,
         "<C-y>": false,
-},
-"cmake.sourceDirectory": "C:/Uni/StudienarbeitIKM/SourceCode/FEMProc/thirdParty/magic_enum"
+}
 }

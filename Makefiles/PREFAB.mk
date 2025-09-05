@@ -196,7 +196,7 @@ raylib:
 		cmake --build dynamicBuild; \
 	fi
 	
-	@make dllCopy COPYTARGET=thirdParty/r3d/build/
+#	@make dllCopy COPYTARGET=thirdParty/r3d/build/
 
 magic_enum:
 	@if [ -d "thirdParty/magic_enum" ]; then \
