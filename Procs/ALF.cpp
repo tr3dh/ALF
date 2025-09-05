@@ -88,6 +88,11 @@ void loadCachedConfigs(){
 
 int main(void)
 {
+
+    #ifdef USE_LLVM
+    LOG << "llvm wird genutzt" << ENDL;
+    #endif
+
     //
     mkdir("../bin");
 

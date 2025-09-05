@@ -1,6 +1,7 @@
 CXX := g++
 BUILD_MODE ?= DEBUG
-USE_LLVM ?= FALSE	# FALSE || TRUE
+USE_LLVM ?=FALSE
+# FALSE || TRUE
 
 CXXFLAGS :=\
 
@@ -166,5 +167,8 @@ clearBuild:
 
 remComp:
 	@find build -type f \( -name '*.o' -o -name '*.d' \) -delete
+
+checkLLVM:
+	$(info USE_LLVM="$(USE_LLVM)")
 
 .DEFAULT_GOAL := all
