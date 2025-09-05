@@ -253,11 +253,11 @@ dllCopy:
 	cp -n /mingw64/bin/libmpfr-6.dll $(COPYTARGET);
 	cp -n thirdParty/raylib/dynamicBuild/raylib/libraylib.dll $(COPYTARGET);
 	cp -n /mingw64/bin/glfw3.dll $(COPYTARGET);
-	cp -n /mingw64/bin/vulkan-1.dll $(COPYTARGET);
-	cp -n /mingw64/bin/libsfml-graphics-2.dll $(COPYTARGET);
-	cp -n /mingw64/bin/libsfml-system-2.dll $(COPYTARGET);
-	cp -n /mingw64/bin/libsfml-audio-2.dll $(COPYTARGET);
-	cp -n /mingw64/bin/libsfml-window-2.dll $(COPYTARGET);
+# 	cp -n /mingw64/bin/vulkan-1.dll $(COPYTARGET);
+# 	cp -n /mingw64/bin/libsfml-graphics-2.dll $(COPYTARGET);
+# 	cp -n /mingw64/bin/libsfml-system-2.dll $(COPYTARGET);
+# 	cp -n /mingw64/bin/libsfml-audio-2.dll $(COPYTARGET);
+# 	cp -n /mingw64/bin/libsfml-window-2.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libfreetype-6.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libbrotlidec.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libbrotlicommon.dll $(COPYTARGET);
@@ -270,6 +270,8 @@ dllCopy:
 	cp -n /mingw64/bin/libintl-8.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libiconv-2.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libpcre2-8-0.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libLLVM-20.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libxml2-16.dll $(COPYTARGET);
 
 	echo "DLLs kopiert nach $(COPYTARGET)";
 
@@ -286,13 +288,16 @@ prefab:
 	$(PACMAN) unzip curl
 
 	@echo "Installiere Vulkan-Tools..."
-	$(PACMAN) $(MINGW_PREFIX)-spirv-tools $(MINGW_PREFIX)-glslang $(MINGW_PREFIX)-vulkan-devel
-	$(PACMAN) $(MINGW_PREFIX)-assimp $(MINGW_PREFIX)-glm $(MINGW_PREFIX)-vulkanscenegraph
-	$(PACMAN) mingw-w64-x86_64-vulkan-loader
-	$(PACMAN) mingw-w64-x86_64-vulkan-validation-layers
-	$(PACMAN) mingw-w64-x86_64-vulkan-utility-libraries
+	$(PACMAN) $(MINGW_PREFIX)-spirv-tools $(MINGW_PREFIX)-glslang 
+	$(PACMAN) $(MINGW_PREFIX)-assimp $(MINGW_PREFIX)-glm
+
+# 	$(MINGW_PREFIX)-vulkan-devel
+#	$(MINGW_PREFIX)-vulkanscenegraph
+# 	$(PACMAN) mingw-w64-x86_64-vulkan-loader
+# 	$(PACMAN) mingw-w64-x86_64-vulkan-validation-layers
+# 	$(PACMAN) mingw-w64-x86_64-vulkan-utility-libraries
 	$(PACMAN) mingw-w64-x86_64-glfw
-	$(PACMAN) mingw-w64-x86_64-shaderc
+# 	$(PACMAN) mingw-w64-x86_64-shaderc
 
 	@echo "Installiere mathematische Bibliotheken..."
 	$(PACMAN) $(MINGW_PREFIX)-gmp $(MINGW_PREFIX)-mpfr $(MINGW_PREFIX)-mpc $(MINGW_PREFIX)-flint
@@ -323,17 +328,18 @@ prefab:
 	$(PACMAN) mingw-w64-x86_64-imagemagick
 	$(PACMAN) mingw-w64-x86_64-poppler
 	$(PACMAN) mingw-w64-x86_64-tinyxml2
-# $(PACMAN) mingw-w64-x86_64-raylib
-	$(PACMAN) mingw-w64-x86_64-ghostscript
 
-	@make r3d
-	@make raylibCpp
+# 	$(PACMAN) mingw-w64-x86_64-raylib
+
+# 	@make r3d
+# 	@make raylibCpp
 
 	@echo "Installiere Magic Enum..."
 	@make magic_enum
 
 	@make symengine
 
+	@make raylib
 	@make imgui
 	@make filebrowser
 	@make raylibImgui

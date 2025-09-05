@@ -6,13 +6,13 @@ void seedFloatGenerator(const float& seed){
 
     if(!seeded){
 
-        LOG << "** Seeded rd Float Gen with " << (seed == 0 ? "default" : "custom") << " Seed " << std::time(nullptr) << endl; 
+        LOG << "** Seeded rd Float Gen with " << (seed == 0 ? "default" : "custom") << " Seed " << std::time(nullptr) << ENDL; 
         std::srand(static_cast<unsigned int>((seed == 0 ? std::time(nullptr) : seed)));
         seeded = true;
         return;
     }
 
-    LOG << "** Continue using gen seed " << endl;
+    LOG << "** Continue using gen seed " << ENDL;
 }
 
 // Gibt Zufalls Float im Intervall [a, b] zurück
@@ -94,15 +94,15 @@ void rejectionSampling(const Expression& pdensity, std::vector<float>& samples, 
     // Check benötigt sodass pdensity nur von Symbol xi abhängig ist
 
     // 
-    LOG << "-- Untersuche pdf(xi) = " << pdensity << endl;
+    LOG << "-- Untersuche pdf(xi) = " << pdensity << ENDL;
 
     //
     auto [max_Xi, maxP_Xi, leftBorder, rightBorder] = preprocessPDF(pdensity, xi_min, xi_max, tolerance, segmentation);
 
     //
-    LOG << "   Max at p(" << max_Xi << ") = " << maxP_Xi << " " << endl;
-    LOG << "   Borders : (" << leftBorder << "|"<< rightBorder << ")" << endl;
-    LOG << endl;
+    LOG << "   Max at p(" << max_Xi << ") = " << maxP_Xi << " " << ENDL;
+    LOG << "   Borders : (" << leftBorder << "|"<< rightBorder << ")" << ENDL;
+    LOG << ENDL;
 
     if(maxP_Xi <= 0 || leftBorder == rightBorder){
 
@@ -154,8 +154,8 @@ std::array<float,2> processSamples(const std::vector<float>& samples){
     for(const auto& sample : samples){ deviation += std::pow(sample - mean,2);}
     deviation = std::sqrt(deviation/(nSamples-1));
 
-    LOG << "-- Processed Samples : [Mean|" << mean << "], [Deviation|" << deviation << "]" << endl; 
-    LOG << endl;
+    LOG << "-- Processed Samples : [Mean|" << mean << "], [Deviation|" << deviation << "]" << ENDL; 
+    LOG << ENDL;
 
     return {mean, deviation};
 }

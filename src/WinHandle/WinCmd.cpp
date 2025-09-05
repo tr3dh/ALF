@@ -50,7 +50,7 @@ int runWinCommand(const std::string& cmd, const std::string& cwd) {
     CloseHandle(pi.hThread);
 
     if(exitCode != 0){
-        _ERROR << "Command : " << cmd << " abgebrochen mit exitCode : " << exitCode << endl;
+        _ERROR << "Command : " << cmd << " abgebrochen mit exitCode : " << exitCode << ENDL;
     }
 
     return static_cast<int>(exitCode & 0xFFFF);

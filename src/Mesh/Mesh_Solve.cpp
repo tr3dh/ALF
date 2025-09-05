@@ -35,7 +35,7 @@ void IsoMesh::solve(){
 //
 void IsoMesh::calculateStrainAndStress(DataSet& dataSet, const Eigen::MatrixXf& displacement, bool calculateOnQuadraturePoints){
 
-    // LOG << "-- Calculate Strain and Stress" << endl;
+    // LOG << "-- Calculate Strain and Stress" << ENDL;
 
     Eigen::MatrixXf BMatrix(nDimensions*(nDimensions + 1)/2, nDimensions * m_Cells.begin()->second.getPrefab().nNodes);
     float jDet = 0.0f;
@@ -69,7 +69,7 @@ void IsoMesh::calculateStrainAndStress(DataSet& dataSet, const Eigen::MatrixXf& 
                 subMatrix(m_cachedBMats[cellIndex], BMatrix, r_prefab.quadraturePoints[nodeNum]);
             } catch(...){
                 LOG << "SymEngine Matrix : " << m_cachedBMats[cellIndex].nrows() << " " << m_cachedBMats[cellIndex].ncols() <<
-                        "Substitutions Container (Eigen Dense) " << BMatrix.rows() << " " << BMatrix.cols() << endl;
+                        "Substitutions Container (Eigen Dense) " << BMatrix.rows() << " " << BMatrix.cols() << ENDL;
 
                 RETURNING_ASSERT(TRIGGER_ASSERT, "substition von cached BMatrix in Eigen BMatrix Container fehlgeschlagen ",);
             }

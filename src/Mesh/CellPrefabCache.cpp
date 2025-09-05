@@ -15,7 +15,7 @@ NodeIndex cacheCellPrefab(const std::string& prefabLabel){
         //
         if(cellPref.label == prefabLabel){
 
-            LOG << LOG_BLUE << "** Prefab mit Label " << prefabLabel << " im Cache gefunden" << endl;
+            LOG << LOG_BLUE << "** Prefab mit Label " << prefabLabel << " im Cache gefunden" << ENDL;
             return index;
         }
     }
@@ -25,8 +25,8 @@ NodeIndex cacheCellPrefab(const std::string& prefabLabel){
     g_cellPrefabCache[cellPrefabCounter].pID = cellPrefabCounter;
 
     //
-    LOG << LOG_GREEN << "** Element " << g_cellPrefabCache[cellPrefabCounter].label << " erfolgreich unter ID " << +cellPrefabCounter << " in CellPrefab Cache geladen" << endl;
-    LOG << endl;
+    LOG << LOG_GREEN << "** Element " << g_cellPrefabCache[cellPrefabCounter].label << " erfolgreich unter ID " << +cellPrefabCounter << " in CellPrefab Cache geladen" << ENDL;
+    LOG << ENDL;
 
     //
     return cellPrefabCounter++;

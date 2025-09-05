@@ -1,5 +1,6 @@
 CXX := g++
 BUILD_MODE ?= DEBUG
+USE_LLVM ?= FALSE	# FALSE || TRUE
 
 CXXFLAGS :=\
 
@@ -17,6 +18,10 @@ ifeq ($(BUILD_MODE),DEBUG)
 else
     CXXFLAGS += -O3 -DNDEBUG -march=native -funroll-loops -flto -ffunction-sections -fdata-sections
 	LDFLAGS += $(NATIVEWIN_FLAGS) -flto -fuse-linker-plugin -Wl,-O2 -Wl,--gc-sections -Wl,--as-needed
+endif
+
+ifeq ($(USE_LLVM),TRUE)
+    CXXFLAGS += -DUSE_LLVM
 endif
 
 # -Wno-missing-designated-field-initializers
@@ -55,8 +60,10 @@ LDFLAGS += -L./src \
 	-lgmp -lmpfr \
 	-lpthread\
 
-# CXXFLAGS += $(shell llvm-config --cxxflags)
-# LDFLAGS  += -lLLVM-20 $(shell llvm-config --system-libs)
+ifeq ($(USE_LLVM),TRUE)
+    CXXFLAGS += $(shell llvm-config --cxxflags)
+	LDFLAGS  += -lLLVM-20 $(shell llvm-config --system-libs)
+endif
 
 # notwendig da llvm-config --cxxflags den sprachstandard auf c++17 setzt und -fno-exeptions
 CXXFLAGS += -std=c++23 -fexceptions
@@ -92,7 +99,9 @@ release:
 # Objekt files
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(PCH)
 	@mkdir -p $(@D)
-	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
+	
+# -include $(PCH_SRC)
 
 SRCLIB := build/libalf$(SUFFIX).a
 $(SRCLIB): $(OBJ) $(PCH)
@@ -109,7 +118,9 @@ PROCSRC ?= $(OBJ)
 
 build/%.o: $(PROC_DIR)/%.cpp $(PCH)
 	@mkdir -p $(@D)
-	$(CXX) -c -o $@ $< $(CXXFLAGS) -include $(PCH_SRC)
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
+	
+#-include $(PCH_SRC)
 
 build/% : build/%.o $(PROCSRC)
 	@mkdir -p $(@D)

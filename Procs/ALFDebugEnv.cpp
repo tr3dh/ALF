@@ -6,7 +6,6 @@
 
 #include <cstdlib>
 #include <iostream>
-#include "defines.h"
 #include "templateDecls.h"
 
 #ifdef LOG
@@ -17,25 +16,19 @@
 #undef _ERROR
 #endif
 
-#ifdef endl
-#undef endl
+#ifdef ENDL
+#undef ENDL
 #endif
 
 #define LOG std::cout
 #define _ERROR std::cerr
-#define endl "\n"
+#define ENDL "\n"
 
 int main(){
 
     mkdir("../bin");
 
-    #ifdef NDEBUG
-
-    //
-    g_logFile = std::ofstream("../bin/.LOG");
-    std::cout.rdbuf(g_logFile.rdbuf());
-
-    #endif
+    openLogFile();
 
     LOG << "-------------------------------------------------------------------\n";
     LOG << "\tStarte Debug Env für die ALF UI\n";
@@ -43,23 +36,18 @@ int main(){
 
     int result = system("powershell -Command \"./ALF_d\"");
 
-    LOG << endl;
+    LOG << ENDL;
     LOG << "-------------------------------------------------------------------\n";
-    LOG << "\tALF UI mit Status " << result << " beendet" << endl; 
+    LOG << "\tALF UI mit Status " << result << " beendet" << ENDL; 
 
     LOG << "\tZum fortfahren beliebige Taste drücken\n";
-    LOG << "-------------------------------------------------------------------\n" << endl;
+    LOG << "-------------------------------------------------------------------\n" << ENDL;
 
     #ifdef DEBUG
     std::cin.get();
     #endif
 
-    #ifdef NDEBUG
-
-    // Release build
-    g_logFile.close();
-
-    #endif
+    closeLogFile();
 
     return result;
 }

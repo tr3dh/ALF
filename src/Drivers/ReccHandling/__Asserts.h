@@ -14,8 +14,8 @@
 #define _ERROR std::cerr
 #endif // _ERROR
 
-#ifndef endl
-#define endl "\n"
+#ifndef ENDL
+#define ENDL "\n"
 #endif // _ERROR
 
 #define TRIGGER_ASSERT  0
@@ -36,7 +36,7 @@
                 << "\t\\ File: " << __FILE__ << "\n"\
                 << "\t\\ Line: " << __LINE__ << "\n"\
                 << "\t\\ Function: " << __FUNCTION__;\
-            _ERROR << oss.str() << "\n" << endl;\
+            _ERROR << oss.str() << "\n" << ENDL;\
         }}\
     while(0);
 

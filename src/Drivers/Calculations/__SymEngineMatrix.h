@@ -4,6 +4,12 @@
 #include <symengine/eval_double.h>
 #include <eigen3/Eigen/Dense>
 
+// Numeric includes
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/SparseCholesky>
+#include <eigen3/Eigen/SparseLU>
+
 typedef std::tuple<size_t, size_t, Expression> SymTriplet;
 
 void clearMatrix(SymEngine::DenseMatrix& matrix);

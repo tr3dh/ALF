@@ -99,9 +99,9 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
                     maxInd = cellIndex;
                 }
             }
-            // LOG << "   maximaler " << magic_enum::enum_name(displayedData) << " : " << fmax << " bei Elem " << maxInd << endl;
-            // LOG << "   minimaler " << magic_enum::enum_name(displayedData) << " : " << fmin << " bei Elem " << minInd << endl;
-            // LOG << endl;
+            // LOG << "   maximaler " << magic_enum::enum_name(displayedData) << " : " << fmax << " bei Elem " << maxInd << ENDL;
+            // LOG << "   minimaler " << magic_enum::enum_name(displayedData) << " : " << fmin << " bei Elem " << minInd << ENDL;
+            // LOG << ENDL;
 
             RETURNING_ASSERT(nodeSets.size() > displayOnNodeSet, "displayOnNodeSet Index ist ungültig",);
             const NodeSet* d_nodeSet = nodeSets[displayOnNodeSet];
@@ -134,7 +134,10 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
             }
 
             // zeichne Linien
-            for(const auto& [setIndex, nodeSet] : std::views::enumerate(nodeSets)){
+            for(size_t setIndex = 0; setIndex < nodeSets.size(); setIndex++){
+
+                const auto& nodeSet = nodeSets[setIndex];
+
                 for(const auto& [index, cell] : m_Cells){
 
                     ASSERT(r_prefab.pID == cell.getPrefab().pID, "Multi Elementnetze sind bislang nicht implementiert");
@@ -157,7 +160,9 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
             }
             
             // Zeichne punkte
-            for(const auto& [setIndex, nodeSet] : std::views::enumerate(nodeSets)){
+            for(size_t setIndex = 0; setIndex < nodeSets.size(); setIndex++){
+
+                const auto& nodeSet = nodeSets[setIndex];
 
                 for(const auto& [index, node] : *nodeSet){
 
@@ -208,9 +213,9 @@ void IsoMesh::display(const DataSet& dataSet, const MeshData& displayedData, con
 
             for (const auto& [cellIndex, cell] : m_Cells) {
 
-                for(const auto& [idx, set] : std::views::enumerate(nodeSets)){
+                for(size_t idx = 0; idx < nodeSets.size(); idx++){
 
-                    renderCellsWireFrame(cell, *set, *setColors[idx]);
+                    renderCellsWireFrame(cell, *nodeSets[idx], *setColors[idx]);
                 }
             }
 

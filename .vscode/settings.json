@@ -112,7 +112,9 @@
         "scoped_allocator": "cpp",
         "spanstream": "cpp",
         "syncstream": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "sparsecholesky": "cpp",
+        "sparse": "cpp"
     },
 
     // Makefile Configs

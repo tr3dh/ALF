@@ -98,12 +98,12 @@ void solveNewtonRaphson(const SymEngine::DenseMatrix& residual, const SymEngine:
     //
     if(numIterations == 0){
 
-        LOG << LOG_RED << "\n!! Newton Raphson Verfahren nicht durchgeführt - Residuumsnorm erfüllt bereits die Torleranz" << endl;
+        LOG << LOG_RED << "\n!! Newton Raphson Verfahren nicht durchgeführt - Residuumsnorm erfüllt bereits die Torleranz" << ENDL;
     }
     else if(numIterations >= breakAfterIterations){
 
         LOG << LOG_RED << "\n!! Newton Raphson Verfahren konvergiert nach maximaler Anzahl zulässiger Durchläufe von " <<
-            breakAfterIterations << " Iterationen nicht (für Toleranz von " << tolerance << ")" << endl;
+            breakAfterIterations << " Iterationen nicht (für Toleranz von " << tolerance << ")" << ENDL;
     }
 
 

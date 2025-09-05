@@ -37,10 +37,10 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXf& resultMatr
             if(std::isnan(value)){
 
                 ASSERT(TRIGGER_ASSERT, "NAN Value bei Substitution aufgetaucht");
-                _ERROR << "Substitution : Result " << value << " koeff " << koeff << " expr " << matrix.get(i, j) << endl;
+                _ERROR << "Substitution : Result " << value << " koeff " << koeff << " expr " << matrix.get(i, j) << ENDL;
 
                 for(const auto& [symbol, sub] : subMap){
-                    _ERROR << "Symbol " << symbol << " Substutution " << sub << endl;
+                    _ERROR << "Symbol " << symbol << " Substutution " << sub << ENDL;
                 }
                 return false;
             }
@@ -87,10 +87,10 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::SparseMatrix<float>&
             if(std::isnan(value)){
 
                 ASSERT(TRIGGER_ASSERT, "NAN Value bei Substitution aufgetaucht");
-                _ERROR << "Substitution : Result " << value << " koeff " << koeff << " expr " << matrix.get(i, j) << endl;
+                _ERROR << "Substitution : Result " << value << " koeff " << koeff << " expr " << matrix.get(i, j) << ENDL;
 
                 for(const auto& [symbol, sub] : subMap){
-                    _ERROR << "Symbol " << symbol << " Substutution " << sub << endl;
+                    _ERROR << "Symbol " << symbol << " Substutution " << sub << ENDL;
                 }
                 return false;
             }
@@ -124,10 +124,10 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, SymEngine::DenseMatrix& res
             if(std::isnan(value)){
 
                 ASSERT(TRIGGER_ASSERT, "NAN Value bei Substitution aufgetaucht");
-                _ERROR << "Substitution : Result " << value << " koeff " << koeff << " expr " << matrix.get(i, j) << endl;
+                _ERROR << "Substitution : Result " << value << " koeff " << koeff << " expr " << matrix.get(i, j) << ENDL;
 
                 for(const auto& [symbol, sub] : subMap){
-                    _ERROR << "Symbol " << symbol << " Substutution " << sub << endl;
+                    _ERROR << "Symbol " << symbol << " Substutution " << sub << ENDL;
                 }
                 return false;
             }
@@ -172,10 +172,10 @@ bool subTriplets(const std::vector<SymTriplet>& matrix, Eigen::SparseMatrix<floa
         if(std::isnan(value)){
 
             ASSERT(TRIGGER_ASSERT, "NAN Value bei Substitution aufgetaucht");
-            _ERROR << "Substitution : Result " << value << " koeff " << koeff << " expr " << expr << endl;
+            _ERROR << "Substitution : Result " << value << " koeff " << koeff << " expr " << expr << ENDL;
 
             for(const auto& [symbol, sub] : subMap){
-                _ERROR << "Symbol " << symbol << " Substutution " << sub << endl;
+                _ERROR << "Symbol " << symbol << " Substutution " << sub << ENDL;
             }
             return false;
         }

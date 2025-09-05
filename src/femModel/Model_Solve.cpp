@@ -214,7 +214,7 @@ void FemModel::calculate(){
             r_currentFrame.setupDisplacement(m_isoMesh.m_nodes.size() * m_isoMesh.nDimensions - m_isoMesh.m_indicesToRemove.size());
 
             //
-            // LOG << "** erstelle Residuum für Iterationsschritt " << stepIdx << endl;
+            // LOG << "** erstelle Residuum für Iterationsschritt " << stepIdx << ENDL;
 
             //
             globalResidual.resize(m_isoMesh.m_nodes.size() * m_isoMesh.nDimensions,1);
@@ -341,7 +341,7 @@ void FemModel::calculate(){
             LOG << "\r";
             LOG << "## Progress [" << stepIdx + 1 << " / " << m_simulationSteps << "] Steps | "; 
             solveNewtonRaphson(globalResidual, symbolVector, r_currentFrame.displacement, mat.normTolerance, mat.breakNRAfterNumIterations);
-            LOG << endl;            // Wenn alles in Zeile geschrieben werden soll auskommentieren
+            LOG << ENDL;            // Wenn alles in Zeile geschrieben werden soll auskommentieren
             LOG << std::flush;
 
             // Ermitteln von Spannug/Dehnung etc. für Substitution und cachen
@@ -395,7 +395,7 @@ void FemModel::calculate(){
 
             // >> nächster Iterationsschritt
 
-            // LOG << "Iterationsschritt " << stepIdx << endl;
+            // LOG << "Iterationsschritt " << stepIdx << ENDL;
         }
     }
 

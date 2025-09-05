@@ -104,9 +104,10 @@ void FemModel::display(const MeshData& displayedData, const int& globKoord, int 
         frameOffsets[2] = {leftCorner.x + 5*frameSize.x/2, frameOffset.y};
     }
 
-    for(const auto& [idx, set] : std::views::enumerate(nodeSetsForDisplay)){
+    for(size_t idx = 0; idx < nodeSetsForDisplay.size(); idx++){
 
-        if(set->size() <= 0){
+        // const auto& set = nodeSetsForDisplay[idx];
+        if(nodeSetsForDisplay[idx]->size() <= 0){
             return;
         }
         //RETURNING_ASSERT(set->size() > 0, "Angegebenes NodeSet für Rendering an Postion " + std::to_string(idx) + " ist leer",);
@@ -158,4 +159,6 @@ const DataSet& FemModel::getDataSet(int displayOnMesh) const {
     else if(displayOnMesh == 3){
         return data_lowerXi;
     }
+
+    return m_isoMesh.getCellData();
 };

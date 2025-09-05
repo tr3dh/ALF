@@ -143,7 +143,7 @@ void printLexer(const std::string& expr, int level) {
     LOG << std::string(level, '|') << expr;
 
     const std::string dominantOperator = getDominantOperator(expr);
-    LOG << " operator " << dominantOperator << endl;
+    LOG << " operator " << dominantOperator << ENDL;
 
     auto tokens = lexExpression(expr, dominantOperator);
 
@@ -164,7 +164,7 @@ void printLexer(const std::string& expr, int level) {
             token = token.substr(1, token.size() - 2);
         }
 
-        LOG << std::string(level, '|') << token << endl;
+        LOG << std::string(level, '|') << token << ENDL;
 
         printLexer(token, level + 1);  
     }

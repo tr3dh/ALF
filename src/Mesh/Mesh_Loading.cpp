@@ -18,7 +18,7 @@ enum class IsoMesh::ReadMode : uint8_t{
 bool IsoMesh::loadFromFile(const std::string& path){
 
     //
-    LOG << LOG_BLUE << "-- Lade Mesh aus file " << path << "" << endl;
+    LOG << LOG_BLUE << "-- Lade Mesh aus file " << path << "" << ENDL;
 
     // Check ob file existiert und in erforderlichen Format vorhanden ist
     RETURNING_ASSERT(fs::exists(fs::path(path)), "Angegebener Pfad für Netz existiert nicht", false);
@@ -117,15 +117,15 @@ bool IsoMesh::loadFromFile(const std::string& path){
                     ASSERT(string::convert<NodeIndex>(lineSplits[0]) >= 0, "Fehlerhafte Node Indizierung, beginnt mit negativem Wert");
 
                     //
-                    LOG << LOG_BLUE << "   Dimension : " << nDimensions << " D" << endl;
-                    LOG << LOG_BLUE << "   Node Bennenung ab Nr. " << nodeNumOffset << endl;
-                    LOG << endl;
+                    LOG << LOG_BLUE << "   Dimension : " << nDimensions << " D" << ENDL;
+                    LOG << LOG_BLUE << "   Node Bennenung ab Nr. " << nodeNumOffset << ENDL;
+                    LOG << ENDL;
                 }
 
                 ASSERT(nodeDimension == nDimensions, "Eingelesenes Mesh hat ungültige Dimension");
             
                 // hier try_emplace weil emplace aufgrund fehlender pair Konstruktoren nen error schmeißt
-                for(const auto& [i, split] : std::views::enumerate(lineSplits)){
+                for(size_t i = 0; i < lineSplits.size(); i++){
 
                     // Element Index an erster Stelle in Zeile
                     if(!i){ continue; }
@@ -147,7 +147,7 @@ bool IsoMesh::loadFromFile(const std::string& path){
                 ASSERT(nodeCount == cellPrefNodes, "Eingelesenes Element hat ungültige Anzahl an Nodes, Prefab Nodes : " + std::to_string(cellPrefNodes)
                     + " übergebene Nodes : " + std::to_string(nodeCount));
 
-                for(const auto& [i, nodeIndex] : std::views::enumerate(lineSplits)){
+                for(size_t i = 0; i < lineSplits.size(); i++){
                     
                     if(!i){ continue; }
 
@@ -191,9 +191,9 @@ bool IsoMesh::loadFromFile(const std::string& path){
     }
 
     //
-    LOG << endl;
-    LOG << LOG_BLUE << "-- Ladevorgang abgeschlossen, geladen : " << m_nodes.size() << " Nodes | " << m_Cells.size() << " Elemente" << endl;
-    LOG << endl;
+    LOG << ENDL;
+    LOG << LOG_BLUE << "-- Ladevorgang abgeschlossen, geladen : " << m_nodes.size() << " Nodes | " << m_Cells.size() << " Elemente" << ENDL;
+    LOG << ENDL;
 
     return true;
 }

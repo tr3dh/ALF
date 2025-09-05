@@ -32,20 +32,14 @@ int main(int argc, char* argv[]){
 
     mkdir("../bin");
 
-    #ifdef NDEBUG
-
-    //
-    g_logFile = std::ofstream("../bin/.LOG");
-    std::cout.rdbuf(g_logFile.rdbuf());
-
-    #endif
+    openLogFile();
 
     // Programm ohne args gestartet
     if(argc < 2){
 
-        LOG << "!! API wurde ohne Argumente angesprochen, invalider Aufruf" << endl;
-        LOG << "   um mehr zu Erfahren die API mit dem Argument '--help' aufrufen" << endl;
-        LOG << "   zum Fortfahren eine beliebige Taste drücken..." << endl;
+        LOG << "!! API wurde ohne Argumente angesprochen, invalider Aufruf" << ENDL;
+        LOG << "   um mehr zu Erfahren die API mit dem Argument '--help' aufrufen" << ENDL;
+        LOG << "   zum Fortfahren eine beliebige Taste drücken..." << ENDL;
 
         std::cin.get();
         return 1;
@@ -62,11 +56,11 @@ int main(int argc, char* argv[]){
 
     if(std::string(argv[1]) == "--help"){
 
-        LOG << "Valid Commandline options are :" << endl;
-        LOG << endl;
+        LOG << "Valid Commandline options are :" << ENDL;
+        LOG << ENDL;
 
         for(const auto& [cm, desc] : options){
-            LOG << "\t" << cm << "\t\t" << desc << endl;
+            LOG << "\t" << cm << "\t\t" << desc << ENDL;
         }
     }
 
@@ -74,15 +68,15 @@ int main(int argc, char* argv[]){
 
         std::ifstream file(exeDir + "/../.VERSION");
         if (!file) {
-            _ERROR << "keine gültige Version gefunden an " << exeDir + "/../.VERSION" << endl;
+            _ERROR << "keine gültige Version gefunden an " << exeDir + "/../.VERSION" << ENDL;
             return 1;
         }
 
-        LOG << endl;
+        LOG << ENDL;
 
         std::string line;
         while (std::getline(file, line)) {
-            LOG << "\t" << line << endl;
+            LOG << "\t" << line << ENDL;
         }
     }
 
@@ -90,15 +84,15 @@ int main(int argc, char* argv[]){
         
         std::ifstream file(exeDir + "/../LICENSE.txt");
         if (!file) {
-            _ERROR << "keine gültige Lizenz gefunden an " << exeDir + "/../LICENSE.txt" << endl;
+            _ERROR << "keine gültige Lizenz gefunden an " << exeDir + "/../LICENSE.txt" << ENDL;
             return 1;
         }
 
-        LOG << endl;
+        LOG << ENDL;
 
         std::string line;
         while (std::getline(file, line)) {
-            LOG << "\t" << line << endl;
+            LOG << "\t" << line << ENDL;
         }
     }
 
@@ -116,9 +110,9 @@ int main(int argc, char* argv[]){
         }
 
         std::filesystem::current_path(exeDir);
-        LOG << "Arbeitsverzeichnis auf " << exeDir << " gesetzt" << endl;
+        LOG << "Arbeitsverzeichnis auf " << exeDir << " gesetzt" << ENDL;
 
-        LOG << "Start Unpacking and Simulating " << path << endl;
+        LOG << "Start Unpacking and Simulating " << path << ENDL;
 
         FemModel model(path);
         model.storeResults();
@@ -127,9 +121,9 @@ int main(int argc, char* argv[]){
     // Programm ohne args gestartet
     else {
 
-        LOG << "!! API wurde ohne valide Argumente angesprochen, invalider Aufruf" << endl;
-        LOG << "   um mehr zu Erfahren die API mit dem Argument '--help' aufrufen" << endl;
-        LOG << "   zum Fortfahren beliebige Taste drücken..." << endl;
+        LOG << "!! API wurde ohne valide Argumente angesprochen, invalider Aufruf" << ENDL;
+        LOG << "   um mehr zu Erfahren die API mit dem Argument '--help' aufrufen" << ENDL;
+        LOG << "   zum Fortfahren beliebige Taste drücken..." << ENDL;
 
         #ifdef DEBUG
         std::cin.get();
@@ -138,12 +132,7 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    #ifdef NDEBUG
-
-    // Release build
-    g_logFile.close();
-
-    #endif
+    closeLogFile();
 
     return 0;
 }

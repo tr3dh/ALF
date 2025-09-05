@@ -1,7 +1,6 @@
 // Main file für FEMProc
 // deklariert main funktion für executable
 
-#include "defines.h"
 #include "templateDecls.h"
 #include "Libaries/Libaries.h"
 
@@ -92,12 +91,7 @@ int main(void)
     //
     mkdir("../bin");
 
-    #ifdef NDEBUG
-
-    g_logFile = std::ofstream("../bin/.LOG");
-    std::cout.rdbuf(g_logFile.rdbuf());
-
-    #endif
+    openLogFile();
 
     //
     getEnv();
@@ -112,12 +106,12 @@ int main(void)
     int usableWidth  = workArea.right - workArea.left;          // nutzbare Breite (in den meisten Fällen gleich der Fensterbreite)
 
     //
-    LOG << std::fixed << std::setprecision(4) << endl;
-    LOG << endl;
+    LOG << std::fixed << std::setprecision(4) << ENDL;
+    LOG << ENDL;
 
-    LOG << "** Source Code " << countLinesInDirectory("../src") << " lines" << endl;
-    LOG << "** Procs Code " << countLinesInDirectory("../Procs") << " lines" << endl;
-    LOG << endl;
+    LOG << "** Source Code " << countLinesInDirectory("../src") << " lines" << ENDL;
+    LOG << "** Procs Code " << countLinesInDirectory("../Procs") << " lines" << ENDL;
+    LOG << ENDL;
 
     //
     SetTraceLogCallback(RaylibLogCallback);
@@ -134,10 +128,10 @@ int main(void)
 
     //
     const char* glVersion = (const char*)glGetString(GL_VERSION);
-    LOG << "** OpenGL Version: " << glVersion << endl;
+    LOG << "** OpenGL Version: " << glVersion << ENDL;
 
     const char* vendor = (const char*)glGetString(GL_VENDOR);
-    LOG << "** GPU Vendor: " << vendor << endl;
+    LOG << "** GPU Vendor: " << vendor << ENDL;
 
     // string splitten da im glVersion String noch Infos über die graphikkarte stehen
     g_glVersion = string::convert<float>(std::string(glVersion).substr(0,3));
@@ -152,15 +146,15 @@ int main(void)
     g_CudaBackendEnabled = string::contains(g_vendorCorp, "NVIDIA");
 
     //
-    LOG << "** Init in GENV " << g_env << endl;
+    LOG << "** Init in GENV " << g_env << ENDL;
 
     LOG << (g_ComputeShaderBackendEnabled ? "** Computeshader Backend freigeschaltet" :
-        "** Computeshader Backend gesperrt, opengl version " + std::to_string(g_glVersion).substr(0,3) + " ist nicht mit comp shadern kompatibel, erforderliche Version : OpenGL 4.3") << endl;
+        "** Computeshader Backend gesperrt, opengl version " + std::to_string(g_glVersion).substr(0,3) + " ist nicht mit comp shadern kompatibel, erforderliche Version : OpenGL 4.3") << ENDL;
 
     LOG << (g_CudaBackendEnabled ? "** Cuda Backend freigeschaltet" :
-        "** Cuda Backend gesperrt, vendor " + g_vendorCorp + " ist nicht mit Cuda kompatibel") << endl;
+        "** Cuda Backend gesperrt, vendor " + g_vendorCorp + " ist nicht mit Cuda kompatibel") << ENDL;
 
-    LOG << "** -----------------------------------------" << endl;
+    LOG << "** -----------------------------------------" << ENDL;
 
     // Raylib Fenster init
     float winSizeFaktor = 0.6f;
@@ -168,9 +162,9 @@ int main(void)
     int monitor = GetCurrentMonitor();
     int vsyncFPS = GetMonitorRefreshRate(monitor);
 
-    LOG << endl;
-    LOG << "++ Monitor VSYNC FPS für Bildschirm " << monitor << " mit " << vsyncFPS << " geladen" << endl;
-    LOG << endl;
+    LOG << ENDL;
+    LOG << "++ Monitor VSYNC FPS für Bildschirm " << monitor << " mit " << vsyncFPS << " geladen" << ENDL;
+    LOG << ENDL;
 
     // vsync aktivieren über Übergabe von 0 als ziel fps oder ziel fps übergeben
     SetTargetFPS(g_vsyncEnabled ? vsyncFPS : g_targetFPS);
@@ -189,14 +183,14 @@ int main(void)
     // RenderTexture2D renderTexture = LoadRenderTexture(windowWidth, windowHeight);
     // SetTextureFilter(renderTexture.texture, TEXTURE_FILTER_POINT);
 
-    LOG << "-- init auf Bildsirm mit Screensize [" << screenWidth << "|" << screenHeight << "]" << endl
+    LOG << "-- init auf Bildsirm mit Screensize [" << screenWidth << "|" << screenHeight << "]" << ENDL;
 
     Image icon = LoadImage("../Recc/Compilation/icon.png");
 
     // RGB zu RGBA falls alpha Kanal fehlt
     if (icon.format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) {
-        LOG << "-- Konvertiere icon.png zu RGBA -> ergänze alpha channel" << endl;
-        LOG << endl;
+        LOG << "-- Konvertiere icon.png zu RGBA -> ergänze alpha channel" << ENDL;
+        LOG << ENDL;
         ImageFormat(&icon, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
     }
 
@@ -306,7 +300,7 @@ int main(void)
 
         if(IsKeyPressed(KEY_F10)){
 
-            LOG << "++ toggleScreen" << endl;
+            LOG << "++ toggleScreen" << ENDL;
 
             if(!fullScreen){
                 SetWindowSize(screenWidth, screenHeight);
@@ -322,7 +316,7 @@ int main(void)
 
         if(IsKeyPressed(KEY_F11)){
 
-            LOG << "++ toggleScreen" << endl;
+            LOG << "++ toggleScreen" << ENDL;
 
             if(!fullScreen){
                 SetWindowSize(usableWidth, usableHeight);
@@ -1314,7 +1308,7 @@ int main(void)
 
                                     currentFile = i;
 
-                                    LOG << "** Import pdf Funktion " << pdfFiles[currentFile] << endl;
+                                    LOG << "** Import pdf Funktion " << pdfFiles[currentFile] << ENDL;
 
                                     model.getMesh().getMaterial().subs.clear();
                                     model.getMesh().saveMaterial();
@@ -1469,7 +1463,7 @@ int main(void)
                                     if(mat.pdf->compare(*mat.pdf->subs({{symbol,val}})) != 0){
 
                                         _ERROR << "   für pdf Expression relevantes Symbol kann nicht entfernt werden, bitte zuerst pdf als von " << symbol <<
-                                        " unabhängig deklarieren" << endl;
+                                        " unabhängig deklarieren" << ENDL;
                                     } else {
 
                                         // wenn nicht abhängig rauslöschen
@@ -1917,12 +1911,7 @@ int main(void)
 
     cacheConfigs();
 
-    #ifdef NDEBUG
-
-    // Release build
-    g_logFile.close();
-
-    #endif
+    closeLogFile();
 
     return 0;
 }

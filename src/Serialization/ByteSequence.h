@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Env.h"
 #include <type_traits>
 #include <vector>
 #include <map>
@@ -294,8 +295,8 @@ struct ByteSequence{
             // Rückwärts damit Reihenfolge des herausgezogenen Vektors identisch mit der des Ursprungsvektors wird
             // normalerweise wird die Reihenfolge beim insert invertiert, da immmer von hinten in den Vector geschrieben und
             // auch von hinten extrahiert wird 
-            for(const auto& elem : std::views::reverse(member)){
-                insert(elem);
+            for (auto it = member.rbegin(); it != member.rend(); ++it) {
+                insert(*it);
             }
 
             // Wichtig damit beim Extract klar ist wie viele Elemente für den Vector in die ByteSequenz gepusht wurden

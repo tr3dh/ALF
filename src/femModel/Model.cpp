@@ -63,7 +63,7 @@ void FemModel::reload(){
         unload();
         loadFromFile(modelPath);
     } else {
-        _ERROR << "kein valider Pfad im Modell hinterlegt\n" << endl;
+        _ERROR << "kein valider Pfad im Modell hinterlegt\n" << ENDL;
     }
 }
 
@@ -74,11 +74,11 @@ void FemModel::unload(){
 FemModel::FemModel(const std::string& path) : m_modelPath(path){
 
     //
-    LOG << "-- Modell aus " << m_modelPath << " konstruiert" << endl;
+    LOG << "-- Modell aus " << m_modelPath << " konstruiert" << ENDL;
 
     m_meshPath = path + "/" +  ".Mesh";
-    LOG << "   Lade Mesh aus " << m_meshPath << endl;
-    LOG << endl;
+    LOG << "   Lade Mesh aus " << m_meshPath << ENDL;
+    LOG << ENDL;
 
     m_resCachePath = path + "/" + ".RESULTCACHE";
     m_constraintPath = path + "/" + ".Constraints";

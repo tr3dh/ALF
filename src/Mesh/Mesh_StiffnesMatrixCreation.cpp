@@ -3,7 +3,7 @@
 bool IsoMesh::createStiffnessMatrix(){
 
     //
-    LOG << LOG_BLUE << "-- Creating Stiffnes Matrix" << endl;
+    LOG << LOG_BLUE << "-- Creating Stiffnes Matrix" << ENDL;
 
     //
     prefabIndex currentPrefabIndex = m_Cells.begin()->second.getPrefabIndex();
@@ -167,7 +167,7 @@ bool IsoMesh::createStiffnessMatrix(){
             //
             if(!subMatrix(BMatrix, subsBMatrix, currentCellPrefab.quadraturePoints[nodeNum])){
 
-                _ERROR << "Substitution fehlgeschlagen bei BMatrix von Element " << +cellIndex << endl;
+                _ERROR << "Substitution fehlgeschlagen bei BMatrix von Element " << +cellIndex << ENDL;
                 _ERROR << "Weigth " << currentCellPrefab.weights[nodeNum];
 
                 return false;
@@ -232,8 +232,8 @@ bool IsoMesh::createStiffnessMatrix(){
     Eigen::SparseMatrix<float> temp = m_kSystem.transpose().triangularView<Eigen::StrictlyLower>();
     m_kSystem += temp;
 
-    LOG << LOG_BLUE << "-- Finished Creating Stiffnes Matrix" << endl;
-    LOG << endl;
+    LOG << LOG_BLUE << "-- Finished Creating Stiffnes Matrix" << ENDL;
+    LOG << ENDL;
 
     //
     return true;

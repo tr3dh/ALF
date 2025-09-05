@@ -23,7 +23,7 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
     RETURNING_ASSERT(string::endsWith(path, fileSuffix), "Invalide Dateiendung beim Laden eines Materials aus " + path, false);
     RETURNING_ASSERT(fs::exists(path), path + "existiert nicht", false);
 
-    LOG << LOG_BLUE << "-- Reading Material from file : " << path << endl;
+    LOG << LOG_BLUE << "-- Reading Material from file : " << path << ENDL;
 
     // Check ob fstream den file ohne Fehler geladen bekommt
     std::ifstream matFile(path);
@@ -41,8 +41,8 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
     RETURNING_ASSERT(E != 0 && v != 0 && t != 0, "Relevante Materiaparamter E,t,v sind Null, kein valides Material Modell",false);
 
-    LOG << LOG_GREEN << "** Material aus " << path << " geladen" << endl;
-    LOG << LOG_GREEN << "   Parameter : [E|" << E << "]; [v|" << v << "]; [t|" << t << "]" << endl; 
+    LOG << LOG_GREEN << "** Material aus " << path << " geladen" << ENDL;
+    LOG << LOG_GREEN << "   Parameter : [E|" << E << "]; [v|" << v << "]; [t|" << t << "]" << ENDL; 
 
     if(matData.contains("pdf")){
        
@@ -53,14 +53,14 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
         ASSERT(matData["pdf"].contains("function"), "pdf Funktion wurde nicht deklariert");
 
         pdf = SymEngine::parse(matData["pdf"]["function"].get<std::string>());
-        LOG << LOG_GREEN << "   pdf(xi) = " << pdf << endl;
+        LOG << LOG_GREEN << "   pdf(xi) = " << pdf << ENDL;
 
         if(matData["pdf"].contains("borders")){
 
             xi_min = matData["pdf"]["borders"]["xi_min"].get<float>();
             xi_max = matData["pdf"]["borders"]["xi_max"].get<float>();
 
-            LOG << LOG_GREEN << "   Xi Borders geladen : [" << xi_min << "|" << xi_max << "]" << endl;
+            LOG << LOG_GREEN << "   Xi Borders geladen : [" << xi_min << "|" << xi_max << "]" << ENDL;
         }
 
         ASSERT(matData["pdf"].contains("pdfPreprocessing"), "pdf preprocessing nicht definiert");
@@ -76,9 +76,9 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
         
         for (const auto& [param, value] : matData["pdf"]["params"].items()) {
             subs.try_emplace(SymEngine::symbol(param), toExpression(value.get<float>()));
-            LOG << LOG_GREEN << "   substitution [" << param << "|" << value << "]" << endl; 
+            LOG << LOG_GREEN << "   substitution [" << param << "|" << value << "]" << ENDL; 
         }
-        LOG << endl; 
+        LOG << ENDL; 
     } else {
         hasPdf = false;
     }
@@ -91,7 +91,7 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
     if(matData.contains("isLinear") && !matData["isLinear"].get<bool>()){
 
         isLinear = false;
-        LOG << "** geladenes Material ist nicht linear" << endl;
+        LOG << "** geladenes Material ist nicht linear" << ENDL;
 
         // Lademechanik für nichtlineare Materialien
         // nichtlineare Materialien müssen definiert sein über
@@ -118,7 +118,7 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
             innerVariableSize.emplace_back(matData["nonLinearApproach"]["innerVariableSize"][dim]);
         }
 
-        LOG << "** innere Variable " << innerVariable << " der Dimension " << innerVariableDimension << " geladen" << endl;
+        LOG << "** innere Variable " << innerVariable << " der Dimension " << innerVariableDimension << " geladen" << ENDL;
 
         // Spannungsansatz
         ASSERT(matData["nonLinearApproach"].contains("sigma"), "Spannungs Ansatz für nicht lineares Material fehlt");
@@ -131,7 +131,7 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
         
         // args ...
 
-        LOG << ")" << endl;
+        LOG << ")" << ENDL;
 
         // Evolution
         ASSERT(matData["nonLinearApproach"].contains("evolutionEquation"), "EvolutionsGleichung für innere Variable fehlt");
@@ -139,7 +139,7 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
         string::fullStrip(evolutionEquation);
 
         //
-        LOG << "** " << innerVariable << "_n_plus_1 = " << evolutionEquation << endl;
+        LOG << "** " << innerVariable << "_n_plus_1 = " << evolutionEquation << ENDL;
 
         if(!matData["nonLinearApproach"].contains("params")){
             return true;
@@ -148,7 +148,7 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
         for (const auto& [param, value] : matData["nonLinearApproach"]["params"].items()) {
 
             nonlinearModellParams.try_emplace(param, fromJson(value));
-            LOG << "** substitution " << param << " : \n" << nonlinearModellParams[param] << endl;
+            LOG << "** substitution " << param << " : \n" << nonlinearModellParams[param] << ENDL;
         }
 
         if(matData["nonLinearApproach"].contains("normTolerance")){
@@ -173,13 +173,13 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
 
         // Default für rundung der Expressions setzen
         g_decimalPlaces = precisionDigits;
-        LOG << "-- Nachkommastellen für Rundung eingestellt auf " << g_decimalPlaces << endl;
+        LOG << "-- Nachkommastellen für Rundung eingestellt auf " << g_decimalPlaces << ENDL;
 
         //
         simulationSteps = (size_t)(simulationDuration/deltaTime);
     }
 
-    LOG << endl;
+    LOG << ENDL;
 
     return true;
 }
@@ -188,7 +188,7 @@ void IsoMeshMaterial::save(const std::string& path){
 
     RETURNING_ASSERT(string::endsWith(path, fileSuffix), "Invalide Dateiendung beim Speichern eines Materials nach " + path,);
 
-    LOG << LOG_BLUE << "-- Writing Material to file : " << path << endl;
+    LOG << LOG_BLUE << "-- Writing Material to file : " << path << ENDL;
 
     // Check ob nlohmann json den file geparst bekommt
     nlohmann::json matData = nlohmann::json::parse(std::ifstream(path), nullptr, true, true);
@@ -234,7 +234,7 @@ void IsoMeshMaterial::save(const std::string& path){
     matFile << matData.dump(4);
     matFile.close();
 
-    LOG << LOG_GREEN << "** Material nach " << path << " gespeichert" << endl;
+    LOG << LOG_GREEN << "** Material nach " << path << " gespeichert" << ENDL;
 }
 
 void IsoMeshMaterial::substitutePdf(){
@@ -242,11 +242,11 @@ void IsoMeshMaterial::substitutePdf(){
     sym::round_subs_map(subs,3);
     pdf_xi = sym::roundAllNumbers(pdf->subs(subs),3);
 
-    LOG << LOG_GREEN << "   substituted pdf(xi) = " << pdf_xi << endl;
+    LOG << LOG_GREEN << "   substituted pdf(xi) = " << pdf_xi << ENDL;
 
     try{
         float pdf_xi0 = SymEngine::eval_double(*pdf_xi->subs({{xi, toExpression(0)}}));
-        LOG << LOG_GREEN << "   pdf(xi = 0) = " << pdf_xi0 << endl;
+        LOG << LOG_GREEN << "   pdf(xi = 0) = " << pdf_xi0 << ENDL;
         ASSERT(pdf_xi0 > 0, "pdf Funktion muss an Stelle xi = 0 größer null sein");
     }
     catch(const std::exception& exc){

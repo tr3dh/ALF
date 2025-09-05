@@ -43,9 +43,14 @@ CellPrefab::CellPrefab(const std::string& path) : CellPrefab(){
     //
     shapeFunctions.reserve(nNodes);
     shapeFunctionDerivatives.reserve(nNodes);
-    for(const auto& [nodeNum, shapeFunction] : std::views::enumerate(isoParamData["SHAPEFUNCTIONS"].get<std::vector<std::string>>())){
+
+    const auto shapefVec = isoParamData["SHAPEFUNCTIONS"].get<std::vector<std::string>>();
+
+    for(size_t nodeNum = 0; nodeNum < shapefVec.size(); nodeNum++){
 
         // Funktion einfügen die checkt ob die Expression nur bekannte symbole enthält (-> x,y,z, ..., r,s,t, ...)
+
+        const auto& shapeFunction = shapefVec[nodeNum]; 
 
         shapeFunctions.emplace_back(SymEngine::parse(shapeFunction));
         shapeFunctionDerivatives.emplace_back(1,nDimensions);
@@ -96,7 +101,7 @@ CellPrefab::CellPrefab(const std::string& path) : CellPrefab(){
     numFaces = faceIndices.size()/3;
     RETURNING_ASSERT(faceIndices.size()%3 == 0, "Ungültige Anzahl an FACEINDICES für 3D Element " + label + " übergeben, für eindeutige Zuordnung muss jede fläche durch 3 VertexIndices definiert sein",);
 
-    LOG << LOG_GREEN << "** " << "Element " << label << " mit " << numFaces << " faces geladen" << endl;
+    LOG << LOG_GREEN << "** " << "Element " << label << " mit " << numFaces << " faces geladen" << ENDL;
 
     ASSERT(isoParamData.contains("WIREFRAMEINDICES"),
         "Rendering Information WIREFRAMEINDICES für 3D Element " + label + " fehlt, Rendering des Elements wird mit default Wireframe, basierend auf angegebenen Faces gerendert");
@@ -105,5 +110,5 @@ CellPrefab::CellPrefab(const std::string& path) : CellPrefab(){
         wireFrameIndices = isoParamData["WIREFRAMEINDICES"].get<decltype(wireFrameIndices)>();
     }
 
-    LOG << LOG_GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen" << endl;
+    LOG << LOG_GREEN << "** " << "Element " << label << " erfolgreich aus file " << path << " geladen" << ENDL;
 }

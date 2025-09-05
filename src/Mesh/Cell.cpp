@@ -21,9 +21,9 @@ const NodeIndex& Cell::operator[](size_t index) const{
 std::ostream& operator<<(std::ostream& os, const Cell& cell) {
 
     os << "Cell-" << cell.getPrefab().label << " {";
-    for (const auto& [i, index] : std::views::enumerate(cell.m_nodeIndices)) {
+    for (size_t i = 0; i < cell.m_nodeIndices.size(); i++){
         if (i > 0) os << ", ";
-        os << index;
+        os << cell.m_nodeIndices[i];
     }
     os << "}";
     return os;

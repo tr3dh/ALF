@@ -4,9 +4,9 @@ bool FemModel::loadCachedResults(){
 
     if(!fs::exists(m_resCachePath)){
 
-        LOG << "** No Cache File found" << endl;
-        LOG << "** Calculation ..." << endl;
-        LOG << endl;
+        LOG << "** No Cache File found" << ENDL;
+        LOG << "** Calculation ..." << ENDL;
+        LOG << ENDL;
 
         return false;
     }
@@ -22,16 +22,16 @@ bool FemModel::loadCachedResults(){
         ftConstraints != fs::last_write_time(m_constraintPath) ||
         ftMaterial != fs::last_write_time(m_matPath)){
 
-            LOG << "** Changes made to Recc files" << endl;
-            LOG << "** Recalculation ..." << endl;
-            LOG << endl;
+            LOG << "** Changes made to Recc files" << ENDL;
+            LOG << "** Recalculation ..." << ENDL;
+            LOG << ENDL;
 
             return false;
     }
 
-    LOG << "** No Changes made to Recc files" << endl;
-    LOG << "** Loading results with " << bs.size() << " bytes from cache - " << endl;
-    LOG << endl;
+    LOG << "** No Changes made to Recc files" << ENDL;
+    LOG << "** Loading results with " << bs.size() << " bytes from cache - " << ENDL;
+    LOG << ENDL;
 
     bs.extractMultiple(
         m_simulationSteps, m_deltaTime, m_simulationTime,
@@ -67,16 +67,16 @@ void FemModel::cacheResults(){
 
     bs.insertMultiple(fs::last_write_time(m_meshPath), fs::last_write_time(m_constraintPath), fs::last_write_time(m_matPath));
     
-    LOG << "** Write Cache to " << m_resCachePath << endl;
+    LOG << "** Write Cache to " << m_resCachePath << ENDL;
 
     timePoint start = chrono::now();
 
     bs.encode(m_encoderKey);
     bs.toFile(m_resCachePath);
 
-    LOG << "-- Cache und Encoding " << (chrono::now() - start).count() / 1000000000.0f << " s" << endl;
-    LOG << "-- Cached Size " << bs.size() << " bytes" << endl;
-    LOG << endl;
+    LOG << "-- Cache und Encoding " << (chrono::now() - start).count() / 1000000000.0f << " s" << ENDL;
+    LOG << "-- Cached Size " << bs.size() << " bytes" << ENDL;
+    LOG << ENDL;
 }
 
 void FemModel::storeResults(){
@@ -142,5 +142,5 @@ void FemModel::storeResults(){
         _ERROR << "Konnte Datei nicht öffnen!\n";
     }
 
-    LOG << "** Have Written Resultfile " << m_resultFilePath << endl;
+    LOG << "** Have Written Resultfile " << m_resultFilePath << ENDL;
 }

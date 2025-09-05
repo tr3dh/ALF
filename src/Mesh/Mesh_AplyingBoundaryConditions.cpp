@@ -3,7 +3,7 @@
 void IsoMesh::applyForces(const std::map<NodeIndex, std::vector<Force>>& externalForces){
 
     //
-    LOG << "-- Aplying m_loads ..." << endl;
+    LOG << "-- Aplying m_loads ..." << ENDL;
 
     m_fSystem = Eigen::SparseMatrix<float>(m_nodes.size() * nDimensions, 1);
 
@@ -11,12 +11,12 @@ void IsoMesh::applyForces(const std::map<NodeIndex, std::vector<Force>>& externa
         for(const auto& force : forces){
 
             CRITICAL_ASSERT(force.direction < nDimensions, "Ungültige Richtungsangebe");
-            LOG << "   Node " << +index << " Force " << force.amount << " N\t\tin direction " << g_globalKoords[force.direction] << endl;
+            LOG << "   Node " << +index << " Force " << force.amount << " N\t\tin direction " << g_globalKoords[force.direction] << ENDL;
             loadTriplets.emplace_back((index-nodeNumOffset) * nDimensions + force.direction, 0, force.amount);
         }
     }
 
-    LOG << endl;
+    LOG << ENDL;
 
     m_fSystem.setFromTriplets(loadTriplets.begin(), loadTriplets.end());
 }
@@ -24,7 +24,7 @@ void IsoMesh::applyForces(const std::map<NodeIndex, std::vector<Force>>& externa
 void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixations){
 
     //
-    LOG << "-- Aplying node Constraints ..." << endl;
+    LOG << "-- Aplying node Constraints ..." << ENDL;
 
     m_indicesToRemove.clear();
     m_uSystem = Eigen::MatrixXf(m_nodes.size() * nDimensions, 1);
@@ -34,13 +34,13 @@ void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixa
 
             //
             CRITICAL_ASSERT(direction < nDimensions, "Ungültige Richtungsangebe");
-            LOG << "   Fixing node " << index << "\t\t\tin direction " << g_globalKoords[direction] << endl;
+            LOG << "   Fixing node " << index << "\t\t\tin direction " << g_globalKoords[direction] << ENDL;
 
             m_indicesToRemove.emplace_back(nDimensions * (index - nodeNumOffset) + direction);
         }
     }
 
-    LOG << endl;
+    LOG << ENDL;
 
     m_indicesToAdd = m_indicesToRemove;
 
@@ -52,8 +52,8 @@ void IsoMesh::fixNodes(const std::map<NodeIndex, std::vector<uint8_t>>& nodeFixa
     for(const auto& i : m_indicesToRemove){
         LOG << i << ",";
     }
-    LOG << "}" << endl;
-    LOG << endl;
+    LOG << "}" << ENDL;
+    LOG << ENDL;
 
     removeDenseRows(m_uSystem, m_indicesToRemove);
     removeSparseRow(m_fSystem, m_indicesToRemove);
@@ -71,8 +71,8 @@ bool IsoMesh::readBoundaryConditions(bool apply, const std::string& path){
 
     CRITICAL_ASSERT(string::endsWith(boundaryFilePath, ".Constraints"), "Übergebener Pfad endet auf ungültige File Endung, erwartetes format : *.fem");
 
-    LOG << LOG_BLUE << "-- Reading file : " << boundaryFilePath << endl;
-    LOG << endl;
+    LOG << LOG_BLUE << "-- Reading file : " << boundaryFilePath << ENDL;
+    LOG << ENDL;
 
     // Check ob Pfad existiert
     CRITICAL_ASSERT(fs::exists(boundaryFilePath), "Angegebener Pfad : '" + boundaryFilePath + "' existiert nicht");

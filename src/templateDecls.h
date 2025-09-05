@@ -14,6 +14,7 @@
 #include "WinHandle/GetEnv.h"
 #include "WinHandle/WinCmd.h"
 #include "Prompts/Curl.h"
+#include "Logging/Logging.h"
 
 #include "CleanUp/ClearCaches.h"
 

@@ -25,16 +25,16 @@ void freeCellRendererMem(){
     UnloadModel(g_cellModel);
 
     //
-    LOG << "++ CellRenderer Unloaded Pref " << +g_cellMesh_pID << ", Memory freed" << endl;
+    LOG << "++ CellRenderer Unloaded Pref " << +g_cellMesh_pID << ", Memory freed" << ENDL;
 }
 
 void initCellRenderer(const CellPrefab& pref){
 
     //
-    LOG << "** Init CellRenderer for CellPref " << pref.label << endl;
-    LOG << "** Try to unload Pref " << +g_cellMesh_pID << " and free Memory" << endl;
-    LOG << "** Try to load Pref " << +pref.pID << endl;
-    LOG << endl;
+    LOG << "** Init CellRenderer for CellPref " << pref.label << ENDL;
+    LOG << "** Try to unload Pref " << +g_cellMesh_pID << " and free Memory" << ENDL;
+    LOG << "** Try to load Pref " << +pref.pID << ENDL;
+    LOG << ENDL;
 
     // Reccourcen nur freigeben falls sie schoneinmal belegt worden sind
     g_cellMesh_pID == 0 ? (void)0 : freeCellRendererMem();
@@ -80,8 +80,8 @@ void applyShader(const std::string& vsPath, const std::string& fsPath){
     g_locationMaterialColor = GetShaderLocation(g_cellMeshShader, "materialColor");
 
     //
-    LOG << "** Initialized Shader" << endl;
-    LOG << endl;
+    LOG << "** Initialized Shader" << ENDL;
+    LOG << ENDL;
 }
 
 void renderCell(const Cell& cell, const NodeSet& nodes, const Color& color){
