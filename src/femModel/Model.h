@@ -6,6 +6,8 @@
 #include "Solver/NewtonRaphsonSolver.h"
 #include "Serialization/JsonSerialization.h"
 
+extern bool g_ignoreCacheValidationWhenLoadingModelCache;
+
 // Container für die ErgebnisWerte eines Schritts der Zeitschrittintegration
 struct SimulationFrame{
 

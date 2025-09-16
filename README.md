@@ -7,7 +7,7 @@
 
 <img align="left" style="width:140px" src="Recc/Compilation/iconStripped.png" width="288px">
 
-ALF is a lightweight, adaptive FEM program that was developed as part of a [thetis](Recc/Thetis/Studienarbeit.pdf) for the Institute of Continuum Mechanics (IKM) at Leibniz University Hannover (LUH). The focus is on testing various probability density functions for the uncertainty quantification of linear FEM and simple, nonlinear material models for nonlinear FEM.
+ALF is a lightweight, adaptive FEM program that was developed as part of a [Thesis](Recc/Thesis/Studienarbeit.pdf) for the Institute of Continuum Mechanics (IKM) at Leibniz University Hannover (LUH). The focus is on testing various probability density functions for the uncertainty quantification of linear FEM and simple, nonlinear material models for nonlinear FEM.
 
 <br>
 
@@ -63,7 +63,7 @@ The tab view in the right side of the window allows you to set the mesh on which
 
 # 📊 Example model
 
-The following shows an example of the model definition for a linear FEM. Further example models that can be imported directly are located in the [Import](/Import/) folder. The definition of the isoparametric element is already stored for several standard cases such as simple triangular/quadrangular and cube elements. If the mesh uses an isoparametric element that has not been implemented, it must be implemented in the [Recc/Cells] folder. Information on this can be found in the implementation files of the existing elements under [Recc/Cells](/Recc/Cells/) and the [thetis](/Recc/Cells/Thetis/Studienarbeit.pdf).
+The following shows an example of the model definition for a linear FEM. Further example models that can be imported directly are located in the [Import](/Import/) folder. The definition of the isoparametric element is already stored for several standard cases such as simple triangular/quadrangular and cube elements. If the mesh uses an isoparametric element that has not been implemented, it must be implemented in the [Recc/Cells] folder. Information on this can be found in the implementation files of the existing elements under [Recc/Cells](/Recc/Cells/) and the [Thesis](/Recc/Cells/Thesis/Studienarbeit.pdf).
 
 ## 🏗️ Structure
 A model is defined by a set of files. The individual files of the definition are placed in a folder with the extension `.model`. All necessary files are automatically read from this folder.
@@ -149,7 +149,7 @@ The `.Material` file defines the material model and controls the simulation proc
 }
 ```
 
-Further information on the definition of probability densities and the nonlinear material model is provided via various example models in [Import](/Import/) and the accompanying [student thetis](Recc/Thetis/Studienarbeit.pdf).
+Further information on the definition of probability densities and the nonlinear material model is provided via various example models in [Import](/Import/) and the accompanying [student Thesis](Recc/Thesis/Studienarbeit.pdf).
 
 # 🔌 API
 The API can be used to simulate models without a user interface. The API automatically generates the `.RESULTS` file in JSON format. This allows the program to be called from other projects, programs, or scripts. FEM simulations can be performed in the background and the results can be loaded into the external project/program using a JSON parser. To do this, the API must be called with the `simulate` argument and the path to the FEM model. If the path is absolute rather than relative to the current working directory, this is specified using the `--absolute` flag.
@@ -190,7 +190,7 @@ The following shortcuts are used to speed up
 
 # 🤝 Many thanks
 
-I would like to express my special thanks to my supervisor Dr. Hendrik Geisler, who made this thetis possible spontaneously and through his support and was a great help during its development.
+I would like to express my special thanks to my supervisor Dr. Hendrik Geisler, who made this Thesis possible spontaneously and through his support and was a great help during its development.
 
 Hendrik Geisler was funded by the European Union (ERC, Gen-TSM, project number 101124463) during the supervision period. However, the views and opinions expressed are solely those of the author(s) and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the funding authority can be held responsible for them.
 

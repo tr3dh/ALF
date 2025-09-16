@@ -7,7 +7,7 @@
 
 <img align="left" style="width:140px" src="Recc/Compilation/iconStripped.png" width="288px">
 
-ALF ist ein leichtgewichtiges, adaptives FEM Programm, das im Rahmen einer [Studienarbeit](Recc/Thetis/Studienarbeit.pdf) für das Institut für Kontinuumsmechanik (IKM) der Leibniz Universität Hannover (LUH) entwickelt worden ist. Dabei liegt der Fokus auf der Erprobung verschiedener Wahrscheinlichkeitsdichtefunktionen für die Unsicherheitsquantifizierung der linearen FEM und von simplen, nichtlinearen Materialmodellen für die nichtlineare FEM.
+ALF ist ein leichtgewichtiges, adaptives FEM Programm, das im Rahmen einer [Studienarbeit](Recc/Thesis/Studienarbeit.pdf) für das Institut für Kontinuumsmechanik (IKM) der Leibniz Universität Hannover (LUH) entwickelt worden ist. Dabei liegt der Fokus auf der Erprobung verschiedener Wahrscheinlichkeitsdichtefunktionen für die Unsicherheitsquantifizierung der linearen FEM und von simplen, nichtlinearen Materialmodellen für die nichtlineare FEM.
 
 <br>
 
@@ -62,7 +62,7 @@ Eine Übersicht über die Kameraführungen und die Steurung ist in [ShortCuts](#
 
 # 📊 Beispielmodell
 
-Im Folgenden ist exemplarisch die Modelldefinition für eine lineare FEM gezeigt. Weitere Beispielmodelle, die direkt importiert werden können liegen im [Import](/Import/)-Ordner. Die Definition des isoparametrischen Elements ist für mehrere Standardfälle wie einfache Dreiecks-/Vierecks- und Würfelelemente bereits hinterlegt. Verwendet das Netz ein nicht implementiertes isoparametrisches Element muss dieses in den [Recc/Cells]-Ordner implementiert werden. Imformationen dazu können aus den Implementierungsdateien der vorhandenen Elemente unter [Recc/Cells](/Recc/Cells/) und der [Studienarbeit](/Recc/Cells/Thetis/Studienarbeit.pdf) entnommen werden.
+Im Folgenden ist exemplarisch die Modelldefinition für eine lineare FEM gezeigt. Weitere Beispielmodelle, die direkt importiert werden können liegen im [Import](/Import/)-Ordner. Die Definition des isoparametrischen Elements ist für mehrere Standardfälle wie einfache Dreiecks-/Vierecks- und Würfelelemente bereits hinterlegt. Verwendet das Netz ein nicht implementiertes isoparametrisches Element muss dieses in den [Recc/Cells]-Ordner implementiert werden. Imformationen dazu können aus den Implementierungsdateien der vorhandenen Elemente unter [Recc/Cells](/Recc/Cells/) und der [Studienarbeit](/Recc/Cells/Thesis/Studienarbeit.pdf) entnommen werden.
 
 ## 🏗️ Aufbau
 Ein Modell wird über einen Dateisatz definiert. Die einzelnen Dateien der Definition werden dazu in einen Ordner mit der Endung `.model` gelegt. Aus diesem Ordner werden automatisch alle erforderlichen Dateien gelesen.
@@ -148,7 +148,7 @@ Die Datei `.Material` definiert das Materialmodell und steuert die ablaufende Si
 }
 ```
 
-Weitere Informationen zur Definition der Wahrscheinlicheitsdichten und des nichtlinearen Materialmodells werden über verschiedene Beispielmodelle in [Import](/Import/) und die beigelegte [Studienarbeit](Recc/Thetis/Studienarbeit.pdf) bereitgestellt. 
+Weitere Informationen zur Definition der Wahrscheinlicheitsdichten und des nichtlinearen Materialmodells werden über verschiedene Beispielmodelle in [Import](/Import/) und die beigelegte [Studienarbeit](Recc/Thesis/Studienarbeit.pdf) bereitgestellt. 
 
 # 🔌 API
 Über die API können Modelle ohne Benutzeroberfläche simuliert werden. Die API erzeugt automatisch die `.RESULTS` Ergebnisdatei im JSON-Format. Damit kann das Programm aus anderen Projekten, Programmen oder Skripten aufgerufen werden. FEM-Simulationen können im Hintergrund durchgeführt und die Ergebnisse über einen JSON-Parser ins externe Projekt/Programm geladen werden. Dazu muss die API mit dem Argument `simulate` und dem Pfad des FEM-Modells aufgerufen werden. Ist der Pfad nicht relativ sondern absolut zum aktuellen Arbeitsverzeichnis wird das über die Flag `--absolute` angegeben.

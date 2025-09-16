@@ -43,7 +43,8 @@ void cacheConfigs(){
         g_logRaylibMessages,
         g_vsyncEnabled,
         g_targetFPS,
-        g_pauseFrames
+        g_pauseFrames,
+        g_ignoreCacheValidationWhenLoadingModelCache
     );
 
     //
@@ -79,7 +80,8 @@ void loadCachedConfigs(){
         g_logRaylibMessages,
         g_vsyncEnabled,
         g_targetFPS,
-        g_pauseFrames
+        g_pauseFrames,
+        g_ignoreCacheValidationWhenLoadingModelCache
     );
 
     // aus relativem Pfad global gültigen generieren
@@ -820,6 +822,7 @@ int main(void)
 
                     //
                     ImGui::Checkbox("Reload Recent on Startup", &g_bindStartUpToReloadRecent);
+                    ImGui::Checkbox("Ignore Cache Validation Dates", &g_ignoreCacheValidationWhenLoadingModelCache);
                     ImGui::EndMenu();
                 }
                 if(ImGui::BeginMenu("Logging")){
@@ -992,7 +995,7 @@ int main(void)
                     LinkRow("GitHub Repository", githubRepositoryUrl.c_str());
                     LinkRow("Releases", (githubRepositoryUrl + "/releases").c_str());
                     LinkRow("Find out more", (githubRepositoryUrl+ "/blob/main/README.md").c_str());
-                    LinkRow("Find out even more (read Thetis)", (githubRepositoryUrl+"/blob/main/Recc/Thetis/Studienarbeit.pdf").c_str());
+                    LinkRow("Find out even more (read Thesis)", (githubRepositoryUrl+"/blob/main/Recc/Thesis/Studienarbeit.pdf").c_str());
 
                     ImGui::EndTable();
                 }

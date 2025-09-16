@@ -1,5 +1,7 @@
 #include "Model.h"
 
+bool g_ignoreCacheValidationWhenLoadingModelCache = false;
+
 bool FemModel::loadCachedResults(){
 
     if(!fs::exists(m_resCachePath)){
@@ -18,7 +20,10 @@ bool FemModel::loadCachedResults(){
     fileTime ftMesh, ftConstraints, ftMaterial;
     bs.extractMultiple(ftMaterial, ftConstraints, ftMesh);
 
-    if(ftMesh != fs::last_write_time(m_meshPath) ||
+    if(g_ignoreCacheValidationWhenLoadingModelCache){
+
+    }
+    else if(ftMesh != fs::last_write_time(m_meshPath) ||
         ftConstraints != fs::last_write_time(m_constraintPath) ||
         ftMaterial != fs::last_write_time(m_matPath)){
 
