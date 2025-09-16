@@ -823,6 +823,7 @@ int main(void)
                     //
                     ImGui::Checkbox("Reload Recent on Startup", &g_bindStartUpToReloadRecent);
                     ImGui::Checkbox("Ignore Cache Validation Dates", &g_ignoreCacheValidationWhenLoadingModelCache);
+                    
                     ImGui::EndMenu();
                 }
                 if(ImGui::BeginMenu("Logging")){
@@ -899,6 +900,11 @@ int main(void)
                 ImGui::EndMenu();
             }
             if(ImGui::BeginMenu("Temp")){
+
+                //
+                if(ImGui::MenuItem("Validate current Cache")){
+                    model.validateCachedResults();
+                }
 
                 if(ImGui::MenuItem("Clear Cache (Strg + C)")){
                     clearCache(model.getSource());

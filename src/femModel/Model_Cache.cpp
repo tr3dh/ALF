@@ -53,6 +53,28 @@ bool FemModel::loadCachedResults(){
     return true;
 }
 
+void FemModel::validateCachedResults(){
+
+    if(!initialzed()){
+
+        LOG << "!! Model nicht initialisiert" << ENDL;
+        return;
+    }
+
+    LOG << "** validiere cache " << m_resCachePath << ENDL;
+
+    ByteSequence bs;
+    bs.fromFile(m_resCachePath);
+    bs.decode(m_encoderKey);
+
+    fileTime ftMesh, ftConstraints, ftMaterial;
+    bs.extractMultiple(ftMaterial, ftConstraints, ftMesh);
+
+    bs.insertMultiple(fs::last_write_time(m_meshPath), fs::last_write_time(m_constraintPath), fs::last_write_time(m_matPath));
+    bs.encode(m_encoderKey);
+    bs.toFile(m_resCachePath);
+}
+
 void FemModel::cacheResults(){
 
     ByteSequence bs;

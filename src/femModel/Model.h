@@ -72,6 +72,7 @@ public:
 
     bool loadCachedResults();
     void cacheResults();
+    void validateCachedResults();
 
     void storeResults();
 
