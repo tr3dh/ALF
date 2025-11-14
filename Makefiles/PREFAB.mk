@@ -70,7 +70,7 @@ RLIMGUI_OBJ = $(patsubst $(RLIMGUI_DIR)/%.cpp,thirdParty/rlImgui/bin/%.o,$(RLIMG
 # ImGui Kompilieren
 thirdParty/rlImgui/bin%.o: $(RLIMGUI_DIR)/%.cpp
 	@mkdir -p $(@D)
-	$(CC) -c -o $@ $< -I./thirdParty/imgui
+	$(CC) -c -o $@ $< -I./thirdParty/imgui -I./thirdParty/raylib/src
 
 librlimgui: $(RLIMGUI_OBJ)
 	ar rcs thirdParty/rlImgui/bin/librlimgui.a $^

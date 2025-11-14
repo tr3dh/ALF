@@ -32,3 +32,20 @@ inline SymEngine::DenseMatrix eigenSparseToSymEngineDense(const Eigen::SparseMat
     }
     return result;
 }
+
+inline SymEngine::DenseMatrix eigenDenseToSymEngineDense(const Eigen::MatrixXf &eigenDense) {
+
+    std::size_t rows = static_cast<std::size_t>(eigenDense.rows());
+    std::size_t cols = static_cast<std::size_t>(eigenDense.cols());
+
+    SymEngine::DenseMatrix result(rows, cols);
+
+    //
+    for (std::size_t i = 0; i < rows; ++i) {
+        for (std::size_t j = 0; j < cols; ++j) {
+            result.set(i, j, toExpression(eigenDense(static_cast<int>(i), static_cast<int>(j))));
+        }
+    }
+
+    return result;
+}

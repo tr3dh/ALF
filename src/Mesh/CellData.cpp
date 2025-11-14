@@ -37,6 +37,18 @@ CellData::CellData(const CellPrefab& prefab){
     stress = Eigen::MatrixXf(prefab.nDimensions * (prefab.nDimensions + 1)/2,1);
     stress.setZero();
 
+    quadratureStrain = {};
+    quadratureStress = {};
+    
+    quadratureStrain.reserve(prefab.nNodes);
+    quadratureStress.reserve(prefab.nNodes);
+
+    for(size_t i = 0; i < prefab.nNodes; i++){
+
+        quadratureStrain.emplace_back(Eigen::MatrixXf(strain.rows(), 1));
+        quadratureStress.emplace_back(Eigen::MatrixXf(strain.rows(), 1));
+    }
+
     innerVariable = Eigen::MatrixXf(0,0);
 };
 

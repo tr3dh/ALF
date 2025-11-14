@@ -121,13 +121,13 @@ bool IsoMeshMaterial::loadFromFile(const std::string& path){
         LOG << "** innere Variable " << innerVariable << " der Dimension " << innerVariableDimension << " geladen" << ENDL;
 
         // Spannungsansatz
-        ASSERT(matData["nonLinearApproach"].contains("sigma"), "Spannungs Ansatz für nicht lineares Material fehlt");
-        stressApproach = matData["nonLinearApproach"]["sigma"];
+        ASSERT(matData["nonLinearApproach"].contains("sigma_n_plus_1"), "Spannungs Ansatz für nicht lineares Material fehlt");
+        stressApproach = matData["nonLinearApproach"]["sigma_n_plus_1"];
 
         ASSERT(string::contains(stressApproach, innerVariable), "Ansatz für Spannung ist nicht von angegebener innererVariable abhängig");
 
         string::fullStrip(stressApproach);
-        LOG << "** sigma = " << stressApproach << " = f(";
+        LOG << "** sigma_n_plus_1 = " << stressApproach << " = f(";
         
         // args ...
 

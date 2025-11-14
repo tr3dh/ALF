@@ -160,5 +160,6 @@
         "<C-v>": false,
         "<C-z>": false,
         "<C-y>": false,
-}
+},
+"cmake.sourceDirectory": "C:/Uni/StudienarbeitIKM/SourceCode/FEMProc/thirdParty/magic_enum/example"
 }

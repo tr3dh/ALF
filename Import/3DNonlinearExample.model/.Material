@@ -1,7 +1,7 @@
 {
     "isLinear": false,
     "nonLinearApproach": {
-        "sigma": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)",
+        "sigma_n_plus_1": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)",
         "evolutionEquation": "(I+eta^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+eta^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
         "innerVariable": ["epsilon_v",1],
         "innerVariableSize": [6],

@@ -57,7 +57,8 @@ struct CellData{
     void toByteSequence(ByteSequence& seq) const;
     void fromByteSequence(ByteSequence& seq);
 
-    prefabIndex m_prefIdx = 0; 
+    prefabIndex m_prefIdx = 0;
+    std::vector<Eigen::MatrixXf> quadratureStrain, quadratureStress;
     Eigen::MatrixXf strain, stress, innerVariable;
     
     float cellVolume = 0.0f;

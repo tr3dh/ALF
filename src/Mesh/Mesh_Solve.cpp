@@ -85,8 +85,11 @@ void IsoMesh::calculateStrainAndStress(DataSet& dataSet, const Eigen::MatrixXf& 
             // . Nachteil : größen an Quadraturpunkten nicht abrufbar
             // -> Steuerung über bool param
 
-            r_cellData.strain += BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum];
-            r_cellData.stress += CMatrix * BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum];
+            r_cellData.quadratureStrain[nodeNum] = BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum];
+            r_cellData.quadratureStress[nodeNum] = CMatrix * BMatrix * r_cellData.cellDisplacement * jDet * r_prefab.weights[nodeNum];
+
+            r_cellData.strain += r_cellData.quadratureStrain[nodeNum];
+            r_cellData.stress += r_cellData.quadratureStress[nodeNum];
             
             r_cellData.cellVolume += jDet * r_prefab.weights[nodeNum];
         }

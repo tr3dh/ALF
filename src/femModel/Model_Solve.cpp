@@ -83,9 +83,6 @@ void FemModel::calculate(){
             });
         }
 
-        //
-        symbolTable["deltaT"] = SymEngine::DenseMatrix(1,1,{toExpression(m_deltaTime)});
-
         // params aus dem nicht linearen Materialmodell
         for(const auto& [param, val] : mat.nonlinearModellParams){
             symbolTable[param] = val;
@@ -96,6 +93,9 @@ void FemModel::calculate(){
         // Dehnung
         symbolTable["epsilon_n"] = SymEngine::DenseMatrix(m_isoMesh.m_cachedBMats.begin()->second.nrows(),1);
         symbolTable["epsilon_n_plus_1"] = SymEngine::DenseMatrix(m_isoMesh.m_cachedBMats.begin()->second.nrows(),1);
+
+        symbolTable["sigma_n"] = SymEngine::DenseMatrix(m_isoMesh.m_cachedBMats.begin()->second.nrows(),1);
+        symbolTable["sigma_n_plus_1"] = SymEngine::DenseMatrix(m_isoMesh.m_cachedBMats.begin()->second.nrows(),1);
 
         // Aufstellen Residuum einzelnes Element
         symbolTable["B"] = m_isoMesh.m_cachedBMats.begin()->second;
@@ -108,8 +108,9 @@ void FemModel::calculate(){
         symbolTable[innerVariableCurrentFrame] = symbolTable[innerVariablePreviousFrame];
         
         // Startwerte
-        SymEngine::zeros(symbolTable["epsilon_n"]);
+        SymEngine::ones(symbolTable["epsilon_n"]);
         SymEngine::zeros(symbolTable[innerVariablePreviousFrame]);
+        symbolTable["sigma_n"] = evalSymbolicMatrixExpr("ElastTensor*epsilon_n" , symbolTable);
 
         // Container für Werte der inneren Variable
         // Einordnung über vec[cellIdx * r_pref.nNodes + quadPoint]
@@ -162,6 +163,9 @@ void FemModel::calculate(){
         m_simulationTime = mat.simulationDuration;
         m_deltaTime = mat.deltaTime;
         m_simulationSteps = mat.simulationSteps;
+
+        //
+        symbolTable["deltaT"] = SymEngine::DenseMatrix(1,1,{toExpression(m_deltaTime)});
 
         //
         m_simulationFrames.resize(m_simulationSteps);
@@ -268,8 +272,14 @@ void FemModel::calculate(){
                     symbolTable["jDet"].set(0,0,m_isoMesh.m_cachedJDets[cellIdx]->subs(r_pref.quadraturePoints[quadPoint]));
                     symbolTable["w"].set(0,0,toExpression(r_pref.weights[quadPoint]));
                     
+                    // default für Frame 1 vec(1)
+                    // Laden als Werte für quadratur punkten
+                    // Für first Frame Spannungen aus lösung des linearen Gleichungssystems laden
+                    // sigma_n = E * epsilon_n
                     if(!firstFrame){
-                        fromEigenDense(symbolTable["epsilon_n"], r_previousFrame.cellDataSet.at(cellIdx).strain);
+
+                        fromEigenDense(symbolTable["epsilon_n"], r_previousFrame.cellDataSet.at(cellIdx).quadratureStrain.at(quadPoint));
+                        fromEigenDense(symbolTable["sigma_n"], r_previousFrame.cellDataSet.at(cellIdx).quadratureStress.at(quadPoint));
                     }
 
                     // Dehnung aus aktuellem Schritt mit B*u substutuieren
@@ -288,14 +298,14 @@ void FemModel::calculate(){
                             mat.evolutionEquation,
                                 symbolTable);
 
-                    symbolTable["sigma"] = evalSymbolicMatrixExpr(
+                    symbolTable["sigma_n_plus_1"] = evalSymbolicMatrixExpr(
                         mat.stressApproach, symbolTable);
 
                     // cachen der von u abhängigen Formel im innerVariable Container
                     innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint] = symbolTable[innerVariableCurrentFrame];
 
                     //
-                    static std::string residual = "B^T*sigma*jDet*w*t";
+                    static std::string residual = "B^T*sigma_n_plus_1*jDet*w*t";
                     cellResidual += evalSymbolicMatrixExpr(
                         residual, symbolTable);
                 }
@@ -339,7 +349,8 @@ void FemModel::calculate(){
 
             // globalResidual - f = 0 mit NR lösen
             LOG << "\r";
-            LOG << "## Progress [" << stepIdx + 1 << " / " << m_simulationSteps << "] Steps | "; 
+            LOG << "## Progress [" << stepIdx + 1 << " / " << m_simulationSteps << "] Steps | ";
+            
             solveNewtonRaphson(globalResidual, symbolVector, r_currentFrame.displacement, mat.normTolerance, mat.breakNRAfterNumIterations);
             LOG << ENDL;            // Wenn alles in Zeile geschrieben werden soll auskommentieren
             LOG << std::flush;

@@ -90,7 +90,6 @@ void loadCachedConfigs(){
 
 int main(void)
 {
-
     #ifdef USE_LLVM
     LOG << "llvm wird genutzt" << ENDL;
     #endif
@@ -1583,7 +1582,7 @@ int main(void)
                         }
 
                         static const char* plotItems[] = { "Strain", "Stress", "Van-Mises-Stress", "InnerVariable" };
-                        static const char* units[] = { "[]", "[N]", "[N]", "[...]" };
+                        static const char* units[] = { "[]", "[MPa]", "[MPa]", "[...]" };
 
                         {
                             

@@ -288,6 +288,44 @@ SymEngine::DenseMatrix evalSymbolicMatrixExpr(std::string expr, const std::unord
 
         return result;
     }
+    else if(dominantOperator == "macaulay"){
+
+        SymEngine::DenseMatrix result(1,1);
+        SymEngine::DenseMatrix rawArg0 = evalSymbolicMatrixExpr(args[0], symbolTable);
+        RETURNING_ASSERT(rawArg0.nrows() == 1 && rawArg0.ncols() == 1, "macaulay norm erwartet Scalar", result);
+
+        double arg0 = SymEngine::eval_double(*rawArg0.get(0,0));
+        result.set(0, 0, toExpression(arg0 > 0 ? arg0 : 0));
+
+        return result;
+    }
+    else if(dominantOperator == "abs"){
+
+        SymEngine::DenseMatrix result(1,1);
+        SymEngine::DenseMatrix rawArg0 = evalSymbolicMatrixExpr(args[0], symbolTable);
+        RETURNING_ASSERT(rawArg0.nrows() == 1 && rawArg0.ncols() == 1, "macaulay norm erwartet Scalar", result);
+
+        double arg0 = SymEngine::eval_double(*rawArg0.get(0,0));
+        result.set(0, 0, toExpression(arg0 > 0 ? arg0 : -arg0));
+
+        return result;
+    }
+    else if(dominantOperator == "frobenius"){
+
+        SymEngine::DenseMatrix result(1,1);
+        SymEngine::DenseMatrix rawArg0 = evalSymbolicMatrixExpr(args[0], symbolTable);
+
+        Expression res = SymEngine::zero;
+        for (size_t i = 0; i < rawArg0.nrows(); i++) {
+            for (size_t j = 0; j < rawArg0.ncols(); j++) {
+
+                res = SymEngine::add(res, SymEngine::pow(rawArg0.get(i, j), SymEngine::integer(2)));
+            }
+        }
+
+        result.set(0, 0, res);
+        return result;
+    }
     // Funktionsname oder nicht deklarierter Operator
     else if(dominantOperator != ""){
 
