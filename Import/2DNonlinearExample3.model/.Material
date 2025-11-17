@@ -10,7 +10,7 @@
             "Identity2D":   { "rows": 3, "cols": 3, "data":    [["1", "0", "0"],
                                                                 ["0", "1", "0"],
                                                                 ["0", "0", "1"]]},
-            "tetha":        { "rows": 1, "cols": 1, "data":    [["5"]]}
+            "tetha":        { "rows": 1, "cols": 1, "data":    [["50000"]]}
         },
         // Spannungsansatz und Evolutionsgleichung unter Verwendung Innerevariable, gewählte Parameter,
         // Substitutionen durch das Programm >> Übersicht in Dokumentation und Studienarbeit
@@ -19,9 +19,9 @@
         // Steuerung der Zeitschrittsimulation
         "normTolerance" : 0.5,              // Residuums Norm Toleranz fürs Abbruchkriterium für Newton Raphson
         "breakNRAfterNumIterations" : 4,    // Abbruch der NR Iteration nach Schrittanzahl
-        "precissionDigits" : 6,             // Rundung der symbolischen Ausdrücke auf Nachkommastellen
+        "precissionDigits" : 10,            // Rundung der symbolischen Ausdrücke auf Nachkommastellen
         "simulationDuration" : 4,           // Simulationsdauer in Sekunden
-        "simulationTimeStep" : 0.05         // Schrittweite der Simulation in Sekunden >> duration/deltaTime Zeitschritte 
+        "simulationTimeStep" : 0.05         // Schrittweite der Simulation in Sekunden >> duration/deltaTime Zeitschritte
     },
     "stdParams": {
         "E": 20000.0,

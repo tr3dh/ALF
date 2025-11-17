@@ -39,7 +39,7 @@ inline std::ostream& operator<<(std::ostream& os, const Expression& expression) 
     return os;
 }
 
-static int g_decimalPlaces = 6;
+extern int g_decimalPlaces;
 
 template <typename T>
 inline Expression toExpression(const T& value) {
@@ -50,6 +50,17 @@ inline Expression toExpression(const T& value) {
     if constexpr (std::is_integral_v<T>) {
         // T ist Integer
         return SymEngine::integer(value);
+    }
+    else if constexpr (std::is_same_v<std::decay_t<T>, double>) {
+        
+        // T ist float/double
+        double intpart;
+        if (std::modf(value, &intpart) == 0.0) {
+            
+            // Ganzzahl
+            return SymEngine::integer(static_cast<int>(value));
+        }
+        return SymEngine::real_double(value);
     }
     else if constexpr (std::is_floating_point_v<T>) {
         

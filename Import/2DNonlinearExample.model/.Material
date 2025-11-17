@@ -19,7 +19,7 @@
         // Steuerung der Zeitschrittsimulation
         "normTolerance" : 0.5,              // Residuums Norm Toleranz fürs Abbruchkriterium für Newton Raphson
         "breakNRAfterNumIterations" : 4,    // Abbruch der NR Iteration nach Schrittanzahl
-        "precissionDigits" : 6,             // Rundung der symbolischen Ausdrücke auf Nachkommastellen
+        "precissionDigits" : 10,             // Rundung der symbolischen Ausdrücke auf Nachkommastellen
         "simulationDuration" : 4,           // Simulationsdauer in Sekunden
         "simulationTimeStep" : 0.05         // Schrittweite der Simulation in Sekunden >> duration/deltaTime Zeitschritte 
     },

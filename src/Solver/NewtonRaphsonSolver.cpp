@@ -1,6 +1,9 @@
 #include "NewtonRaphsonSolver.h"
 
 //
+constexpr float FLOAT_DENORM_MIN = std::numeric_limits<float>::denorm_min();
+
+//
 void assembleSubstitutionMap(SymEngine::map_basic_basic& substitutionMap, const SymEngine::DenseMatrix& symbolVector, Eigen::MatrixXf& result){
 
     ASSERT(symbolVector.nrows() == result.rows(), "Symbol Vector und Werte Vektor für substitution nicht gleich groß");

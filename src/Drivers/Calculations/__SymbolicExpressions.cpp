@@ -1,6 +1,9 @@
 #include "__SymbolicExpressions.h"
 
 //
+int g_decimalPlaces = 6;
+
+//
 bool contains(const Expression& expr, const Expression& sym){
 
     return SymEngine::free_symbols(*expr).contains(sym);

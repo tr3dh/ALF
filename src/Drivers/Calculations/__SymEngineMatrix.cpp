@@ -4,6 +4,8 @@
 #include "Drivers/ReccHandling/__Asserts.h"
 #include <eigen3/Eigen/Sparse>
 
+constexpr float FLOAT_DENORM_MIN = std::numeric_limits<float>::denorm_min();
+
 void clearMatrix(SymEngine::DenseMatrix& matrix){
     for (unsigned i = 0; i < matrix.nrows(); ++i) {
         for (unsigned j = 0; j < matrix.ncols(); ++j) {
@@ -16,7 +18,7 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXf& resultMatr
     
     ASSERT(koeff != 0, "Invalider Koeffizient übergeben");
 
-    float value = 0;
+    double value = 0;
 
     for (unsigned i = 0; i < matrix.nrows(); ++i) {
         for (unsigned j = 0; j < matrix.ncols(); ++j) {
@@ -28,7 +30,9 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXf& resultMatr
             // }
 
             try{
-                value = koeff * SymEngine::eval_double(*expr->subs(subMap));
+
+                value = static_cast<double>(koeff) * SymEngine::eval_double(*expr->subs(subMap));
+                // RETURNING_ASSERT(value > FLOAT_DENORM_MIN, "...", false);
             }
             catch(...){
                 ASSERT(TRIGGER_ASSERT, "Expression " + expr->__str__() + " konnte nicht evaluiert werden");
@@ -46,9 +50,9 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXf& resultMatr
             }
 
             if(addUp){
-                resultMatrix(i,j) += value;
+                resultMatrix(i,j) += static_cast<float>(value);
             } else {
-                resultMatrix(i,j) = value;
+                resultMatrix(i,j) = static_cast<float>(value);
             }
         }
     }
@@ -114,12 +118,12 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, SymEngine::DenseMatrix& res
     
     ASSERT(koeff != 0, "Invalider Koeffizient übergeben");
 
-    float value = 0;
+    double value = 0;
 
     for (unsigned i = 0; i < matrix.nrows(); ++i) {
         for (unsigned j = 0; j < matrix.ncols(); ++j) {
 
-            value = koeff * SymEngine::eval_double(*matrix.get(i, j)->subs(subMap));
+            value = static_cast<double>(koeff) * SymEngine::eval_double(*matrix.get(i, j)->subs(subMap));
 
             if(std::isnan(value)){
 
@@ -195,9 +199,10 @@ bool subTriplets(const std::vector<SymTriplet>& matrix, Eigen::SparseMatrix<floa
 }
 
 void expandMatrix(SymEngine::DenseMatrix& matrix){
+
     for (unsigned i = 0; i < matrix.nrows(); ++i) {
         for (unsigned j = 0; j < matrix.ncols(); ++j) {
-            matrix.set(i, j, SymEngine::expand(matrix.get(i,j)));
+            matrix.set(i, j, SymEngine::expand(SymEngine::expand(matrix.get(i,j))));
         }
     }
 }

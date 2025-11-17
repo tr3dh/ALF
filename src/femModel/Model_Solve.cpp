@@ -108,7 +108,7 @@ void FemModel::calculate(){
         symbolTable[innerVariableCurrentFrame] = symbolTable[innerVariablePreviousFrame];
         
         // Startwerte
-        SymEngine::ones(symbolTable["epsilon_n"]);
+        SymEngine::zeros(symbolTable["epsilon_n"]);
         SymEngine::zeros(symbolTable[innerVariablePreviousFrame]);
         symbolTable["sigma_n"] = evalSymbolicMatrixExpr("ElastTensor*epsilon_n" , symbolTable);
 
@@ -163,6 +163,8 @@ void FemModel::calculate(){
         m_simulationTime = mat.simulationDuration;
         m_deltaTime = mat.deltaTime;
         m_simulationSteps = mat.simulationSteps;
+
+        g_decimalPlaces = mat.precisionDigits;
 
         //
         symbolTable["deltaT"] = SymEngine::DenseMatrix(1,1,{toExpression(m_deltaTime)});
@@ -326,7 +328,7 @@ void FemModel::calculate(){
 
             // nötig und zeitsparend ???
             expandMatrix(globalResidual);
-            sym::roundMatrix(globalResidual);
+            // sym::roundMatrix(globalResidual);
 
             // benötigt wird ein gekürztes Residuum ein gekürzter symbolVector und der Lösungsvektor
 
@@ -391,7 +393,7 @@ void FemModel::calculate(){
 
                 r_currentFrame.cellDataSet.at(cellIdx).innerVariable = Eigen::MatrixXf(innerVariableContainer.begin()->nrows(), 
                                 innerVariableContainer.begin()->ncols());
-                r_currentFrame.cellDataSet.at(cellIdx).innerVariable.setZero();
+                // r_currentFrame.cellDataSet.at(cellIdx).innerVariable.setZero();
                 
                 // Loop durch quadrature Points
                 for(size_t quadPoint = 0; quadPoint < r_pref.nNodes; quadPoint++){
@@ -399,9 +401,9 @@ void FemModel::calculate(){
                     // cachen der von u abhängigen Formel im innerVariable Container
                     subMatrix(innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint], r_currentFrame.cellDataSet.at(cellIdx).innerVariable,{},
                         1, true);
-
-                    r_currentFrame.cellDataSet.at(cellIdx).innerVariable *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
                 }
+
+                r_currentFrame.cellDataSet.at(cellIdx).innerVariable *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
             }
 
             // >> nächster Iterationsschritt
