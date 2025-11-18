@@ -408,7 +408,8 @@ void FemModel::calculate(){
 
                 //
                 r_currentFrame.cellDataSet.at(cellIdx).innerVariable = Eigen::MatrixXf(innerVariableContainer.begin()->nrows(), innerVariableContainer.begin()->ncols());
-                
+                r_currentFrame.cellDataSet.at(cellIdx).innerVariable.setZero();
+
                 // Loop durch quadrature Points
                 for(size_t quadPoint = 0; quadPoint < r_pref.nNodes; quadPoint++){
 

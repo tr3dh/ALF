@@ -10,17 +10,17 @@
             "Identity2D":   { "rows": 3, "cols": 3, "data":    [["1", "0", "0"],
                                                                 ["0", "1", "0"],
                                                                 ["0", "0", "1"]]},
-            "tetha":        { "rows": 1, "cols": 1, "data":    [["5"]]},
-            "sigmaY":       { "rows": 1, "cols": 1, "data":    [["10000"]]}
+            "eta":        { "rows": 1, "cols": 1, "data":    [["50"]]},
+            "sigmaY":       { "rows": 1, "cols": 1, "data":    [["1000000"]]}
         },
         // Spannungsansatz und Evolutionsgleichung unter Verwendung Innerevariable, gewählte Parameter,
         // Substitutionen durch das Programm >> Übersicht in Dokumentation und Studienarbeit
         "sigma_n_plus_1": "ElastTensor*(epsilon_n_plus_1+-epsilon_vp_n_plus_1)",
-        "evolutionEquation": "epsilon_vp_n + deltaT * tetha^-1 * macaulay(frobenius(S * sigma_n) - sigmaY) * (S * sigma_n) * (frobenius(S * sigma_n))^1",
+        "evolutionEquation": "epsilon_vp_n + deltaT * eta^-1 * macaulay(frobenius(S * sigma_n) - sigmaY) * (S * sigma_n) * (frobenius(S * sigma_n))^1",
         // Steuerung der Zeitschrittsimulation
         "normTolerance" : 0.5,              // Residuums Norm Toleranz fürs Abbruchkriterium für Newton Raphson
         "breakNRAfterNumIterations" : 4,    // Abbruch der NR Iteration nach Schrittanzahl
-        "precissionDigits" : 6,             // Rundung der symbolischen Ausdrücke auf Nachkommastellen
+        "precissionDigits" : 10,             // Rundung der symbolischen Ausdrücke auf Nachkommastellen
         "simulationDuration" : 4,           // Simulationsdauer in Sekunden
         "simulationTimeStep" : 0.05         // Schrittweite der Simulation in Sekunden >> duration/deltaTime Zeitschritte 
     },

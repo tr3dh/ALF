@@ -10,12 +10,12 @@
             "Identity2D":   { "rows": 3, "cols": 3, "data":    [["1", "0", "0"],
                                                                 ["0", "1", "0"],
                                                                 ["0", "0", "1"]]},
-            "tetha":        { "rows": 1, "cols": 1, "data":    [["50000"]]}
+            "eta":        { "rows": 1, "cols": 1, "data":    [["50000"]]}
         },
         // Spannungsansatz und Evolutionsgleichung unter Verwendung Innerevariable, gewählte Parameter,
         // Substitutionen durch das Programm >> Übersicht in Dokumentation und Studienarbeit
         "sigma_n_plus_1": "ElastTensor*(epsilon_n_plus_1+-epsilon_v_n_plus_1)",
-        "evolutionEquation": "(I+tetha^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+tetha^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
+        "evolutionEquation": "(I+eta^-1*S*ElastTensor*deltaT)^-1*(epsilon_v_n+eta^-1*S*ElastTensor*deltaT*epsilon_n_plus_1)",
         // Steuerung der Zeitschrittsimulation
         "normTolerance" : 0.5,              // Residuums Norm Toleranz fürs Abbruchkriterium für Newton Raphson
         "breakNRAfterNumIterations" : 4,    // Abbruch der NR Iteration nach Schrittanzahl

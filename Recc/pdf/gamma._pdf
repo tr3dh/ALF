@@ -1,8 +1,8 @@
 {
-    "function": "xi^(k-1) * exp(-xi/theta) / (gamma(k) * theta^k)",
+    "function": "xi^(k-1) * exp(-xi/eta) / (gamma(k) * eta^k)",
     "params": {
         "k": 1,
-        "theta": 1
+        "eta": 1
     },
     // Bei der Untersuchung wird die pdf in beide Richtungen +xi und -xi abgelaufen bis der wert pdf(xi) unter
     // tolerance fällt, aus diesem Grund lässt sich der Gültigkeitsbereich über die folgenden Paramter eingrenzen
