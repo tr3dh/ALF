@@ -149,6 +149,30 @@ The `.Material` file defines the material model and controls the simulation proc
 }
 ```
 
+The following variables can be used for the nonlinear material equations under the labels mentioned.
+
+| variable   | substitution |
+|--------|-------|
+| u_n | Displacement of the element in the previous frame |
+| u_n_plus_1 | Displacement of the element in the current frame |
+| epsilon_n | Strain at the quadrature point in the previous frame |
+| epsilon_n_plus_1 | Strain at the quadrature point in the current frame |
+| sigma_n    | Stress at the quadrature point in the previous frame |
+| sigma_n_plus_1   | Stress at the quadrature point in the current frame |
+| {innerVariable}_n | Value of the self-named inner variable at the quadrature point in the previous frame |
+| {innerVariable}_n_plus_1 | Value of the self-named internal variable at the quadrature point in the current frame |
+| ElastTensor | Elasticity tensor |
+| S | Deviator matrix | 
+| I | Identity matrix with as many rows as B |
+| B | B matrix |
+| jDet | Jacoby determinant |
+| t | Thickness |
+| w | Weight of the quadrature point|
+| Identity(scalar) | Returns the unit matrix of the transferred size |
+| frobenius(tensor) | Returns the Frobenius norm of the transferred size |
+| macaulay(scalar) | Returns the Macaulay norm of the transferred size |
+| abs(scalar) | Returns the absolute value of the transferred size |
+
 Further information on the definition of probability densities and the nonlinear material model is provided via various example models in [Import](/Import/) and the accompanying [student Thesis](Recc/Thesis/Studienarbeit.pdf).
 
 # 🔌 API

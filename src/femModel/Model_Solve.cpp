@@ -420,15 +420,14 @@ void FemModel::calculate(){
                     r_cellData.cellVolume += SymEngine::eval_double(*m_isoMesh.m_cachedJDets[cellIdx]->subs(r_pref.quadraturePoints[quadPoint])) * r_pref.weights[quadPoint];
                 }
 
-                // r_currentFrame.cellDataSet.at(cellIdx).strain *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
-                // r_currentFrame.cellDataSet.at(cellIdx).stress *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
-                // r_currentFrame.cellDataSet.at(cellIdx).innerVariable *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
+                r_currentFrame.cellDataSet.at(cellIdx).strain *= (1.0/r_pref.nNodes);
+                r_currentFrame.cellDataSet.at(cellIdx).stress *= (1.0/r_pref.nNodes);
+                r_currentFrame.cellDataSet.at(cellIdx).innerVariable *= (1.0/r_pref.nNodes);
 
                 r_currentFrame.cellDataSet.at(cellIdx).calculateVanMisesStress();
             }
 
             // >> nächster Iterationsschritt
-
             // LOG << "Iterationsschritt " << stepIdx << ENDL;
         }
     }

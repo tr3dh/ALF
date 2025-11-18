@@ -148,6 +148,30 @@ Die Datei `.Material` definiert das Materialmodell und steuert die ablaufende Si
 }
 ```
 
+Für die nichtlinearen Materialgleichungen können folgende Variablen unter den genannten labeln verwendet werden
+
+| variable   | substitution |
+|--------|-------|
+| u_n | Verschiebung des Elements im vorherigen Frame |
+| u_n_plus_1 | Verschiebung des Elements im aktuellen Frame |
+| epsilon_n | Dehnung am Quadraturpunkt im vorherigen Frame |
+| epsilon_n_plus_1 | Dehnung am Quadraturpunkt im aktuellen Frame |
+| sigma_n    | Spannung am Quadraturpunkt im vorherigen Frame |
+| sigma_n_plus_1   | Spannung am Quadraturpunkt im aktuellen Frame |
+| {innerVariable}_n | Wert der selbstbenannten inneren Variable am Quadraturpunkt im vorherigen Frame |
+| {innerVariable}_n_plus_1 | Wert der selbstbenannten inneren Variable am Quadraturpunkt im aktuellen Frame |
+| ElastTensor | Elastizitätstensor |
+| S | Deviatormatrix | 
+| I | Einheitsmatrix mit so vielen Zeilen wie B |
+| B | B-Matrix |
+| jDet | Jacoby-Determinate|
+| t | Dicke |
+| w | Gewicht des Quadraturpunkts|
+| Identity(scalar) | Liefert Einheitsmatrix der übergebenen Größe |
+| frobenius(tensor) | Liefert Frobeniusnorm der übergebenen Größe |
+| macaulay(scalar) | Liefert Macaulaynorm der übergebenen Größe |
+| abs(scalar) | Liefert Betrag der übergebenen Größe |
+
 Weitere Informationen zur Definition der Wahrscheinlicheitsdichten und des nichtlinearen Materialmodells werden über verschiedene Beispielmodelle in [Import](/Import/) und die beigelegte [Studienarbeit](Recc/Thesis/Studienarbeit.pdf) bereitgestellt. 
 
 # 🔌 API
