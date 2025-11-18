@@ -101,7 +101,11 @@ void FemModel::calculate(){
         symbolTable["B"] = m_isoMesh.m_cachedBMats.begin()->second;
         symbolTable["jDet"] = SymEngine::DenseMatrix(1,1);
         symbolTable["w"] = SymEngine::DenseMatrix(1,1);
-        symbolTable["uCell"] = SymEngine::DenseMatrix(r_pref.nNodes * r_pref.nDimensions,1);
+
+        //
+        symbolTable["u_n_plus_1"] = SymEngine::DenseMatrix(r_pref.nNodes * r_pref.nDimensions,1);
+        symbolTable["u_n"] = SymEngine::DenseMatrix(r_pref.nNodes * r_pref.nDimensions,1);
+        SymEngine::zeros(symbolTable["u_n"]);
 
         // innere Variable
         symbolTable[innerVariablePreviousFrame] = SymEngine::DenseMatrix(mat.innerVariableSize.size() > 0 ? mat.innerVariableSize[0] : 1, mat.innerVariableSize.size() > 1 ? mat.innerVariableSize[1] : 1);
@@ -114,9 +118,10 @@ void FemModel::calculate(){
 
         // Container für Werte der inneren Variable
         // Einordnung über vec[cellIdx * r_pref.nNodes + quadPoint]
-        std::vector<SymEngine::DenseMatrix> innerVariableContainer;
-        innerVariableContainer.reserve(r_pref.nNodes * m_isoMesh.m_Cells.size());
+        std::vector<SymEngine::DenseMatrix> innerVariableContainer, strainContainer, stressContainer;
         innerVariableContainer.resize(r_pref.nNodes * m_isoMesh.m_Cells.size());
+        strainContainer.resize(r_pref.nNodes * m_isoMesh.m_Cells.size());
+        stressContainer.resize(r_pref.nNodes * m_isoMesh.m_Cells.size());
 
         //
         SymEngine::DenseMatrix nullVariable = symbolTable[innerVariablePreviousFrame];
@@ -256,12 +261,17 @@ void FemModel::calculate(){
                         // wenn in fixed dofs symbol mit 0 substituieren
                         if(vectorContains(m_isoMesh.m_indicesToRemove, globalDofIndex)){
 
-                            symbolTable["uCell"].set(localDofIndex, 0, NULL_EXPR);
+                            symbolTable["u_n_plus_1"].set(localDofIndex, 0, NULL_EXPR);
+                            symbolTable["u_n"].set(localDofIndex, 0, NULL_EXPR);
+                        }
+                        else if(stepIdx == 0){
+
+                            symbolTable["u_n_plus_1"].set(localDofIndex, 0, toExpression("u" + std::to_string(globalDofIndex)));
                         }
                         else {
                             
-                            symbolTable["uCell"].set(localDofIndex, 0,
-                                toExpression("u" + std::to_string(globalDofIndex)));
+                            symbolTable["u_n_plus_1"].set(localDofIndex, 0, toExpression("u" + std::to_string(globalDofIndex)));
+                            symbolTable["u_n"].set(localDofIndex, 0, toExpression(r_previousFrame.displacement(globalDofIndex, 0)));
                         }
                     }
                 }
@@ -280,12 +290,12 @@ void FemModel::calculate(){
                     // sigma_n = E * epsilon_n
                     if(!firstFrame){
 
-                        fromEigenDense(symbolTable["epsilon_n"], r_previousFrame.cellDataSet.at(cellIdx).quadratureStrain.at(quadPoint));
-                        fromEigenDense(symbolTable["sigma_n"], r_previousFrame.cellDataSet.at(cellIdx).quadratureStress.at(quadPoint));
+                        symbolTable["epsilon_n"] = strainContainer[cellStorePositon * r_pref.nNodes + quadPoint];
+                        symbolTable["sigma_n"] = stressContainer[cellStorePositon * r_pref.nNodes + quadPoint];
                     }
 
                     // Dehnung aus aktuellem Schritt mit B*u substutuieren
-                    static std::string strain = "B*uCell";
+                    static std::string strain = "B*u_n_plus_1";
                     symbolTable["epsilon_n_plus_1"] = evalSymbolicMatrixExpr(strain, symbolTable);
 
                     // Wert innere Variable aus letztem Schritt in innerVariableContainer
@@ -304,6 +314,8 @@ void FemModel::calculate(){
                         mat.stressApproach, symbolTable);
 
                     // cachen der von u abhängigen Formel im innerVariable Container
+                    strainContainer[cellStorePositon * r_pref.nNodes + quadPoint] = symbolTable["epsilon_n_plus_1"];
+                    stressContainer[cellStorePositon * r_pref.nNodes + quadPoint] = symbolTable["sigma_n_plus_1"];
                     innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint] = symbolTable[innerVariableCurrentFrame];
 
                     //
@@ -372,18 +384,17 @@ void FemModel::calculate(){
             r_currentFrame.deformedNodes = m_isoMesh.m_nodes;
             m_isoMesh.displaceNodes(r_currentFrame.deformedNodes, r_currentFrame.displacement, m_isoMesh.nodeNumOffset);
 
-            // nach dem der spannungs Vektor wieder vollständig ist können nun spannungen und Dehnungen ermittelt werden
-            m_isoMesh.calculateStrainAndStress(r_currentFrame.cellDataSet, r_currentFrame.displacement);
-
             // über einfache SymEngine Substitutionen bzw subsMatrix kann jetzt der Ausdruck für die innere
             // Variable, der mittels der Matrixsubstitution ermittelt wurde mit den Einträgen des Verschiebungsvektors substituiert und so
             // vollständig aufgelöst werden und in den Container geschrieben sodass er für die Berechnungen im nächsten Schritt
             // für die Substitution herangezogen werden kann
 
-            for(auto& var : innerVariableContainer){
+            for(auto& var : strainContainer){ subMatrix(var,var,substituteDisplacement); }
+            for(auto& var : stressContainer){ subMatrix(var,var,substituteDisplacement); }
+            for(auto& var : innerVariableContainer){ subMatrix(var,var,substituteDisplacement); }
 
-                subMatrix(var,var,substituteDisplacement);
-            }
+            //
+            r_currentFrame.cellDataSet.reserve(m_isoMesh.m_Cells.size());
 
             // mitteln und abspeichern der Substitutionsergebnisse für die einzelnen Zellen
             for(const auto& [cellIdx, cell] : m_isoMesh.getCells()){
@@ -391,19 +402,28 @@ void FemModel::calculate(){
                 //
                 const auto cellStorePositon = cellIdx - cellNumOffset; 
 
-                r_currentFrame.cellDataSet.at(cellIdx).innerVariable = Eigen::MatrixXf(innerVariableContainer.begin()->nrows(), 
-                                innerVariableContainer.begin()->ncols());
-                // r_currentFrame.cellDataSet.at(cellIdx).innerVariable.setZero();
+                //
+                r_currentFrame.cellDataSet.try_emplace(cellIdx, r_pref);
+                CellData& r_cellData = r_currentFrame.cellDataSet.at(cellIdx);
+
+                //
+                r_currentFrame.cellDataSet.at(cellIdx).innerVariable = Eigen::MatrixXf(innerVariableContainer.begin()->nrows(), innerVariableContainer.begin()->ncols());
                 
                 // Loop durch quadrature Points
                 for(size_t quadPoint = 0; quadPoint < r_pref.nNodes; quadPoint++){
 
-                    // cachen der von u abhängigen Formel im innerVariable Container
-                    subMatrix(innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint], r_currentFrame.cellDataSet.at(cellIdx).innerVariable,{},
-                        1, true);
+                    subMatrix(strainContainer[cellStorePositon * r_pref.nNodes + quadPoint], r_currentFrame.cellDataSet.at(cellIdx).strain,{}, 1, true);
+                    subMatrix(stressContainer[cellStorePositon * r_pref.nNodes + quadPoint], r_currentFrame.cellDataSet.at(cellIdx).stress,{}, 1, true);
+                    subMatrix(innerVariableContainer[cellStorePositon * r_pref.nNodes + quadPoint], r_currentFrame.cellDataSet.at(cellIdx).innerVariable,{}, 1, true);
+
+                    r_cellData.cellVolume += SymEngine::eval_double(*m_isoMesh.m_cachedJDets[cellIdx]->subs(r_pref.quadraturePoints[quadPoint])) * r_pref.weights[quadPoint];
                 }
 
-                r_currentFrame.cellDataSet.at(cellIdx).innerVariable *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
+                // r_currentFrame.cellDataSet.at(cellIdx).strain *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
+                // r_currentFrame.cellDataSet.at(cellIdx).stress *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
+                // r_currentFrame.cellDataSet.at(cellIdx).innerVariable *= (1/r_currentFrame.cellDataSet.at(cellIdx).cellVolume);
+
+                r_currentFrame.cellDataSet.at(cellIdx).calculateVanMisesStress();
             }
 
             // >> nächster Iterationsschritt

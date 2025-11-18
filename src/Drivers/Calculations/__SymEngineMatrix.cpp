@@ -18,7 +18,7 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXf& resultMatr
     
     ASSERT(koeff != 0, "Invalider Koeffizient übergeben");
 
-    double value = 0;
+    float value = 0;
 
     for (unsigned i = 0; i < matrix.nrows(); ++i) {
         for (unsigned j = 0; j < matrix.ncols(); ++j) {
@@ -31,8 +31,7 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXf& resultMatr
 
             try{
 
-                value = static_cast<double>(koeff) * SymEngine::eval_double(*expr->subs(subMap));
-                // RETURNING_ASSERT(value > FLOAT_DENORM_MIN, "...", false);
+                value = koeff * SymEngine::eval_double(*expr->subs(subMap));
             }
             catch(...){
                 ASSERT(TRIGGER_ASSERT, "Expression " + expr->__str__() + " konnte nicht evaluiert werden");
@@ -50,9 +49,9 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, Eigen::MatrixXf& resultMatr
             }
 
             if(addUp){
-                resultMatrix(i,j) += static_cast<float>(value);
+                resultMatrix(i,j) += value;
             } else {
-                resultMatrix(i,j) = static_cast<float>(value);
+                resultMatrix(i,j) = value;
             }
         }
     }
@@ -118,12 +117,12 @@ bool subMatrix(const SymEngine::DenseMatrix& matrix, SymEngine::DenseMatrix& res
     
     ASSERT(koeff != 0, "Invalider Koeffizient übergeben");
 
-    double value = 0;
+    float value = 0;
 
     for (unsigned i = 0; i < matrix.nrows(); ++i) {
         for (unsigned j = 0; j < matrix.ncols(); ++j) {
 
-            value = static_cast<double>(koeff) * SymEngine::eval_double(*matrix.get(i, j)->subs(subMap));
+            value = koeff * SymEngine::eval_double(*matrix.get(i, j)->subs(subMap));
 
             if(std::isnan(value)){
 
