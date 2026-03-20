@@ -22,8 +22,8 @@
         "normTolerance" : 6,              
         "breakNRAfterNumIterations" : 3,    
         "precissionDigits" : 6,            
-        "simulationDuration" : 4,           
-        "simulationTimeStep" : 0.05         
+        "simulationDuration" : 6,           
+        "simulationTimeStep" : 0.0125         
     },
     "stdParams": {
         "E": 20000.0,

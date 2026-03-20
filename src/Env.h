@@ -125,7 +125,11 @@ typedef struct tagBITMAPINFOHEADER {
 #include <implot.h>
 
 #include <rlgl.h>
+#ifdef RAYLIB_USES_ANGLE
+#include <GLES3/gl3.h>
+#else
 #include <GL/gl.h>
+#endif
 
 //
 #if defined(LOG) | defined(_ERROR)

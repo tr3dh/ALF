@@ -67,8 +67,22 @@ void initCellRenderer(const CellPrefab& pref){
 
 void applyShader(const std::string& vsPath, const std::string& fsPath){
 
-    //
-    g_cellMeshShader = LoadShader(vsPath.c_str(), fsPath.c_str());
+    // Shader Source
+    std::string vsSource = LoadFileText(vsPath.c_str());
+    std::string fsSource = LoadFileText(fsPath.c_str());
+
+    // Header je nach Backend
+    #ifdef RAYLIB_USES_ANGLE  // oder dein ANGLE-Flag
+        std::string header = "#version 300 es\nprecision mediump float;\n";
+    #else
+        std::string header = "#version 330 core\n";
+    #endif
+
+    vsSource = header + vsSource;
+    fsSource = header + fsSource;
+
+    // Aus String laden
+    g_cellMeshShader = LoadShaderFromMemory(vsSource.c_str(), fsSource.c_str());
 
     //
     RETURNING_ASSERT(g_cellMeshShader.id > 0, 

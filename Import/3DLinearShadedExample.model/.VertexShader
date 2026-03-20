@@ -1,4 +1,4 @@
-#version 330
+
 
 // Bei der Verwendung der Shader können nur die vorhandenen In-/Outputs und Uniforms verwendet werden
 // werden weitere Größen benötigt können sie nicht aus dem Programm übergeben werden sondern müssen als const

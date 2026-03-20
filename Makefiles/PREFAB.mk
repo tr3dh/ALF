@@ -174,26 +174,37 @@ raylib:
 	@if [ -d "thirdParty/raylib" ]; then \
 		echo "Info: 'thirdParty/raylib' existiert bereits. Überspringe Build.";\
 	else \
-		cd thirdParty && git clone https://github.com/raysan5/raylib.git; \
-		cd raylib/; \
-		cmake -B build -G "MinGW Makefiles" \
+		git clone https://github.com/raysan5/raylib.git thirdParty/raylib && \
+		cmake -S thirdParty/raylib -B thirdParty/raylib/build -G "MinGW Makefiles" \
 			-DGRAPHICS=GRAPHICS_API_OPENGL_43 \
 			-DSUPPORT_FILEFORMAT_GLTF=ON \
 			-DSUPPORT_FILEFORMAT_GLTF_DRACO=ON \
 			-DSUPPORT_FILEFORMAT_ASSIMP=ON \
-			-DUSE_EXTERNAL_GLFW=ON \
+			-DUSE_EXTERNAL_GLFW=OFF \
 			-DBUILD_SHARED_LIBS=OFF \
 			-DCMAKE_BUILD_TYPE=Release; \
-		cmake --build build; \
-		cmake -B dynamicBuild -G "MinGW Makefiles" \
-			-DGRAPHICS=GRAPHICS_API_OPENGL_43 \
+		cmake --build thirdParty/raylib/build; \
+	fi
+
+angle:
+	$(PACMAN) $(MINGW_PREFIX)-angleproject
+
+angleRaylib:
+
+	@if [ -d "thirdParty/raylib" ]; then \
+		echo "Info: 'thirdParty/raylib' existiert bereits. Überspringe Build.";\
+	else \
+		git clone --branch 5.5 --depth 1 https://github.com/raysan5/raylib.git thirdParty/raylib && \
+		cmake -S thirdParty/raylib -B thirdParty/raylib/buildAngle -G "MinGW Makefiles" \
+
+			-DCUSTOMIZE_BUILD=ON \
+			-DOPENGL_VERSION="ES 3.0" \
 			-DSUPPORT_FILEFORMAT_GLTF=ON \
-			-DSUPPORT_FILEFORMAT_GLTF_DRACO=ON \
-			-DSUPPORT_FILEFORMAT_ASSIMP=ON \
-			-DUSE_EXTERNAL_GLFW=ON \
-			-DBUILD_SHARED_LIBS=ON \
-			-DCMAKE_BUILD_TYPE=Release; \
-		cmake --build dynamicBuild; \
+			-DBUILD_EXAMPLES=OFF \
+			-DUSE_EXTERNAL_GLFW=OFF \
+			-DBUILD_SHARED_LIBS=OFF \
+			-DCMAKE_BUILD_TYPE=Release && \
+		cmake --build thirdParty/raylib/buildAngle; \
 	fi
 	
 #	@make dllCopy COPYTARGET=thirdParty/r3d/build/
@@ -340,6 +351,8 @@ prefab:
 	@make symengine
 
 	@make raylib
+	@make angle
+	@make angleRaylib
 	@make imgui
 	@make filebrowser
 	@make raylibImgui
