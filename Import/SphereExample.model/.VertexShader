@@ -22,7 +22,7 @@ void main()
     // sichtbare Wellen
     float wave = sin(pos.x * 4.0 + time * 5.0) 
                + cos(pos.z * 3.0 + time * 10.0);
-    pos.y += wave * 10; // Wellenhöhe
+    pos.y += wave * 10.0; // Wellenhöhe
 
     // Standard Transformation
     fragPosition = vec3(matModel * vec4(pos, 1.0));

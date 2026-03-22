@@ -191,12 +191,11 @@ angle:
 
 angleRaylib:
 
-	@if [ -d "thirdParty/raylib" ]; then \
+	@if [ -d "thirdParty/angleRaylib" ]; then \
 		echo "Info: 'thirdParty/raylib' existiert bereits. Überspringe Build.";\
 	else \
-		git clone --branch 5.5 --depth 1 https://github.com/raysan5/raylib.git thirdParty/raylib && \
-		cmake -S thirdParty/raylib -B thirdParty/raylib/buildAngle -G "MinGW Makefiles" \
-
+		git clone --branch 5.5 --depth 1 https://github.com/raysan5/raylib.git thirdParty/angleRaylib && \
+		cmake -S thirdParty/angleRaylib -B thirdParty/angleRaylib/build -G "MinGW Makefiles" \
 			-DCUSTOMIZE_BUILD=ON \
 			-DOPENGL_VERSION="ES 3.0" \
 			-DSUPPORT_FILEFORMAT_GLTF=ON \
@@ -204,7 +203,7 @@ angleRaylib:
 			-DUSE_EXTERNAL_GLFW=OFF \
 			-DBUILD_SHARED_LIBS=OFF \
 			-DCMAKE_BUILD_TYPE=Release && \
-		cmake --build thirdParty/raylib/buildAngle; \
+		cmake --build thirdParty/angleRaylib/build; \
 	fi
 	
 #	@make dllCopy COPYTARGET=thirdParty/r3d/build/
@@ -262,7 +261,7 @@ dllCopy:
 	cp -n /mingw64/bin/libgomp-1.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libgmp-10.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libmpfr-6.dll $(COPYTARGET);
-	cp -n thirdParty/raylib/dynamicBuild/raylib/libraylib.dll $(COPYTARGET);
+#	cp -n thirdParty/raylib/dynamicBuild/raylib/libraylib.dll $(COPYTARGET);
 	cp -n /mingw64/bin/glfw3.dll $(COPYTARGET);
 # 	cp -n /mingw64/bin/vulkan-1.dll $(COPYTARGET);
 # 	cp -n /mingw64/bin/libsfml-graphics-2.dll $(COPYTARGET);
@@ -283,6 +282,8 @@ dllCopy:
 	cp -n /mingw64/bin/libpcre2-8-0.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libLLVM-20.dll $(COPYTARGET);
 	cp -n /mingw64/bin/libxml2-16.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libGLESv2.dll $(COPYTARGET);
+	cp -n /mingw64/bin/libEGL.dll $(COPYTARGET);
 
 	echo "DLLs kopiert nach $(COPYTARGET)";
 

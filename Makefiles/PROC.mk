@@ -25,6 +25,16 @@ ifeq ($(USE_LLVM),TRUE)
     CXXFLAGS += -DUSE_LLVM
 endif
 
+RAYLIB_USES_ANGLE ?= TRUE
+
+RAYLIB_INCLUDES = \
+
+ifeq ($(RAYLIB_USES_ANGLE), TRUE)
+	RAYLIB_INCLUDES = -I./thirdParty/raylib/src
+else
+	RAYLIB_INCLUDES = -I./thirdParty/angleRaylib/src
+endif
+
 # -Wno-missing-designated-field-initializers
 CXXFLAGS += -Wextra -MMD -MP -std=c++23 -fuse-ld=lld -fexceptions \
 	-Wno-deprecated-literal-operator \
@@ -32,7 +42,7 @@ CXXFLAGS += -Wextra -MMD -MP -std=c++23 -fuse-ld=lld -fexceptions \
 	-Wno-cpp \
 	-I./src \
 	-I./thirdParty \
-	-I./thirdParty/raylib/src \
+	$(RAYLIB_INCLUDES) \
 	-I/mingw64/include \
 	-I./thirdparty/symengine -I./thirdparty/symengine/build \
 	-I./thirdparty/magic_enum/include \
@@ -48,10 +58,11 @@ ifeq ($(LINKING), STATIC)
 	CXXFLAGS += -static-libgcc -static-libstdc++
 endif
 
-RAYLIB_USES_ANGLE ?= TRUE
+# für angle -lEGL -lGLESv2
+LDFLAGS += -L./src
 
 ifeq ($(RAYLIB_USES_ANGLE), TRUE)
-	LDFLAGS += -L./thirdParty/raylib/buildAngle/raylib -lraylib
+	LDFLAGS += -L./thirdParty/angleRaylib/build/raylib -lraylib
 	CXXFLAGS += -DRAYLIB_USES_ANGLE
 else
 	LDFLAGS += -L./thirdParty/raylib/build/raylib -lraylib
